@@ -1,0 +1,75 @@
+import { Routes } from '@angular/router';
+import { authGuard, guestGuard, roleGuard } from './core/guards';
+import { UserRole } from './core/models';
+
+export const routes: Routes = [
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  {
+    path: 'auth',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./shared/layouts/auth-layout.component').then(m => m.AuthLayoutComponent),
+    children: [
+      { path: '', redirectTo: 'login', pathMatch: 'full' },
+      { path: 'login', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
+      { path: 'register', loadComponent: () => import('./features/auth/register.component').then(m => m.RegisterComponent) },
+      { path: 'register-student', loadComponent: () => import('./features/auth/student-register.component').then(m => m.StudentRegisterComponent) },
+      { path: 'register-teacher', loadComponent: () => import('./features/auth/teacher-register.component').then(m => m.TeacherRegisterComponent) },
+      { path: 'forgot-password', loadComponent: () => import('./features/auth/forgot-password.component').then(m => m.ForgotPasswordComponent) },
+      { path: 'pending-approval', loadComponent: () => import('./features/auth/pending-approval.component').then(m => m.PendingApprovalComponent) },
+    ]
+  },
+  {
+    path: '',
+    canActivate: [authGuard],
+    loadComponent: () => import('./shared/layouts/main-layout.component').then(m => m.MainLayoutComponent),
+    children: [
+      { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'schools', loadComponent: () => import('./features/schools/school-list.component').then(m => m.SchoolListComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN)] },
+      { path: 'schools/pending', loadComponent: () => import('./features/schools/pending-schools.component').then(m => m.PendingSchoolsComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN)] },
+      { path: 'schools/new', loadComponent: () => import('./features/schools/school-form.component').then(m => m.SchoolFormComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN)] },
+      { path: 'schools/:id', loadComponent: () => import('./features/schools/school-form.component').then(m => m.SchoolFormComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN)] },
+      { path: 'users', loadComponent: () => import('./features/users/user-list.component').then(m => m.UserListComponent) },
+      { path: 'users/new', loadComponent: () => import('./features/users/user-form.component').then(m => m.UserFormComponent) },
+      { path: 'users/:id', loadComponent: () => import('./features/users/user-form.component').then(m => m.UserFormComponent) },
+      { path: 'academic-years', loadComponent: () => import('./features/academic-years/academic-year-list.component').then(m => m.AcademicYearListComponent) },
+      { path: 'classes', loadComponent: () => import('./features/classes/class-list.component').then(m => m.ClassListComponent) },
+      { path: 'classes/new', loadComponent: () => import('./features/classes/class-form.component').then(m => m.ClassFormComponent) },
+      { path: 'classes/:id', loadComponent: () => import('./features/classes/class-form.component').then(m => m.ClassFormComponent) },
+      { path: 'subjects', loadComponent: () => import('./features/subjects/subject-list.component').then(m => m.SubjectListComponent) },
+      { path: 'students', loadComponent: () => import('./features/students/student-list.component').then(m => m.StudentListComponent) },
+      { path: 'students/new', loadComponent: () => import('./features/students/student-form.component').then(m => m.StudentFormComponent) },
+      { path: 'students/:id', loadComponent: () => import('./features/students/student-detail.component').then(m => m.StudentDetailComponent) },
+      { path: 'students/:id/edit', loadComponent: () => import('./features/students/student-form.component').then(m => m.StudentFormComponent) },
+      { path: 'teachers', loadComponent: () => import('./features/teachers/teacher-list.component').then(m => m.TeacherListComponent) },
+      { path: 'teachers/new', loadComponent: () => import('./features/teachers/teacher-form.component').then(m => m.TeacherFormComponent) },
+      { path: 'teachers/:id/assignments', loadComponent: () => import('./features/teachers/teacher-assignments.component').then(m => m.TeacherAssignmentsComponent) },
+      { path: 'teachers/:id', loadComponent: () => import('./features/teachers/teacher-form.component').then(m => m.TeacherFormComponent) },
+      { path: 'parents', loadComponent: () => import('./features/parents/parent-list.component').then(m => m.ParentListComponent) },
+      { path: 'attendance', loadComponent: () => import('./features/attendance/attendance.component').then(m => m.AttendanceComponent) },
+      { path: 'exams', loadComponent: () => import('./features/exams/exam-list.component').then(m => m.ExamListComponent) },
+      { path: 'exams/new', loadComponent: () => import('./features/exams/exam-form.component').then(m => m.ExamFormComponent) },
+      { path: 'results', loadComponent: () => import('./features/results/result-list.component').then(m => m.ResultListComponent) },
+      { path: 'results/report-card/:studentId', loadComponent: () => import('./features/results/report-card.component').then(m => m.ReportCardComponent) },
+      { path: 'results/analytics', loadComponent: () => import('./features/results/result-analytics.component').then(m => m.ResultAnalyticsComponent) },
+      { path: 'fees', loadComponent: () => import('./features/fees/fee-list.component').then(m => m.FeeListComponent) },
+      { path: 'fees/analytics', loadComponent: () => import('./features/fees/fee-analytics.component').then(m => m.FeeAnalyticsComponent) },
+      { path: 'transport', loadComponent: () => import('./features/transport/vehicle-list.component').then(m => m.VehicleListComponent) },
+      { path: 'transport/new', loadComponent: () => import('./features/transport/vehicle-form.component').then(m => m.VehicleFormComponent) },
+      { path: 'transport/tracking', loadComponent: () => import('./features/transport/gps-tracking.component').then(m => m.GpsTrackingComponent) },
+      { path: 'transport/:id', loadComponent: () => import('./features/transport/vehicle-form.component').then(m => m.VehicleFormComponent) },
+      { path: 'promotions', loadComponent: () => import('./features/promotions/promotion-list.component').then(m => m.PromotionListComponent) },
+      { path: 'transfers', loadComponent: () => import('./features/transfers/transfer-list.component').then(m => m.TransferListComponent) },
+      { path: 'timetable', loadComponent: () => import('./features/timetable/timetable.component').then(m => m.TimetableComponent) },
+      { path: 'notifications', loadComponent: () => import('./features/notifications/notification-list.component').then(m => m.NotificationListComponent) },
+      { path: 'reports', loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent) },
+      { path: 'subscriptions', loadComponent: () => import('./features/subscriptions/subscription-list.component').then(m => m.SubscriptionListComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN)] },
+      { path: 'roles', loadComponent: () => import('./features/settings/roles.component').then(m => m.RolesComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN, UserRole.PRINCIPAL)] },
+      { path: 'pending-students', loadComponent: () => import('./features/students/pending-students.component').then(m => m.PendingStudentsComponent) },
+      { path: 'pending-teachers', loadComponent: () => import('./features/teachers/pending-teachers.component').then(m => m.PendingTeachersComponent) },
+      { path: 'settings', loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent) },
+    ]
+  },
+  { path: 'guide', loadComponent: () => import('./features/guide/guided-tour.component').then(m => m.GuidedTourComponent) },
+  { path: '**', redirectTo: 'dashboard' }
+];
+

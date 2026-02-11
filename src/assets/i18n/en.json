@@ -1,0 +1,41 @@
+{
+  "app": { "title": "EduCore", "tagline": "School Management Platform" },
+  "nav": {
+    "dashboard": "Dashboard", "students": "Students", "teachers": "Teachers", "parents": "Parents",
+    "classes": "Classes", "subjects": "Subjects", "attendance": "Attendance", "exams": "Exams",
+    "results": "Results", "fees": "Fees", "transport": "Transport", "transfers": "Transfers",
+    "promotions": "Promotions", "timetable": "Timetable", "notifications": "Notifications",
+    "reports": "Reports", "settings": "Settings", "schools": "Schools", "users": "Users",
+    "subscriptions": "Subscriptions", "academic_years": "Academic Years", "logout": "Logout",
+    "pending_students": "Pending Students", "pending_approvals": "Pending Approvals", "roles": "Roles"
+  },
+  "auth": {
+    "login": "Sign In", "register": "Create Account", "forgot_password": "Forgot Password",
+    "reset_password": "Reset Password", "email": "Email Address", "password": "Password",
+    "confirm_password": "Confirm Password", "remember_me": "Remember me",
+    "no_account": "Don't have an account?", "has_account": "Already have an account?",
+    "sign_up": "Sign Up", "back_to_login": "Back to login", "send_reset": "Send Reset Link"
+  },
+  "common": {
+    "search": "Search...", "create": "Create", "edit": "Edit", "delete": "Delete", "save": "Save",
+    "cancel": "Cancel", "confirm": "Confirm", "back": "Back", "next": "Next", "loading": "Loading...",
+    "no_data": "No data found", "actions": "Actions", "status": "Status", "view": "View",
+    "export": "Export", "import": "Import", "print": "Print", "filter": "Filter",
+    "total": "Total", "showing": "Showing", "of": "of", "entries": "entries",
+    "success": "Success", "error": "Error", "warning": "Warning", "info": "Info"
+  },
+  "dashboard": {
+    "welcome": "Welcome back", "overview": "Overview", "total_students": "Total Students",
+    "total_teachers": "Total Teachers", "total_classes": "Total Classes",
+    "fee_collection": "Fee Collection", "attendance_rate": "Attendance Rate",
+    "upcoming_exams": "Upcoming Exams", "recent_activities": "Recent Activities",
+    "quick_actions": "Quick Actions"
+  },
+  "student": {
+    "title": "Students", "add": "Add Student", "admission_no": "Admission No",
+    "first_name": "First Name", "last_name": "Last Name", "class": "Class",
+    "section": "Section", "roll_no": "Roll Number", "gender": "Gender",
+    "dob": "Date of Birth", "contact": "Contact", "address": "Address",
+    "guardian": "Guardian", "performance": "Performance", "report_card": "Report Card"
+  }
+}

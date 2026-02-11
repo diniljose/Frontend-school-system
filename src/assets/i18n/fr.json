@@ -1,0 +1,41 @@
+{
+  "app": { "title": "EduCore", "tagline": "Plateforme de Gestion Scolaire" },
+  "nav": {
+    "dashboard": "Tableau de Bord", "students": "Étudiants", "teachers": "Enseignants", "parents": "Parents",
+    "classes": "Classes", "subjects": "Matières", "attendance": "Présence", "exams": "Examens",
+    "results": "Résultats", "fees": "Frais", "transport": "Transport", "transfers": "Transferts",
+    "promotions": "Promotions", "timetable": "Emploi du Temps", "notifications": "Notifications",
+    "reports": "Rapports", "settings": "Paramètres", "schools": "Écoles", "users": "Utilisateurs",
+    "subscriptions": "Abonnements", "academic_years": "Années Scolaires", "logout": "Déconnexion",
+    "pending_students": "Étudiants en Attente", "pending_approvals": "Approbations en Attente", "roles": "Rôles"
+  },
+  "auth": {
+    "login": "Connexion", "register": "Créer un Compte", "forgot_password": "Mot de Passe Oublié",
+    "reset_password": "Réinitialiser", "email": "Adresse Email", "password": "Mot de Passe",
+    "confirm_password": "Confirmer le Mot de Passe", "remember_me": "Se Souvenir de Moi",
+    "no_account": "Pas de compte?", "has_account": "Déjà un compte?",
+    "sign_up": "S'inscrire", "back_to_login": "Retour", "send_reset": "Envoyer le Lien"
+  },
+  "common": {
+    "search": "Rechercher...", "create": "Créer", "edit": "Modifier", "delete": "Supprimer", "save": "Sauvegarder",
+    "cancel": "Annuler", "confirm": "Confirmer", "back": "Retour", "next": "Suivant", "loading": "Chargement...",
+    "no_data": "Aucune donnée", "actions": "Actions", "status": "Statut", "view": "Voir",
+    "export": "Exporter", "import": "Importer", "print": "Imprimer", "filter": "Filtrer",
+    "total": "Total", "showing": "Affichant", "of": "de", "entries": "entrées",
+    "success": "Succès", "error": "Erreur", "warning": "Avertissement", "info": "Info"
+  },
+  "dashboard": {
+    "welcome": "Bon Retour", "overview": "Vue d'Ensemble", "total_students": "Total Étudiants",
+    "total_teachers": "Total Enseignants", "total_classes": "Total Classes",
+    "fee_collection": "Collecte des Frais", "attendance_rate": "Taux de Présence",
+    "upcoming_exams": "Examens à Venir", "recent_activities": "Activités Récentes",
+    "quick_actions": "Actions Rapides"
+  },
+  "student": {
+    "title": "Étudiants", "add": "Ajouter Étudiant", "admission_no": "No. Admission",
+    "first_name": "Prénom", "last_name": "Nom", "class": "Classe",
+    "section": "Section", "roll_no": "Numéro", "gender": "Genre",
+    "dob": "Date de Naissance", "contact": "Contact", "address": "Adresse",
+    "guardian": "Tuteur", "performance": "Performance", "report_card": "Bulletin"
+  }
+}
