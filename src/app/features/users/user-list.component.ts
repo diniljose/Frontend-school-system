@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
-import { User, PaginatedResult, UserRole } from '../../core/models';
+import { User, UserRole } from '../../core/models';
 
 @Component({
   selector: 'app-user-list',

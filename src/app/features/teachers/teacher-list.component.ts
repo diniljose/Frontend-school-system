@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Teacher, PaginatedResult } from '../../core/models';
+import { Teacher } from '../../core/models';
 
 @Component({
   selector: 'app-teacher-list',
@@ -39,6 +39,7 @@ import { Teacher, PaginatedResult } from '../../core/models';
                 <td>{{ t.phone || '—' }}</td>
                 <td><span class="badge badge-success">Active</span></td>
                 <td class="action-btns">
+                  <a [routerLink]="['/teachers', t._id, 'profile']" class="btn btn-ghost btn-sm" title="View Profile">👤</a>
                   <a [routerLink]="['/teachers', t._id, 'assignments']" class="btn btn-ghost btn-sm" title="Teaching Assignments">📚</a>
                   <a [routerLink]="['/teachers', t._id]" class="btn btn-ghost btn-sm">Edit</a>
                   <button class="btn btn-ghost btn-sm" style="color:var(--danger)" (click)="delete(t._id)">Delete</button>
@@ -73,8 +74,12 @@ export class TeacherListComponent implements OnInit {
     this.loading.set(true);
     const params: any = {};
     if (this.search) params.search = this.search;
-    this.api.get<PaginatedResult<Teacher>>('/teachers', params).subscribe({
-      next: (res) => { this.teachers.set(res.data?.items || []); this.loading.set(false); },
+    this.api.get<any>('/teachers', params).subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        this.teachers.set(Array.isArray(data) ? data : []);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }

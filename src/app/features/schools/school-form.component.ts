@@ -40,17 +40,41 @@ export class SchoolFormComponent implements OnInit {
   isEdit = signal(false);
   saving = signal(false);
   school: any = {};
+  private schoolId = '';
 
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
-    if (id) { this.isEdit.set(true); this.api.get(`/schools/${id}`).subscribe({ next: (s) => this.school = { ...(s.data || s) } }); }
+    if (id) {
+      this.isEdit.set(true);
+      this.schoolId = id;
+      this.api.get(`/schools/${id}`).subscribe({
+        next: (res: any) => {
+          const s = res.data || res;
+          this.school = {
+            name: s.name || '',
+            email: s.email || '',
+            phone: s.phone || '',
+            website: s.website || '',
+            address: s.address || '',
+          };
+        }
+      });
+    }
   }
   onSubmit(): void {
     this.saving.set(true);
-    const obs = this.isEdit() ? this.api.patch(`/schools/${this.school._id}`, this.school) : this.api.post('/schools', this.school);
+    const payload: any = {
+      name: this.school.name,
+      email: this.school.email,
+    };
+    if (this.school.phone) payload.phone = this.school.phone;
+    if (this.school.website) payload.website = this.school.website;
+    if (this.school.address) payload.address = this.school.address;
+
+    const obs = this.isEdit() ? this.api.patch(`/schools/${this.schoolId}`, payload) : this.api.post('/schools', payload);
     obs.subscribe({
       next: () => { this.toast.success(this.isEdit() ? 'Updated' : 'Created'); this.router.navigate(['/schools']); },
-      error: () => { this.saving.set(false); this.toast.error('Failed'); }
+      error: (err) => { this.saving.set(false); this.toast.error(err?.error?.message || 'Failed'); }
     });
   }
 }

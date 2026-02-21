@@ -85,15 +85,39 @@ export class AcademicYearListComponent implements OnInit {
   ngOnInit(): void { this.load(); }
   load(): void {
     this.api.get<any>('/academic-years').subscribe({
-      next: (res) => { this.years.set(res.data?.items || res.data || []); this.loading.set(false); },
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        this.years.set(Array.isArray(data) ? data : []);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }
-  edit(y: AcademicYear): void { this.form = { ...y }; this.editId.set(y._id); this.showForm.set(true); }
+  edit(y: AcademicYear): void {
+    this.form = {
+      name: y.name,
+      startDate: this.toDateInput(y.startDate),
+      endDate: this.toDateInput(y.endDate),
+      isCurrent: y.isCurrent || false,
+    };
+    this.editId.set(y._id);
+    this.showForm.set(true);
+  }
+  private toDateInput(d: any): string {
+    if (!d) return '';
+    const date = new Date(d);
+    return date.toISOString().split('T')[0];
+  }
   cancelForm(): void { this.form = {}; this.editId.set(null); this.showForm.set(false); }
   onSubmit(): void {
-    const obs = this.editId() ? this.api.patch(`/academic-years/${this.editId()}`, this.form) : this.api.post('/academic-years', this.form);
-    obs.subscribe({ next: () => { this.toast.success('Saved'); this.cancelForm(); this.load(); }, error: () => this.toast.error('Failed') });
+    const payload = {
+      name: this.form.name,
+      startDate: this.form.startDate,
+      endDate: this.form.endDate,
+      isCurrent: this.form.isCurrent || false,
+    };
+    const obs = this.editId() ? this.api.patch(`/academic-years/${this.editId()}`, payload) : this.api.post('/academic-years', payload);
+    obs.subscribe({ next: () => { this.toast.success('Saved'); this.cancelForm(); this.load(); }, error: (err) => this.toast.error(err?.error?.message || 'Failed') });
   }
   delete(id: string): void {
     if (!confirm('Delete?')) return;

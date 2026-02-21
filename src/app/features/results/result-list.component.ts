@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
-import { Result, PaginatedResult } from '../../core/models';
+import { Result } from '../../core/models';
 
 @Component({
   selector: 'app-result-list',
@@ -70,8 +70,12 @@ export class ResultListComponent implements OnInit {
     const params: any = {};
     if (this.search) params.search = this.search;
     if (this.filterExam) params.examType = this.filterExam;
-    this.api.get<PaginatedResult<Result>>('/results', params).subscribe({
-      next: (res) => { this.results.set(res.data?.items || []); this.loading.set(false); },
+    this.api.get<any>('/results', params).subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        this.results.set(Array.isArray(data) ? data : []);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }

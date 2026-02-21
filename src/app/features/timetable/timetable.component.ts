@@ -109,7 +109,12 @@ export class TimetableComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.api.get<any>('/classes').subscribe({ next: (res) => this.classes.set(res.data || res || []) });
+    this.api.get<any>('/classes').subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        this.classes.set(Array.isArray(data) ? data : []);
+      }
+    });
   }
 
   loadTimetable(): void {

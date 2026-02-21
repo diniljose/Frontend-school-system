@@ -19,6 +19,14 @@ interface ClassInfo {
   sections: string[];
 }
 
+interface AcademicYearInfo {
+  _id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isCurrent: boolean;
+}
+
 @Component({
   selector: 'app-student-register',
   standalone: true,
@@ -82,18 +90,28 @@ interface ClassInfo {
               </div>
             }
 
-            <!-- Step 2: Class Selection -->
+            <!-- Step 2: Class & Academic Year Selection -->
             @if (step() === 2) {
               <div class="step-content animate-in">
-                <h3>Step 2: Select Your Class</h3>
+                <h3>Step 2: Select Class & Academic Year</h3>
                 <p class="selected-school">School: <strong>{{ selectedSchool()?.name }}</strong></p>
                 
                 @if (loadingClasses()) {
                   <div class="loading-state">
                     <div class="spinner"></div>
-                    <p>Loading classes...</p>
+                    <p>Loading classes and academic years...</p>
                   </div>
                 } @else {
+                  <div class="form-group">
+                    <label class="form-label">Academic Year *</label>
+                    <select class="form-select" formControlName="academicYearId">
+                      <option value="">Select academic year</option>
+                      @for (ay of academicYears(); track ay._id) {
+                        <option [value]="ay._id">{{ ay.name }}{{ ay.isCurrent ? ' (Current)' : '' }}</option>
+                      }
+                    </select>
+                  </div>
+
                   <div class="form-group">
                     <label class="form-label">Class *</label>
                     <select class="form-select" formControlName="classId" (change)="onClassChange()">
@@ -120,10 +138,15 @@ interface ClassInfo {
                           }
                         </div>
                       </div>
+                    } @else if (selectedClass()!.sections.length === 1) {
+                      <div class="auto-section-note">
+                        <span class="info-icon">ℹ️</span>
+                        Section: <strong>{{ form.get('section')?.value }}</strong> (auto-assigned)
+                      </div>
                     } @else {
                       <div class="auto-section-note">
                         <span class="info-icon">ℹ️</span>
-                        Section: <strong>{{ form.get('section')?.value || 'A' }}</strong> (auto-assigned)
+                        This class has no sections — you'll be assigned automatically.
                       </div>
                     }
                   }
@@ -434,13 +457,15 @@ export class StudentRegisterComponent implements OnInit {
   
   schools = signal<School[]>([]);
   classes = signal<ClassInfo[]>([]);
+  academicYears = signal<AcademicYearInfo[]>([]);
   selectedSchool = signal<School | null>(null);
   selectedClass = signal<ClassInfo | null>(null);
   submittedData = signal<any>(null);
 
   form: FormGroup = this.fb.group({
     classId: ['', Validators.required],
-    section: ['', Validators.required],
+    academicYearId: ['', Validators.required],
+    section: [''],
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
@@ -481,27 +506,54 @@ export class StudentRegisterComponent implements OnInit {
   loadClasses(): void {
     if (!this.selectedSchool()) return;
     this.loadingClasses.set(true);
-    this.http.get<any>(`/api/v1/auth/public/schools/${this.selectedSchool()?.code}/classes`).subscribe({
+    const code = this.selectedSchool()?.code;
+    
+    // Load both classes and academic years in parallel
+    this.http.get<any>(`/api/v1/auth/public/schools/${code}/classes`).subscribe({
       next: (res) => {
         this.classes.set(res.data || []);
-        this.loadingClasses.set(false);
+        // Check if academic years are already loaded
+        if (this.academicYears().length > 0 || this._ayLoaded) {
+          this.loadingClasses.set(false);
+        }
       },
       error: () => {
         this.error.set('Failed to load classes. Please try again.');
         this.loadingClasses.set(false);
       }
     });
+
+    this.http.get<any>(`/api/v1/auth/public/schools/${code}/academic-years`).subscribe({
+      next: (res) => {
+        const years = res.data || [];
+        this.academicYears.set(years);
+        this._ayLoaded = true;
+        // Auto-select current academic year
+        const current = years.find((ay: AcademicYearInfo) => ay.isCurrent);
+        if (current) {
+          this.form.patchValue({ academicYearId: current._id });
+        }
+        if (this.classes().length > 0) {
+          this.loadingClasses.set(false);
+        }
+      },
+      error: () => {
+        this._ayLoaded = true;
+        this.loadingClasses.set(false);
+      }
+    });
   }
+  private _ayLoaded = false;
 
   onClassChange(): void {
     const classId = this.form.get('classId')?.value;
     const cls = this.classes().find(c => c._id === classId);
     this.selectedClass.set(cls || null);
     
-    // Auto-select section if only one exists, or set to 'A' if no sections defined
+    // Auto-select section if only one exists, or leave empty for no-section classes
     if (cls) {
       if (!cls.sections || cls.sections.length === 0) {
-        this.form.patchValue({ section: 'A' }); // Default section
+        this.form.patchValue({ section: '' }); // No sections - backend will handle
       } else if (cls.sections.length === 1) {
         this.form.patchValue({ section: cls.sections[0] }); // Auto-select single section
       } else {
@@ -518,10 +570,11 @@ export class StudentRegisterComponent implements OnInit {
 
   isStep2Valid(): boolean {
     const classId = this.form.get('classId')?.value;
+    const academicYearId = this.form.get('academicYearId')?.value;
     const section = this.form.get('section')?.value;
     const cls = this.selectedClass();
     
-    if (!classId) return false;
+    if (!classId || !academicYearId) return false;
     
     // If no sections defined or only one section, we already auto-selected
     if (!cls?.sections || cls.sections.length <= 1) {
@@ -560,15 +613,38 @@ export class StudentRegisterComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.invalid || !this.selectedSchool()) return;
+    // Check required fields manually since section is not a required validator
+    const f = this.form;
+    if (!f.get('classId')?.value || !f.get('academicYearId')?.value || !f.get('firstName')?.value || !f.get('lastName')?.value ||
+        !f.get('email')?.valid || !f.get('password')?.valid || !this.selectedSchool()) {
+      this.error.set('Please fill all required fields');
+      return;
+    }
     
     this.submitting.set(true);
     this.error.set('');
 
-    const payload = {
-      ...this.form.value,
+    const formVal = this.form.value;
+    const payload: any = {
+      firstName: formVal.firstName,
+      lastName: formVal.lastName,
+      email: formVal.email,
+      password: formVal.password,
+      classId: formVal.classId,
+      academicYearId: formVal.academicYearId,
       schoolCode: this.selectedSchool()?.code,
     };
+    // Only send section if it has a value
+    if (formVal.section) payload.section = formVal.section;
+    if (formVal.dateOfBirth) payload.dateOfBirth = formVal.dateOfBirth;
+    if (formVal.gender) payload.gender = formVal.gender;
+    if (formVal.phone) payload.phone = formVal.phone;
+    // Parent info - send as flat fields (matching RegisterStudentDto)
+    if (formVal.parentFirstName) payload.parentFirstName = formVal.parentFirstName;
+    if (formVal.parentLastName) payload.parentLastName = formVal.parentLastName;
+    if (formVal.parentEmail) payload.parentEmail = formVal.parentEmail;
+    if (formVal.parentPhone) payload.parentPhone = formVal.parentPhone;
+    if (formVal.parentRelation) payload.parentRelation = formVal.parentRelation;
 
     this.http.post<any>('/api/v1/auth/register-student', payload).subscribe({
       next: (res) => {

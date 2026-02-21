@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
-import { School, PaginatedResult } from '../../core/models';
+import { School } from '../../core/models';
 
 @Component({
   selector: 'app-school-list',
@@ -51,8 +51,12 @@ export class SchoolListComponent implements OnInit {
   schools = signal<School[]>([]);
 
   ngOnInit(): void {
-    this.api.get<PaginatedResult<School>>('/schools').subscribe({
-      next: (res) => { this.schools.set(res.data?.items || []); this.loading.set(false); },
+    this.api.get<any>('/schools').subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        this.schools.set(Array.isArray(data) ? data : []);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }

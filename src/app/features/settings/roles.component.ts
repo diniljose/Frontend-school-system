@@ -843,6 +843,8 @@ export class RolesComponent implements OnInit {
     settings: '⚙️',
     transfer: '🔄',
     promotion: '⬆️',
+    enrollment: '📋',
+    event: '🎉',
   };
 
   private roleColors: Record<string, string> = {

@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Fee, FeeStatus, PaginatedResult } from '../../core/models';
+import { Fee, FeeStatus } from '../../core/models';
 
 @Component({
   selector: 'app-fee-list',

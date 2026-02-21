@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, BehaviorSubject } from 'rxjs';
+import { Observable, tap, catchError, throwError, of, switchMap } from 'rxjs';
 import { ApiService } from './api.service';
 import { User, AuthResponse, LoginRequest, RegisterRequest, RegisterSchoolRequest, SchoolInfo, UserRole } from '../models';
 
@@ -15,14 +15,64 @@ export class AuthService {
   readonly user = this.currentUser.asReadonly();
   readonly school = this.schoolInfo.asReadonly();
   readonly isAuthenticated = computed(() => !!this.currentUser());
-  readonly userRole = computed(() => this.currentUser()?.role ?? null);
+  readonly userRole = computed(() => {
+    const user = this.currentUser();
+    return user?.role ?? null;
+  });
   readonly userName = computed(() => {
     const u = this.currentUser();
     return u ? `${u.firstName} ${u.lastName}` : '';
   });
+  
+  // Expose user permissions for dynamic menu
+  readonly userPermissions = computed(() => {
+    const user = this.currentUser();
+    return user?.permissions || [];
+  });
 
   constructor() {
     this.loadFromStorage();
+  }
+
+  /**
+   * Check if user has a specific permission
+   * Supports wildcards: '*' means all permissions
+   */
+  hasPermission(permission: string): boolean {
+    const permissions = this.userPermissions();
+    const role = this.userRole();
+    
+    // Platform admin has all permissions
+    if (role === UserRole.PLATFORM_ADMIN || permissions.includes('*')) {
+      return true;
+    }
+    
+    // Check exact match
+    if (permissions.includes(permission)) {
+      return true;
+    }
+    
+    // Check if user has any permission for this module (e.g., 'student:view' for 'student:*')
+    const [module] = permission.split(':');
+    return permissions.some(p => p.startsWith(`${module}:`));
+  }
+
+  /**
+   * Check if user can view a menu item based on its permission config
+   */
+  canViewMenuItem(permission: string): boolean {
+    // '*' = visible to all authenticated users
+    if (permission === '*') {
+      return this.isAuthenticated();
+    }
+    
+    // 'admin' = platform admin only
+    if (permission === 'admin') {
+      return this.userRole() === UserRole.PLATFORM_ADMIN;
+    }
+    
+    // Check specific permission
+    return this.hasPermission(permission);
   }
 
   private loadFromStorage(): void {
@@ -31,7 +81,9 @@ export class AuthService {
       const userStr = localStorage.getItem('user');
       const schoolStr = localStorage.getItem('school');
       if (token && userStr) {
-        this.currentUser.set(JSON.parse(userStr));
+        const user = JSON.parse(userStr);
+        console.log('AUTH: Loaded user from storage, role=' + user?.role + ', permissions=' + (user?.permissions?.length || 0));
+        this.currentUser.set(user);
       }
       if (schoolStr) {
         this.schoolInfo.set(JSON.parse(schoolStr));
@@ -39,10 +91,14 @@ export class AuthService {
     } catch { /* ignore parse errors */ }
   }
 
+  /**
+   * Login and fetch fresh user profile with latest permissions from database
+   */
   login(credentials: LoginRequest): Observable<any> {
     return this.api.post<AuthResponse>('auth/login', credentials).pipe(
       tap(res => {
         const data = res.data;
+        console.log('AUTH: Login success, role=' + data.user?.role + ', permissions=' + (data.user?.permissions?.length || 0));
         localStorage.setItem('accessToken', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
         localStorage.setItem('user', JSON.stringify(data.user));
@@ -91,9 +147,12 @@ export class AuthService {
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<any> {
-    return this.api.post('auth/change-password', { currentPassword, newPassword });
+    return this.api.post('auth/change-password', { oldPassword: currentPassword, newPassword });
   }
 
+  /**
+   * Refresh token and update user data with latest permissions
+   */
   refreshToken(): Observable<any> {
     const refreshToken = localStorage.getItem('refreshToken');
     return this.api.post<AuthResponse>('auth/refresh', { refreshToken }).pipe(
@@ -101,6 +160,12 @@ export class AuthService {
         localStorage.setItem('accessToken', res.data.accessToken);
         if (res.data.refreshToken) {
           localStorage.setItem('refreshToken', res.data.refreshToken);
+        }
+        // Update user data with fresh permissions from token refresh
+        if (res.data.user) {
+          localStorage.setItem('user', JSON.stringify(res.data.user));
+          this.currentUser.set(res.data.user);
+          console.log('AUTH: Token refreshed, permissions updated=' + (res.data.user.permissions?.length || 0));
         }
       }),
       catchError(err => {
@@ -110,13 +175,29 @@ export class AuthService {
     );
   }
 
+  /**
+   * Fetch fresh user profile with latest permissions from database
+   * Call this after role/permission changes to sync frontend state
+   */
   getProfile(): Observable<any> {
     return this.api.get<User>('auth/profile').pipe(
       tap(res => {
+        console.log('AUTH: Profile fetched, permissions=' + (res.data?.permissions?.length || 0));
         this.currentUser.set(res.data);
         localStorage.setItem('user', JSON.stringify(res.data));
       })
     );
+  }
+
+  /**
+   * Refresh user profile to get latest permissions
+   * Useful when role has been updated
+   */
+  refreshProfile(): void {
+    this.getProfile().subscribe({
+      next: () => console.log('AUTH: Profile refreshed successfully'),
+      error: (err) => console.error('AUTH: Failed to refresh profile', err)
+    });
   }
 
   logout(): void {

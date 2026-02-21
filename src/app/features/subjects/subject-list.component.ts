@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Subject, PaginatedResult } from '../../core/models';
+import { Subject } from '../../core/models';
 
 @Component({
   selector: 'app-subject-list',
@@ -74,16 +74,25 @@ export class SubjectListComponent implements OnInit {
   ngOnInit(): void { this.load(); }
   load(): void {
     this.loading.set(true);
-    this.api.get<PaginatedResult<Subject>>('/subjects').subscribe({
-      next: (res) => { this.subjects.set(res.data?.items || []); this.loading.set(false); },
+    this.api.get<any>('/subjects').subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        this.subjects.set(Array.isArray(data) ? data : []);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }
-  edit(s: Subject): void { this.form = { ...s }; this.editId.set(s._id); this.showForm.set(true); }
+  edit(s: Subject): void {
+    this.form = { name: s.name, code: s.code, type: s.type || '' };
+    this.editId.set(s._id);
+    this.showForm.set(true);
+  }
   cancelForm(): void { this.form = {}; this.editId.set(null); this.showForm.set(false); }
   onSubmit(): void {
-    const obs = this.editId() ? this.api.patch(`/subjects/${this.editId()}`, this.form) : this.api.post('/subjects', this.form);
-    obs.subscribe({ next: () => { this.toast.success('Saved'); this.cancelForm(); this.load(); }, error: () => this.toast.error('Failed') });
+    const payload = { name: this.form.name, code: this.form.code, type: this.form.type || undefined };
+    const obs = this.editId() ? this.api.patch(`/subjects/${this.editId()}`, payload) : this.api.post('/subjects', payload);
+    obs.subscribe({ next: () => { this.toast.success('Saved'); this.cancelForm(); this.load(); }, error: (err) => this.toast.error(err?.error?.message || 'Failed') });
   }
   delete(id: string): void {
     if (!confirm('Delete this subject?')) return;

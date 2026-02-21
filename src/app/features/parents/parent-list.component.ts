@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Parent, PaginatedResult } from '../../core/models';
+import { Parent } from '../../core/models';
 
 @Component({
   selector: 'app-parent-list',
@@ -61,8 +61,12 @@ export class ParentListComponent implements OnInit {
     this.loading.set(true);
     const params: any = {};
     if (this.search) params.search = this.search;
-    this.api.get<PaginatedResult<Parent>>('/parents', params).subscribe({
-      next: (res) => { this.parents.set(res.data?.items || []); this.loading.set(false); },
+    this.api.get<any>('/parents', params).subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        this.parents.set(Array.isArray(data) ? data : []);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }

@@ -445,56 +445,26 @@ export class DashboardComponent implements OnInit {
   // Role-based computed
   userRole = computed(() => this.auth.userRole() || 'principal');
   
-  // Student-specific data
-  studentData = signal<any>({ attendanceRate: 92, currentGrade: 'A', upcomingExams: 3, feeStatus: 'Paid' });
-  todaySchedule = signal([
-    { time: '08:00 - 08:45', subject: 'Mathematics', teacher: 'Mr. Johnson', current: false },
-    { time: '08:45 - 09:30', subject: 'Physics', teacher: 'Mrs. Smith', current: true },
-    { time: '09:45 - 10:30', subject: 'English', teacher: 'Ms. Wilson', current: false },
-    { time: '10:30 - 11:15', subject: 'Chemistry', teacher: 'Dr. Brown', current: false },
-    { time: '11:30 - 12:15', subject: 'History', teacher: 'Mr. Davis', current: false },
-  ]);
-  assignments = signal([
-    { id: 1, subject: 'Mathematics', title: 'Chapter 5 Problems', dueDate: 'Tomorrow', urgent: true },
-    { id: 2, subject: 'Physics', title: 'Lab Report', dueDate: 'Feb 15', urgent: false },
-    { id: 3, subject: 'English', title: 'Essay on Climate', dueDate: 'Feb 18', urgent: false },
-  ]);
+  // Student-specific data - loaded from API
+  studentData = signal<any>(null);
+  todaySchedule = signal<any[]>([]);
+  assignments = signal<any[]>([]);
   
-  // Parent-specific data
-  parentData = signal<any>({ totalDue: 5000, totalPaid: 4200, pending: 800 });
-  children = signal([
-    { id: '1', name: 'Emily Johnson', class: 'Grade 10', section: 'A', attendance: 94, grade: 'A', rank: 3 },
-    { id: '2', name: 'Michael Johnson', class: 'Grade 7', section: 'B', attendance: 88, grade: 'B+', rank: 8 },
-  ]);
+  // Parent-specific data - loaded from API
+  parentData = signal<any>(null);
+  children = signal<any[]>([]);
   
-  // Teacher-specific data
-  teacherData = signal<any>({ classCount: 4, totalStudents: 120, todayAttendance: 94, presentToday: 113, subjectCount: 3, pendingApprovals: 2, pendingEvaluations: 12 });
-  teacherSchedule = signal([
-    { time: '08:00 - 08:45', subject: 'Mathematics', class: 'Grade 10A', current: false },
-    { time: '09:45 - 10:30', subject: 'Mathematics', class: 'Grade 9B', current: true },
-    { time: '11:30 - 12:15', subject: 'Physics', class: 'Grade 11A', current: false },
-    { time: '14:00 - 14:45', subject: 'Mathematics', class: 'Grade 8C', current: false },
-  ]);
+  // Teacher-specific data - loaded from API
+  teacherData = signal<any>(null);
+  teacherSchedule = signal<any[]>([]);
 
-  recentActivities = signal([
-    { id: 1, icon: '🎓', message: 'New student John Doe enrolled in Class 10A', time: '2 min ago' },
-    { id: 2, icon: '💰', message: 'Fee payment received from Sarah Smith - $500', time: '15 min ago' },
-    { id: 3, icon: '📝', message: 'Midterm exam results published for Class 9B', time: '1 hour ago' },
-    { id: 4, icon: '📋', message: 'Attendance marked for all classes today', time: '2 hours ago' },
-    { id: 5, icon: '🔔', message: 'Parent meeting scheduled for next Monday', time: '3 hours ago' },
-  ]);
-
-  upcomingEvents = signal([
-    { id: 1, day: '15', month: 'Feb', title: 'Annual Day Celebration', type: 'Event', badgeType: 'primary' },
-    { id: 2, day: '18', month: 'Feb', title: 'Mid-Term Examinations', type: 'Exam', badgeType: 'warning' },
-    { id: 3, day: '20', month: 'Feb', title: 'Parent-Teacher Meeting', type: 'Meeting', badgeType: 'info' },
-    { id: 4, day: '25', month: 'Feb', title: 'Sports Day', type: 'Event', badgeType: 'success' },
-  ]);
+  recentActivities = signal<any[]>([]);
+  upcomingEvents = signal<any[]>([]);
 
   attendanceChartData: ChartConfiguration<'line'>['data'] = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     datasets: [
-      { data: [92, 94, 88, 96, 93, 90], label: 'Present %', borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4 },
+      { data: [], label: 'Present %', borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4 },
     ]
   };
 
@@ -507,8 +477,8 @@ export class DashboardComponent implements OnInit {
   feeChartData: ChartConfiguration<'bar'>['data'] = {
     labels: ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     datasets: [
-      { data: [45000, 52000, 48000, 61000, 55000, 67000], label: 'Collected', backgroundColor: '#6366f1' },
-      { data: [5000, 8000, 12000, 4000, 10000, 3000], label: 'Pending', backgroundColor: 'rgba(99,102,241,0.2)' },
+      { data: [], label: 'Collected', backgroundColor: '#6366f1' },
+      { data: [], label: 'Pending', backgroundColor: 'rgba(99,102,241,0.2)' },
     ]
   };
 
@@ -521,6 +491,8 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadStats();
     this.loadRoleSpecificData();
+    this.loadEvents();
+    this.loadActivities();
   }
 
   getGreeting(): string {
@@ -542,20 +514,139 @@ export class DashboardComponent implements OnInit {
 
   loadStats(): void {
     this.api.get<DashboardStats>('/dashboard/stats').subscribe({
-      next: (res) => { this.stats.set(res.data); this.loading.set(false); },
+      next: (res) => {
+        this.stats.set(res.data);
+        this.loading.set(false);
+        // Update chart data from stats
+        if (res.data) {
+          this.updateChartData(res.data);
+        }
+      },
       error: () => {
-        this.stats.set({ totalStudents: 1247, totalTeachers: 83, totalClasses: 42, totalParents: 920, attendanceRate: 92, feeCollectionRate: 87, totalFeeCollected: 285000, totalFeePending: 38500, activeTransport: 15, upcomingExams: 3 });
+        // Show empty state instead of hardcoded data
+        this.stats.set(null);
         this.loading.set(false);
       }
     });
   }
 
   loadRoleSpecificData(): void {
-    // In a real app, load role-specific data from API
-    // For now using mock data set in signals above
+    const role = this.userRole();
+    
+    if (role === 'student') {
+      this.loadStudentData();
+    } else if (role === 'parent') {
+      this.loadParentData();
+    } else if (role === 'teacher' || role === 'class_teacher') {
+      this.loadTeacherData();
+    }
+  }
+
+  private loadStudentData(): void {
+    // Load student schedule
+    this.api.get('/timetable/my-schedule').subscribe({
+      next: (res: any) => this.todaySchedule.set(res.data || []),
+      error: () => this.todaySchedule.set([])
+    });
+    
+    // Load student dashboard data
+    this.api.get('/dashboard/student').subscribe({
+      next: (res: any) => {
+        this.studentData.set(res.data);
+        this.assignments.set(res.data?.assignments || []);
+      },
+      error: () => this.studentData.set(null)
+    });
+  }
+
+  private loadParentData(): void {
+    // Load children data
+    this.api.get('/dashboard/parent').subscribe({
+      next: (res: any) => {
+        this.parentData.set(res.data);
+        this.children.set(res.data?.children || []);
+      },
+      error: () => {
+        this.parentData.set(null);
+        this.children.set([]);
+      }
+    });
+  }
+
+  private loadTeacherData(): void {
+    // Load teacher schedule and data
+    this.api.get('/dashboard/teacher').subscribe({
+      next: (res: any) => {
+        this.teacherData.set(res.data);
+        this.teacherSchedule.set(res.data?.schedule || []);
+      },
+      error: () => {
+        this.teacherData.set(null);
+        this.teacherSchedule.set([]);
+      }
+    });
+  }
+
+  private loadEvents(): void {
+    this.api.get('/events?limit=5&upcoming=true').subscribe({
+      next: (res: any) => {
+        const events = (res.data?.items || res.data || []).map((e: any) => {
+          const date = new Date(e.startDate || e.date);
+          return {
+            id: e._id,
+            day: date.getDate().toString(),
+            month: date.toLocaleString('default', { month: 'short' }),
+            title: e.title,
+            type: e.type || 'Event',
+            badgeType: e.type === 'Exam' ? 'warning' : e.type === 'Meeting' ? 'info' : 'primary'
+          };
+        });
+        this.upcomingEvents.set(events);
+      },
+      error: () => this.upcomingEvents.set([])
+    });
+  }
+
+  private loadActivities(): void {
+    this.api.get('/dashboard/recent-activities').subscribe({
+      next: (res: any) => this.recentActivities.set(res.data || []),
+      error: () => this.recentActivities.set([])
+    });
+  }
+
+  private updateChartData(stats: DashboardStats): void {
+    // Update attendance chart with real data if available
+    if (stats.attendanceRate) {
+      this.attendanceChartData = {
+        ...this.attendanceChartData,
+        datasets: [{ ...this.attendanceChartData.datasets[0], data: [stats.attendanceRate, stats.attendanceRate, stats.attendanceRate, stats.attendanceRate, stats.attendanceRate, stats.attendanceRate] }]
+      };
+    }
+    
+    // Update fee chart with real data if available
+    if (stats.totalFeeCollected || stats.totalFeePending) {
+      this.feeChartData = {
+        ...this.feeChartData,
+        datasets: [
+          { ...this.feeChartData.datasets[0], data: [stats.totalFeeCollected || 0] },
+          { ...this.feeChartData.datasets[1], data: [stats.totalFeePending || 0] }
+        ]
+      };
+    }
   }
 
   loadAttendanceChart(): void {
-    // Reload chart data based on period
+    // Load attendance chart data based on period
+    this.api.get(`/attendance/chart?period=${this.attendancePeriod}`).subscribe({
+      next: (res: any) => {
+        if (res.data?.labels && res.data?.data) {
+          this.attendanceChartData = {
+            labels: res.data.labels,
+            datasets: [{ ...this.attendanceChartData.datasets[0], data: res.data.data }]
+          };
+        }
+      },
+      error: () => {} // Keep existing data on error
+    });
   }
 }

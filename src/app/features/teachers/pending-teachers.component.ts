@@ -316,7 +316,9 @@ export class PendingTeachersComponent implements OnInit {
     this.loading.set(true);
     this.http.get<any>('/api/v1/auth/teachers/pending').subscribe({
       next: (res) => {
-        this.teachers.set(res.data || []);
+        // Handle both normalized (items array) and raw response formats
+        const data = res.data?.items || res.data || [];
+        this.teachers.set(Array.isArray(data) ? data : []);
         this.loading.set(false);
       },
       error: (err) => {

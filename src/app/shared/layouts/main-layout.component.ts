@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
@@ -271,18 +271,18 @@ export class MainLayoutComponent {
   themeOpen = signal(false);
   currentLang = signal(localStorage.getItem('lang') || 'en');
 
-  filteredMenu = signal<MenuItem[]>([]);
-
-  constructor() {
-    this.updateMenu();
-  }
-
-  private updateMenu(): void {
+  // Dynamically filter menu based on user permissions
+  filteredMenu = computed(() => {
+    const permissions = this.auth.userPermissions();
     const role = this.auth.userRole();
-    this.filteredMenu.set(
-      MENU_ITEMS.filter(item => !role || item.roles.includes(role))
-    );
-  }
+    
+    console.log('MENU: Filtering by permissions, role=' + role + ', permissions=' + permissions.length);
+    
+    const filtered = MENU_ITEMS.filter(item => this.auth.canViewMenuItem(item.permission));
+    
+    console.log('MENU: Showing ' + filtered.length + ' items: ' + filtered.map(f => f.label).join(', '));
+    return filtered;
+  });
 
   toggleSidebar(): void {
     this.sidebarCollapsed.update(v => !v);

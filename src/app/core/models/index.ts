@@ -42,6 +42,7 @@ export interface User {
   lastName: string;
   email: string;
   role: UserRole;
+  permissions?: string[]; // Dynamic permissions from role
   school?: string | School;
   isActive: boolean;
   avatar?: string;
@@ -102,6 +103,7 @@ export interface SchoolSettings {
 export interface Student {
   _id: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   email?: string;
   dateOfBirth?: string;
@@ -116,6 +118,7 @@ export interface Student {
   contact?: { phone?: string; address?: string; };
   photo?: string;
   school?: string;
+  parents?: any[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -195,14 +198,46 @@ export interface AcademicYear {
   school?: string;
 }
 
-// ── Attendance ──
-export interface Attendance {
+// ── Enrollment ──
+export interface Enrollment {
   _id: string;
   student: string | Student;
   class: string | ClassModel;
-  section?: string;
-  date: string;
-  status: AttendanceStatus;
+  section: string;
+  academicYear: string | AcademicYear;
+  rollNumber?: string;
+  status: EnrollmentStatus;
+  result?: string; // pass, fail, promoted, retained, pending
+  percentage?: number;
+  rank?: number;
+  enrollmentDate?: string;
+  withdrawalDate?: string;
+  withdrawalReason?: string;
+  remarks?: string;
+  enrolledBy?: string | User;
+  previousEnrollment?: {
+    academicYear: string;
+    class: string;
+    section: string;
+    rollNumber: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export enum EnrollmentStatus {
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  WITHDRAWN = 'withdrawn',
+  TRANSFERRED = 'transferred',
+  PROMOTED = 'promoted',
+  PASSED = 'passed',
+  FAILED = 'failed',
+  RETAINED = 'retained',
+}
+
+// ── Attendance ──
+export interface Attendance {
   period?: number;
   remark?: string;
   markedBy?: string | User;

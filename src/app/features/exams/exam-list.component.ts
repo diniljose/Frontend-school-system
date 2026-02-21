@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
-import { Exam, PaginatedResult } from '../../core/models';
+import { Exam } from '../../core/models';
 
 @Component({
   selector: 'app-exam-list',
@@ -59,8 +59,12 @@ export class ExamListComponent implements OnInit {
 
   ngOnInit(): void { this.load(); }
   load(): void {
-    this.api.get<PaginatedResult<Exam>>('/exams').subscribe({
-      next: (res) => { this.exams.set(res.data?.items || []); this.loading.set(false); },
+    this.api.get<any>('/exams').subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        this.exams.set(Array.isArray(data) ? data : []);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }

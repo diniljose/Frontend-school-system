@@ -25,11 +25,10 @@ export class CommandPaletteService {
 
   getCommands(): CommandItem[] {
     const commands: CommandItem[] = [];
-    const role = this.auth.userRole();
 
-    // Navigation commands from menu
+    // Navigation commands from menu - filtered by permissions
     MENU_ITEMS.forEach(item => {
-      if (!role || !item.roles.includes(role)) return;
+      if (!this.auth.canViewMenuItem(item.permission)) return;
       commands.push({
         id: `nav-${item.route}`,
         label: `Go to ${item.label}`,

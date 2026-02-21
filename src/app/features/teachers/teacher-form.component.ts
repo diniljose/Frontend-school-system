@@ -84,23 +84,45 @@ export class TeacherFormComponent implements OnInit {
   roles = signal<Role[]>([]);
   teacher: any = { roleCode: '' };
 
+  private teacherId = '';
+
   ngOnInit(): void {
     this.loadRoles();
     const id = this.route.snapshot.params['id'];
-    if (id) { this.isEdit.set(true); this.api.get(`/teachers/${id}`).subscribe({ next: (t) => this.teacher = { ...(t.data || t) } }); }
+    if (id) {
+      this.isEdit.set(true);
+      this.teacherId = id;
+      this.api.get(`/teachers/${id}`).subscribe({
+        next: (res: any) => {
+          const t = res.data || res;
+          this.teacher = {
+            firstName: t.firstName || '',
+            lastName: t.lastName || '',
+            email: t.email || '',
+            employeeId: t.employeeId || '',
+            phone: t.phone || '',
+            gender: t.gender || '',
+            dateOfBirth: t.dateOfBirth ? t.dateOfBirth.substring(0, 10) : '',
+            joiningDate: t.joiningDate ? t.joiningDate.substring(0, 10) : '',
+            designation: t.designation || '',
+            roleCode: t.roleCode || t.role?.code || '',
+            qualification: t.qualification || '',
+            address: t.address || '',
+          };
+        }
+      });
+    }
   }
 
   loadRoles(): void {
     this.api.get<any>('/roles').subscribe({
       next: (res) => {
-        // Filter to only show teacher-applicable roles
-        const allRoles = res?.data || res || [];
-        const teacherRoles = Array.isArray(allRoles) 
-          ? allRoles.filter((r: Role) => 
-              ['class_teacher', 'subject_teacher', 'accountant', 'librarian'].includes(r.code) || 
-              !r.code.startsWith('school_admin') && r.code !== 'principal' && r.code !== 'parent' && r.code !== 'student'
-            )
-          : [];
+        const raw = res.data?.data || res.data?.items || res.data || [];
+        const allRoles = Array.isArray(raw) ? raw : [];
+        const teacherRoles = allRoles.filter((r: Role) => 
+          ['class_teacher', 'subject_teacher', 'accountant', 'librarian'].includes(r.code) || 
+          (!r.code.startsWith('school_admin') && r.code !== 'principal' && r.code !== 'parent' && r.code !== 'student')
+        );
         this.roles.set(teacherRoles);
       },
       error: (err) => console.error('Failed to load roles:', err)
@@ -109,10 +131,25 @@ export class TeacherFormComponent implements OnInit {
 
   onSubmit(): void {
     this.saving.set(true);
-    const obs = this.isEdit() ? this.api.patch(`/teachers/${this.teacher._id}`, this.teacher) : this.api.post('/teachers', this.teacher);
+    const payload: any = {
+      firstName: this.teacher.firstName,
+      lastName: this.teacher.lastName,
+      email: this.teacher.email,
+      roleCode: this.teacher.roleCode,
+    };
+    if (this.teacher.employeeId) payload.employeeId = this.teacher.employeeId;
+    if (this.teacher.phone) payload.phone = this.teacher.phone;
+    if (this.teacher.gender) payload.gender = this.teacher.gender;
+    if (this.teacher.dateOfBirth) payload.dateOfBirth = this.teacher.dateOfBirth;
+    if (this.teacher.joiningDate) payload.joiningDate = this.teacher.joiningDate;
+    if (this.teacher.designation) payload.designation = this.teacher.designation;
+    if (this.teacher.qualification) payload.qualification = this.teacher.qualification;
+    if (this.teacher.address) payload.address = this.teacher.address;
+
+    const obs = this.isEdit() ? this.api.patch(`/teachers/${this.teacherId}`, payload) : this.api.post('/teachers', payload);
     obs.subscribe({
       next: () => { this.toast.success(this.isEdit() ? 'Updated' : 'Created'); this.router.navigate(['/teachers']); },
-      error: (err) => { this.saving.set(false); this.toast.error(err?.error?.message?.join?.(', ') || 'Failed to save'); }
+      error: (err) => { this.saving.set(false); this.toast.error(err?.error?.message?.join?.(', ') || err?.error?.message || 'Failed to save'); }
     });
   }
 }

@@ -57,8 +57,7 @@ import { User, UserRole } from '../../core/models';
           <select class="form-select" [(ngModel)]="user.role" name="role" required>
             <option value="">Select Role</option>
             <option [value]="UserRole.PLATFORM_ADMIN">Super Admin</option>
-            <option [value]="UserRole.PRINCIPAL">School Admin</option>
-            <option [value]="UserRole.PRINCIPAL">Principal</option>
+            <option [value]="UserRole.PRINCIPAL">Principal / School Admin</option>
             <option [value]="UserRole.VICE_PRINCIPAL">Vice Principal</option>
             <option [value]="UserRole.TEACHER">Teacher</option>
             <option [value]="UserRole.CLASS_TEACHER">Class Teacher</option>
@@ -104,15 +103,24 @@ export class UserFormComponent implements OnInit {
   isEdit = signal(false);
   saving = signal(false);
   user: any = { isActive: true };
+  private userId = '';
 
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
     if (id) {
       this.isEdit.set(true);
+      this.userId = id;
       this.api.get<User>(`/users/${id}`).subscribe({
         next: (res: any) => {
           const data = res.data || res;
-          this.user = { ...data };
+          this.user = {
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            role: data.role || '',
+            isActive: data.isActive !== false,
+          };
         },
         error: () => this.toast.error('Failed to load user'),
       });
@@ -121,21 +129,27 @@ export class UserFormComponent implements OnInit {
 
   onSubmit(): void {
     this.saving.set(true);
-    const payload = { ...this.user };
-    // Remove email from update payload (immutable)
-    if (this.isEdit()) {
-      delete payload.password;
-      delete payload.email;
+    const payload: any = {
+      firstName: this.user.firstName,
+      lastName: this.user.lastName,
+      role: this.user.role,
+      isActive: this.user.isActive,
+    };
+    if (!this.isEdit()) {
+      payload.email = this.user.email;
+      if (this.user.password) payload.password = this.user.password;
     }
+    if (this.user.phone) payload.phone = this.user.phone;
+
     const obs = this.isEdit()
-      ? this.api.patch(`/users/${this.user._id}`, payload)
+      ? this.api.patch(`/users/${this.userId}`, payload)
       : this.api.post('/users', payload);
     obs.subscribe({
       next: () => {
         this.toast.success(this.isEdit() ? 'User updated' : 'User created');
         this.router.navigate(['/users']);
       },
-      error: (err) => { this.saving.set(false); this.toast.error(err?.error?.message?.join?.(', ') || 'Failed to save user'); }
+      error: (err) => { this.saving.set(false); this.toast.error(err?.error?.message?.join?.(', ') || err?.error?.message || 'Failed to save user'); }
     });
   }
 }
