@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { ClassModel } from '../../core/models';
+import { ClassTeacherAssignmentComponent } from './class-teacher-assignment.component';
 
 @Component({
   selector: 'app-class-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, ClassTeacherAssignmentComponent],
   template: `
     <div class="page-header">
       <div><h1>{{ 'nav.classes' | translate }}</h1><p>Manage classes, sections, and view student distribution</p></div>
@@ -63,10 +64,16 @@ import { ClassModel } from '../../core/models';
                           <span class="sec-name">Section {{ s.name }}</span>
                           <span class="sec-cap">{{ s.capacity || '∞' }} cap</span>
                         </div>
-                        <div class="sec-teacher">👨‍🏫 {{ getTeacherDisplay(s.classTeacher) }}</div>
+                        <div class="sec-teacher">
+                          👨‍🏫 {{ getTeacherDisplay(s.classTeacher) }}
+                          @if (currentAcademicYearTeacher(c._id); as teacher) {
+                            <span class="current-year-badge">{{ teacher?.firstName }} {{ teacher?.lastName }}</span>
+                          }
+                        </div>
                         <div class="sec-actions">
                           <a [routerLink]="['/students']" [queryParams]="{classId: c._id, section: s.name}" class="sec-link">View Students</a>
                           <a [routerLink]="['/enrollments']" [queryParams]="{classId: c._id, section: s.name}" class="sec-link">Enrollments</a>
+                          <button class="sec-link sec-assign-btn" (click)="openAssignModal(c, s)">Assign Class Teacher</button>
                         </div>
                       </div>
                     }
@@ -90,6 +97,13 @@ import { ClassModel } from '../../core/models';
         }
       }
     </div>
+
+    <!-- Class Teacher Assignment Modal -->
+    <app-class-teacher-assignment 
+      [isOpen]="assignModalOpen()"
+      (onOpenChange)="assignModalOpen.set($event)"
+      (onAssigned)="onAssignmentSuccess()">
+    </app-class-teacher-assignment>
   `,
   styles: [`
     .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-6); }
@@ -122,9 +136,12 @@ import { ClassModel } from '../../core/models';
     .sec-name { font-weight: 600; font-size: var(--text-sm); }
     .sec-cap { font-size: var(--text-xs); color: var(--text-tertiary); background: var(--bg-secondary); padding: 1px 6px; border-radius: 4px; }
     .sec-teacher { font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: 8px; }
+    .current-year-badge { display: inline-block; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px; }
     .sec-actions { display: flex; gap: var(--space-2); }
-    .sec-link { font-size: 11px; color: var(--primary); text-decoration: none; font-weight: 500; }
+    .sec-link { font-size: 11px; color: var(--primary); text-decoration: none; font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; }
     .sec-link:hover { text-decoration: underline; }
+    .sec-assign-btn { color: #059669; font-weight: 600; }
+    .sec-assign-btn:hover { color: #047857; }
     .no-sections { text-align: center; padding: var(--space-4); color: var(--text-tertiary); font-size: var(--text-sm); }
     .no-sections p { margin-bottom: var(--space-3); }
     .empty-state { text-align: center; padding: var(--space-8); color: var(--text-tertiary); }
@@ -142,8 +159,50 @@ export class ClassListComponent implements OnInit {
   loading = signal(true);
   classes = signal<ClassModel[]>([]);
   expandedClass = '';
+  currentAcademicYear = signal<any>(null);
+  classTeachersByClassId = signal<Map<string, any>>(new Map());
+  assignModalOpen = signal(false);
+  currentAcademicYear = signal<any>(null);
+  classTeachersByClassId = signal<Map<string, any>>(new Map());
 
   ngOnInit(): void {
+    this.loadCurrentAcademicYear();
+    this.loadClasses();
+  }
+
+  private loadCurrentAcademicYear(): void {
+    this.api.get<any>('/academic-years', { isCurrent: true }).subscribe({
+      next: (res: any) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        const currentYear = Array.isArray(data) ? data[0] : null;
+        if (currentYear) {
+          this.currentAcademicYear.set(currentYear);
+          this.loadClassTeacherAssignments(currentYear._id);
+        }
+      },
+    });
+  }
+
+  private loadClassTeacherAssignments(academicYearId: string): void {
+    this.api.get<any>('/class-teacher-assignments', { academicYear: academicYearId }).subscribe({
+      next: (res: any) => {
+        const assignments = res.data?.data || res.data?.items || res.data || [];
+        const map = new Map<string, any>();
+        
+        if (Array.isArray(assignments)) {
+          assignments.forEach((assignment: any) => {
+            if (assignment.class?._id && assignment.teacher) {
+              map.set(assignment.class._id, assignment.teacher);
+            }
+          });
+        }
+        
+        this.classTeachersByClassId.set(map);
+      },
+    });
+  }
+
+  private loadClasses(): void {
     this.api.get<any>('/classes', { limit: 100 }).subscribe({
       next: (res: any) => {
         const data = res.data?.data || res.data?.items || res.data || [];
@@ -152,6 +211,10 @@ export class ClassListComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  currentAcademicYearTeacher(classId: string): any {
+    return this.classTeachersByClassId().get(classId) || null;
   }
 
   toggleExpand(id: string): void {
@@ -187,5 +250,18 @@ export class ClassListComponent implements OnInit {
     if (!t) return 'Unassigned';
     if (typeof t === 'string') return 'Assigned';
     return `${t.firstName || ''} ${t.lastName || ''}`.trim() || 'Unassigned';
+  }
+
+  openAssignModal(classData: any, section: any): void {
+    // In a real scenario, you might pre-populate the modal with class/section
+    // For now, just open it
+    this.assignModalOpen.set(true);
+  }
+
+  onAssignmentSuccess(): void {
+    // Reload class teacher assignments after successful assignment
+    if (this.currentAcademicYear()) {
+      this.loadClassTeacherAssignments(this.currentAcademicYear()._id);
+    }
   }
 }

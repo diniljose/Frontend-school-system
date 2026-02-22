@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ClassTeacherAssignmentComponent } from '../classes/class-teacher-assignment.component';
 
 interface Role {
   _id: string;
@@ -15,7 +16,7 @@ interface Role {
 @Component({
   selector: 'app-teacher-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ClassTeacherAssignmentComponent],
   template: `
     <div class="page-header">
       <div><h1>{{ isEdit() ? 'Edit Teacher' : 'Add New Teacher' }}</h1></div>
@@ -59,6 +60,19 @@ interface Role {
           <input type="text" class="form-input" [(ngModel)]="teacher.qualification" name="qual" placeholder="e.g. M.Ed, B.Sc" />
         </div>
       </div>
+
+      @if (teacher.roleCode === 'class_teacher') {
+        <div class="section-info">
+          <p><strong>⚠️ Class Teacher Role:</strong> This teacher will be assigned to manage a specific class section. You can assign the class after creating the teacher.</p>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="openClassTeacherModal()">
+            + Assign to Class Section
+          </button>
+        </div>
+      }
+
+      <div class="grid grid-2">
+        <div class="form-group"></div>
+      </div>
       <div class="form-group">
         <label>Address</label>
         <input type="text" class="form-input" [(ngModel)]="teacher.address" name="addr" />
@@ -68,10 +82,19 @@ interface Role {
         <button type="submit" class="btn btn-primary" [disabled]="saving()">{{ isEdit() ? 'Update' : 'Create' }}</button>
       </div>
     </form>
+
+    <!-- Class Teacher Assignment Modal -->
+    <app-class-teacher-assignment 
+      [isOpen]="classTeacherModalOpen()"
+      (onOpenChange)="classTeacherModalOpen.set($event)"
+      (onAssigned)="onClassTeacherAssigned()">
+    </app-class-teacher-assignment>
   `,
   styles: [`
     .section-title { font-size: var(--text-lg); font-weight: 600; margin-top: var(--space-6); margin-bottom: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border); }
     .form-actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+    .section-info { background: #fef3c7; border: 1px solid #fcd34d; border-radius: var(--radius-md); padding: var(--space-4); margin: var(--space-4) 0; }
+    .section-info p { margin: 0 0 var(--space-3); font-size: var(--text-sm); color: #92400e; }
   `]
 })
 export class TeacherFormComponent implements OnInit {
@@ -82,6 +105,7 @@ export class TeacherFormComponent implements OnInit {
   isEdit = signal(false);
   saving = signal(false);
   roles = signal<Role[]>([]);
+  classTeacherModalOpen = signal(false);
   teacher: any = { roleCode: '' };
 
   private teacherId = '';
@@ -151,5 +175,13 @@ export class TeacherFormComponent implements OnInit {
       next: () => { this.toast.success(this.isEdit() ? 'Updated' : 'Created'); this.router.navigate(['/teachers']); },
       error: (err) => { this.saving.set(false); this.toast.error(err?.error?.message?.join?.(', ') || err?.error?.message || 'Failed to save'); }
     });
+  }
+
+  openClassTeacherModal(): void {
+    this.classTeacherModalOpen.set(true);
+  }
+
+  onClassTeacherAssigned(): void {
+    this.toast.success('Class teacher assignment completed');
   }
 }

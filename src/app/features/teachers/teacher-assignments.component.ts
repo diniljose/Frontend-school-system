@@ -6,9 +6,13 @@ import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 
 interface SubjectAssignment {
+  _id?: string;
   subject: { _id: string; name: string; code: string };
   class: { _id: string; name: string; grade: number };
   sections: string[];
+  academicYear?: { _id: string; name: string; start: string; end: string; isCurrent?: boolean };
+  assignedDate?: string;
+  startDate?: string;
 }
 
 @Component({
@@ -46,27 +50,77 @@ interface SubjectAssignment {
             <p>This teacher hasn't been assigned to teach any subjects in any class yet.</p>
           </div>
         } @else {
-          <div class="assignments-grid">
-            @for (a of assignments(); track a.subject._id + a.class._id) {
-              <div class="assignment-card">
-                <div class="assignment-header">
-                  <div class="subject-info">
-                    <span class="subject-name">{{ a.subject.name }}</span>
-                    <span class="subject-code">{{ a.subject.code }}</span>
+          <div class="assignments-list">
+            @for (a of assignments(); track a._id || (a.subject._id + a.class._id)) {
+              <div class="assignment-card-detailed">
+                <div class="card-top-section">
+                  <div class="subject-header">
+                    <div class="subject-info">
+                      <span class="subject-name">{{ a.subject.name }}</span>
+                      <span class="subject-code">{{ a.subject.code }}</span>
+                    </div>
                   </div>
-                  <button class="btn btn-ghost btn-sm btn-danger" (click)="removeAssignment(a)" title="Remove">
-                    🗑️
+                  <button class="btn btn-ghost btn-sm btn-danger" (click)="removeAssignment(a)" title="Remove Assignment">
+                    🗑️ Remove
                   </button>
                 </div>
-                <div class="class-info">
-                  <span class="class-badge">{{ a.class.name }}</span>
-                  <span class="grade-text">Grade {{ a.class.grade }}</span>
-                </div>
-                <div class="sections-info">
-                  <span class="label">Sections:</span>
-                  @for (s of a.sections; track s) {
-                    <span class="section-badge">{{ s }}</span>
+
+                <div class="card-content-grid">
+                  <!-- Class & Grade -->
+                  <div class="info-group">
+                    <span class="info-label">📖 Class</span>
+                    <div class="info-value">
+                      <span class="class-badge">{{ a.class.name }}</span>
+                      <span class="class-sub">Grade {{ a.class.grade }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Sections -->
+                  <div class="info-group">
+                    <span class="info-label">📑 Sections</span>
+                    <div class="info-value">
+                      @for (s of a.sections; track s) {
+                        <span class="section-badge">{{ s }}</span>
+                      } @empty {
+                        <span class="text-muted">No sections</span>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Academic Year -->
+                  @if (a.academicYear) {
+                    <div class="info-group">
+                      <span class="info-label">📅 Academic Year</span>
+                      <div class="info-value">
+                        <span class="year-badge" [class.current]="a.academicYear.isCurrent">
+                          {{ a.academicYear.name }}
+                          @if (a.academicYear.isCurrent) {
+                            <span class="current-badge">Current</span>
+                          }
+                        </span>
+                        <span class="year-sub">{{ a.academicYear.start | date:'MMM yyyy' }} - {{ a.academicYear.end | date:'MMM yyyy' }}</span>
+                      </div>
+                    </div>
                   }
+
+                  <!-- Assignment Dates -->
+                  <div class="info-group">
+                    <span class="info-label">⏰ Assignment Info</span>
+                    <div class="info-value dates-info">
+                      @if (a.startDate) {
+                        <div class="date-item">
+                          <span class="date-label">Effective from:</span>
+                          <span class="date-value">{{ a.startDate | date:'MMM d, yyyy' }}</span>
+                        </div>
+                      }
+                      @if (a.assignedDate) {
+                        <div class="date-item">
+                          <span class="date-label">Assigned on:</span>
+                          <span class="date-value">{{ a.assignedDate | date:'MMM d, yyyy' }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
                 </div>
               </div>
             }
@@ -82,25 +136,37 @@ interface SubjectAssignment {
             <button class="btn btn-ghost btn-sm" (click)="showAddForm.set(false)">✕</button>
           </div>
 
-          <div class="grid grid-3">
-            <div class="form-group">
-              <label>Subject *</label>
-              <select class="form-select" [(ngModel)]="newAssignment.subjectId" (change)="onSubjectChange()">
-                <option value="">Select Subject</option>
-                @for (s of subjects(); track s._id) {
-                  <option [value]="s._id">{{ s.name }} ({{ s.code }})</option>
-                }
-              </select>
-            </div>
+          <div class="form-section">
+            <div class="grid grid-3">
+              <div class="form-group">
+                <label>Subject *</label>
+                <select class="form-select" [(ngModel)]="newAssignment.subjectId" (change)="onSubjectChange()">
+                  <option value="">Select Subject</option>
+                  @for (s of subjects(); track s._id) {
+                    <option [value]="s._id">{{ s.name }} ({{ s.code }})</option>
+                  }
+                </select>
+              </div>
 
-            <div class="form-group">
-              <label>Class *</label>
-              <select class="form-select" [(ngModel)]="newAssignment.classId" (change)="onClassChange()">
-                <option value="">Select Class</option>
-                @for (c of classes(); track c._id) {
-                  <option [value]="c._id">{{ c.name }} - Grade {{ c.grade }}</option>
-                }
-              </select>
+              <div class="form-group">
+                <label>Class *</label>
+                <select class="form-select" [(ngModel)]="newAssignment.classId" (change)="onClassChange()">
+                  <option value="">Select Class</option>
+                  @for (c of classes(); track c._id) {
+                    <option [value]="c._id">{{ c.name }} - Grade {{ c.grade }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Academic Year</label>
+                <select class="form-select" [(ngModel)]="newAssignment.academicYearId">
+                  <option value="">Select Academic Year</option>
+                  @for (ay of academicYears(); track ay._id) {
+                    <option [value]="ay._id">{{ ay.name }} @if (ay.isCurrent) { <span>(Current)</span> }</option>
+                  }
+                </select>
+              </div>
             </div>
 
             <div class="form-group">
@@ -116,6 +182,12 @@ interface SubjectAssignment {
                   <span class="text-muted">Select a class first</span>
                 }
               </div>
+            </div>
+
+            <div class="form-group">
+              <label>Assignment Start Date</label>
+              <input type="date" class="form-input" [(ngModel)]="newAssignment.startDate" placeholder="Leave blank for today" />
+              <small class="text-muted">When this assignment becomes effective</small>
             </div>
           </div>
 
@@ -144,67 +216,160 @@ interface SubjectAssignment {
     .empty-state h4 { margin: 0 0 var(--space-2); color: var(--text-primary); }
     .empty-state p { margin: 0; }
 
-    .assignments-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    .assignments-list {
+      display: flex; flex-direction: column;
       gap: var(--space-4);
     }
 
-    .assignment-card {
+    .assignment-card-detailed {
       background: var(--bg-surface-hover);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       padding: var(--space-4);
     }
 
-    .assignment-header {
+    .card-top-section {
       display: flex; justify-content: space-between; align-items: flex-start;
-      margin-bottom: var(--space-3);
+      margin-bottom: var(--space-4); padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-color);
     }
 
-    .subject-info { display: flex; flex-direction: column; gap: 2px; }
-    .subject-name { font-size: var(--text-lg); font-weight: 600; }
-    .subject-code { font-size: var(--text-sm); color: var(--text-secondary); }
-
-    .class-info { margin-bottom: var(--space-3); }
-    .class-badge {
-      display: inline-block;
-      background: var(--color-primary);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: var(--text-sm);
-      font-weight: 500;
-    }
-    .grade-text { margin-left: var(--space-2); color: var(--text-secondary); font-size: var(--text-sm); }
-
-    .sections-info { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-    .sections-info .label { font-size: var(--text-sm); color: var(--text-secondary); }
-    .section-badge {
-      background: rgba(99,102,241,0.1);
-      color: var(--color-primary);
-      padding: 2px 10px;
-      border-radius: var(--radius-full);
-      font-size: var(--text-sm);
-      font-weight: 500;
-    }
+    .subject-header { flex: 1; }
+    .subject-info { display: flex; flex-direction: column; gap: 4px; }
+    .subject-name { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); }
+    .subject-code { font-size: var(--text-sm); color: var(--text-secondary); font-weight: 500; }
 
     .btn-danger { color: var(--color-danger); }
     .btn-danger:hover { background: rgba(239,68,68,0.1); }
 
+    .card-content-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-4);
+    }
+
+    .info-group {
+      display: flex; flex-direction: column; gap: var(--space-2);
+    }
+
+    .info-label {
+      font-size: var(--text-sm); font-weight: 600; text-transform: uppercase;
+      color: var(--text-secondary); letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      display: flex; flex-direction: column; gap: var(--space-1);
+    }
+
+    .class-badge {
+      display: inline-block;
+      background: var(--color-primary);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      width: fit-content;
+    }
+
+    .class-sub { font-size: var(--text-sm); color: var(--text-secondary); }
+
+    .section-badge {
+      display: inline-block;
+      background: rgba(99,102,241,0.1);
+      color: var(--color-primary);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      width: fit-content;
+    }
+
+    .year-badge {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      background: rgba(59,130,246,0.1);
+      color: #2563eb;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      width: fit-content;
+    }
+
+    .year-badge.current {
+      background: rgba(34,197,94,0.1);
+      color: #16a34a;
+    }
+
+    .current-badge {
+      background: rgba(34,197,94,0.3);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .year-sub { font-size: var(--text-sm); color: var(--text-secondary); }
+
+    .dates-info {
+      gap: var(--space-2);
+    }
+
+    .date-item {
+      display: flex; flex-direction: column; gap: 2px;
+      padding: var(--space-2); background: var(--bg-surface);
+      border-radius: var(--radius-md);
+    }
+
+    .date-label { font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .date-value { font-size: var(--text-sm); font-weight: 600; color: var(--text-primary); }
+
     .add-form-card { margin-top: var(--space-4); }
+
+    .form-section {
+      padding: var(--space-4) 0;
+    }
+
+    .form-group {
+      margin-bottom: var(--space-4);
+    }
+
+    .form-group label {
+      display: block; margin-bottom: var(--space-2);
+      font-weight: 600; font-size: var(--text-sm);
+    }
+
+    .form-select, .form-input {
+      width: 100%; padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+    }
+
+    .form-select:focus, .form-input:focus {
+      outline: none; border-color: var(--color-primary);
+      box-shadow: inset 0 0 0 1px var(--color-primary);
+    }
+
+    .form-group small {
+      display: block; margin-top: 4px;
+      font-size: var(--text-xs); color: var(--text-secondary);
+    }
 
     .section-checkboxes {
       display: flex; gap: var(--space-3); flex-wrap: wrap;
     }
+
     .checkbox-label {
       display: flex; align-items: center; gap: var(--space-2);
       padding: var(--space-2) var(--space-3);
       background: var(--bg-surface-hover);
       border-radius: var(--radius-md);
       cursor: pointer;
+      user-select: none;
     }
+
     .checkbox-label:hover { background: var(--bg-muted); }
+    .checkbox-label input { cursor: pointer; }
 
     .form-actions {
       display: flex; justify-content: flex-end; gap: var(--space-3);
@@ -216,6 +381,8 @@ interface SubjectAssignment {
     .spinner-lg { width: 32px; height: 32px; border: 3px solid var(--border-color); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .text-muted { color: var(--text-muted); font-size: var(--text-sm); }
+
+    .grid.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); }
   `]
 })
 export class TeacherAssignmentsComponent implements OnInit {
@@ -232,11 +399,14 @@ export class TeacherAssignmentsComponent implements OnInit {
   assignments = signal<SubjectAssignment[]>([]);
   subjects = signal<any[]>([]);
   classes = signal<any[]>([]);
+  academicYears = signal<any[]>([]);
   availableSections = signal<string[]>([]);
 
   newAssignment = {
     subjectId: '',
     classId: '',
+    academicYearId: '',
+    startDate: '',
     sections: [] as string[],
   };
 
@@ -275,6 +445,13 @@ export class TeacherAssignmentsComponent implements OnInit {
         this.classes.set(res.data?.data || res.data || []);
       }
     });
+
+    // Load academic years for dropdown
+    this.api.get('/academic-years').subscribe({
+      next: (res: any) => {
+        this.academicYears.set(res.data?.data || res.data || []);
+      }
+    });
   }
 
   onSubjectChange(): void {
@@ -284,10 +461,12 @@ export class TeacherAssignmentsComponent implements OnInit {
   onClassChange(): void {
     const classId = this.newAssignment.classId;
     const selectedClass = this.classes().find(c => c._id === classId);
-    if (selectedClass) {
-      this.availableSections.set(selectedClass.sections || ['A']);
+    if (selectedClass && selectedClass.sections && selectedClass.sections.length > 0) {
+      // Extract section names from section objects
+      const sectionNames = selectedClass.sections.map((s: any) => typeof s === 'string' ? s : s.name);
+      this.availableSections.set(sectionNames);
     } else {
-      this.availableSections.set([]);
+      this.availableSections.set(['A']);
     }
     this.newAssignment.sections = [];
   }
@@ -303,16 +482,25 @@ export class TeacherAssignmentsComponent implements OnInit {
 
   addAssignment(): void {
     if (!this.newAssignment.subjectId || !this.newAssignment.classId || this.newAssignment.sections.length === 0) {
-      this.toast.error('Please fill all fields');
+      this.toast.error('Please fill all required fields');
       return;
     }
 
     this.saving.set(true);
-    this.api.post(`/teachers/${this.teacherId}/subject-class-assignment`, this.newAssignment).subscribe({
+    
+    const payload = {
+      subjectId: this.newAssignment.subjectId,
+      classId: this.newAssignment.classId,
+      sections: this.newAssignment.sections,
+      ...(this.newAssignment.academicYearId && { academicYearId: this.newAssignment.academicYearId }),
+      ...(this.newAssignment.startDate && { startDate: this.newAssignment.startDate }),
+    };
+
+    this.api.post(`/teachers/${this.teacherId}/subject-class-assignment`, payload).subscribe({
       next: () => {
-        this.toast.success('Assignment added');
+        this.toast.success('Assignment added successfully');
         this.showAddForm.set(false);
-        this.newAssignment = { subjectId: '', classId: '', sections: [] };
+        this.newAssignment = { subjectId: '', classId: '', academicYearId: '', startDate: '', sections: [] };
         this.loadData();
       },
       error: (err) => {

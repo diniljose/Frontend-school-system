@@ -19,27 +19,32 @@ export class ApiService {
   private normalizeResponse(res: any): any {
     if (!res) return res;
     const payload = res?.data;
-    if (payload?.items) return res;
-
-    const items = Array.isArray(payload?.data)
-      ? payload.data
-      : Array.isArray(payload)
-        ? payload
-        : null;
-
+    
+    // Check if payload is an array (simple array response)
+    const isArrayPayload = Array.isArray(payload);
+    const isDataArray = Array.isArray(payload?.data);
+    
+    // Extract the actual data array
+    const items = isArrayPayload ? payload : isDataArray ? payload.data : null;
+    
+    // If no data array found, return as-is
     if (!items) return res;
 
-    // Backend may put pagination in .pagination, .meta, or as direct properties
-    const pagination = payload?.pagination || payload?.meta || {};
+    // Extract pagination information - it can be in different locations
+    const pagination = payload?.pagination || payload?.meta || (isDataArray ? payload : {}) || {};
     const page = Number(pagination.page ?? payload?.page ?? 1);
     const totalPages = Number(pagination.pages ?? pagination.totalPages ?? payload?.totalPages ?? 1);
     const limit = Number(pagination.limit ?? payload?.limit ?? items.length);
     const total = Number(pagination.total ?? payload?.total ?? items.length);
 
+    // Preserve original nested structure but ensure data array is present
+    // This way both res.data?.data and res.data?.items work
     return {
       ...res,
       data: {
-        items,
+        ...(isDataArray ? payload : {}),  // Preserve original properties
+        data: items,  // Ensure data array is always available
+        items,  // Also provide items for backward compatibility
         total,
         page,
         limit,

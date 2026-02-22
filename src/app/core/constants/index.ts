@@ -51,6 +51,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { label: 'Enrollments', icon: 'user-plus', route: '/enrollments', translationKey: 'nav.enrollments', permission: 'enrollment:view' },
   { label: 'Promotions', icon: 'trending-up', route: '/promotions', translationKey: 'nav.promotions', permission: 'promotion:view' },
   { label: 'Transfers', icon: 'shuffle', route: '/transfers', translationKey: 'nav.transfers', permission: 'transfer:view' },
+  { label: 'Events', icon: 'calendar', route: '/events', translationKey: 'nav.events', permission: 'event:view' },
   { label: 'Reports', icon: 'pie-chart', route: '/reports', translationKey: 'nav.reports', permission: 'report:view' },
   { label: 'Settings', icon: 'settings', route: '/settings', translationKey: 'nav.settings', permission: 'settings:view' },
   

@@ -23,11 +23,20 @@ import { ClassModel, Student } from '../../core/models';
         </div>
         <div class="form-group" style="margin-bottom:0">
           <label>Class</label>
-          <select class="form-select" [(ngModel)]="selectedClass" (change)="loadAttendance()">
+          <select class="form-select" [(ngModel)]="selectedClass" (change)="onClassChange()">
             <option value="">Select class</option>
             @for (c of classes(); track c._id) { <option [value]="c._id">{{ c.name }} (Grade {{ c.grade }})</option> }
           </select>
         </div>
+        @if (availableSections().length > 0) {
+          <div class="form-group" style="margin-bottom:0">
+            <label>Section</label>
+            <select class="form-select" [(ngModel)]="selectedSection" (change)="loadAttendance()">
+              <option value="">All Sections</option>
+              @for (s of availableSections(); track s.name || s) { <option [value]="s.name || s">{{ s.name || s }}</option> }
+            </select>
+          </div>
+        }
         <button class="btn btn-primary" [disabled]="!selectedClass || savingAll()" (click)="saveAll()">
           @if (savingAll()) { <span class="spinner-sm"></span> }
           💾 Save Attendance
@@ -96,9 +105,11 @@ export class AttendanceComponent implements OnInit {
   loading = signal(false);
   savingAll = signal(false);
   classes = signal<ClassModel[]>([]);
+  availableSections = signal<any[]>([]);
   records = signal<any[]>([]);
   selectedDate = new Date().toISOString().split('T')[0];
   selectedClass = '';
+  selectedSection = '';
 
   presentCount = signal(0);
   absentCount = signal(0);
@@ -113,16 +124,31 @@ export class AttendanceComponent implements OnInit {
     });
   }
 
+  onClassChange(): void {
+    this.selectedSection = '';
+    const selectedClass = this.classes().find(c => c._id === this.selectedClass);
+    if (selectedClass && selectedClass.sections && selectedClass.sections.length > 0) {
+      this.availableSections.set(selectedClass.sections);
+    } else {
+      this.availableSections.set([]);
+    }
+    this.loadAttendance();
+  }
+
   loadAttendance(): void {
     if (!this.selectedClass) return;
     this.loading.set(true);
-    this.api.get<any>(`/attendance`, { classId: this.selectedClass, date: this.selectedDate }).subscribe({
+    const params: any = { classId: this.selectedClass, date: this.selectedDate };
+    if (this.selectedSection) {
+      params.section = this.selectedSection;
+    }
+    this.api.get<any>(`/attendance`, params).subscribe({
       next: (res) => {
         const data = res.data?.data || res.data || res || [];
         const attendanceData = Array.isArray(data) ? data : [];
         if (attendanceData.length === 0) {
           // Load students for fresh attendance
-          this.api.get<any>(`/students`, { classId: this.selectedClass }).subscribe({
+          this.api.get<any>(`/students`, { classId: this.selectedClass, section: this.selectedSection || undefined }).subscribe({
             next: (sRes) => {
               const studentsData = sRes.data?.data || sRes.data?.items || sRes.data || [];
               const students = Array.isArray(studentsData) ? studentsData : [];
@@ -154,11 +180,15 @@ export class AttendanceComponent implements OnInit {
   saveAll(): void {
     this.updateCounts();
     this.savingAll.set(true);
-    this.api.post('/attendance', {
+    const payload: any = {
       classId: this.selectedClass,
       date: this.selectedDate,
       records: this.records()
-    }).subscribe({
+    };
+    if (this.selectedSection) {
+      payload.section = this.selectedSection;
+    }
+    this.api.post('/attendance', payload).subscribe({
       next: () => { this.toast.success('Attendance saved!'); this.savingAll.set(false); },
       error: () => { this.toast.error('Failed to save'); this.savingAll.set(false); },
     });

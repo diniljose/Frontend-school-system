@@ -302,7 +302,7 @@ export class MainLayoutComponent {
       'heart-handshake': '🤝', 'clipboard-check': '✅', 'file-text': '📝', 'bar-chart-2': '📈',
       'credit-card': '💳', 'bus': '🚌', 'clock': '🕐', 'trending-up': '📈',
       'shuffle': '🔀', 'bell': '🔔', 'pie-chart': '🥧', 'package': '📦', 'settings': '⚙️',
-      'user-check': '✓👤', 'shield': '🛡️',
+      'user-check': '✓👤', 'shield': '🛡️', 'calendar': '📆', 'user-plus': '➕👤',
     };
     return icons[iconName] || '📄';
   }

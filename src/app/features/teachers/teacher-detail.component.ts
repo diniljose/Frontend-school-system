@@ -90,15 +90,28 @@ import { ApiService } from '../../core/services/api.service';
               @for (sa of subjectAssignments(); track sa) {
                 <div class="assignment-card">
                   <div class="asgn-header">
-                    <span class="asgn-subject">{{ getSubjectName(sa.subject) }}</span>
+                    <div class="asgn-main">
+                      <span class="asgn-subject">{{ getSubjectName(sa.subject) }}</span>
+                      <span class="asgn-code" *ngIf="sa.subject?.code">{{ sa.subject.code }}</span>
+                    </div>
                     <span class="asgn-class">{{ getClassName(sa.class) }}</span>
+                  </div>
+                  <div class="asgn-sections">
+                    <span class="label">Sections:</span>
+                    @if (sa.sections && sa.sections.length > 0) {
+                      @for (sec of sa.sections; track sec) {
+                        <span class="section-tag">{{ sec }}</span>
+                      }
+                    } @else {
+                      <span class="text-muted">No sections</span>
+                    }
                   </div>
                   <div class="asgn-meta">
                     @if (sa.academicYear) {
                       <span class="meta-tag">📅 {{ getAcademicYearName(sa.academicYear) }}</span>
                     }
-                    @if (sa.assignedAt) {
-                      <span class="meta-tag">⏰ {{ sa.assignedAt | date:'mediumDate' }}</span>
+                    @if (sa.startDate) {
+                      <span class="meta-tag">⏰ {{ sa.startDate | date:'mediumDate' }}</span>
                     }
                   </div>
                 </div>
@@ -121,8 +134,20 @@ import { ApiService } from '../../core/services/api.service';
               <div class="ct-item">
                 <div class="ct-marker">👨‍🏫</div>
                 <div class="ct-content">
-                  <div class="ct-class">{{ getClassName(ct.class) }} — Section {{ getSectionName(ct.section) }}</div>
-                  <div class="ct-year">{{ getAcademicYearName(ct.academicYear) }}</div>
+                  <div class="ct-class">
+                    {{ ct.class?.name || ct.class || 'Unknown' }}
+                    @if (ct.class?.sections && ct.class.sections.length > 0) {
+                      <span class="ct-sections">
+                        @for (sec of ct.class.sections; track sec.name) {
+                          <span class="section-badge">{{ sec.name }}</span>
+                        }
+                      </span>
+                    }
+                  </div>
+                  <div class="ct-year">{{ ct.academicYear?.name || ct.academicYear || 'N/A' }} ({{ ct.academicYear?.start | date:'yyyy' }}-{{ ct.academicYear?.end | date:'yyyy' }})</div>
+                  @if (ct.assignedAt) {
+                    <div class="ct-date">Assigned: {{ ct.assignedAt | date:'mediumDate' }}</div>
+                  }
                 </div>
               </div>
             }
@@ -182,18 +207,27 @@ import { ApiService } from '../../core/services/api.service';
 
     .assignment-list { display: flex; flex-direction: column; gap: var(--space-3); }
     .assignment-card { padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); }
-    .asgn-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .asgn-subject { font-weight: 600; color: var(--primary); }
-    .asgn-class { font-size: var(--text-sm); color: var(--text-secondary); background: var(--bg-secondary); padding: 1px 8px; border-radius: 8px; }
-    .asgn-meta { display: flex; gap: var(--space-2); }
-    .meta-tag { font-size: var(--text-xs); color: var(--text-tertiary); background: var(--bg-secondary); padding: 1px 6px; border-radius: 6px; }
+    .asgn-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); gap: var(--space-3); }
+    .asgn-main { display: flex; flex-direction: column; gap: 2px; }
+    .asgn-subject { font-weight: 700; color: var(--primary); font-size: var(--text-base); }
+    .asgn-code { font-size: var(--text-xs); color: var(--text-secondary); font-weight: 500; }
+    .asgn-class { font-size: var(--text-sm); color: white; background: var(--primary); padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+    .asgn-sections { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); flex-wrap: wrap; }
+    .asgn-sections .label { font-size: var(--text-xs); color: var(--text-secondary); font-weight: 600; }
+    .section-tag { display: inline-block; background: rgba(99,102,241,0.1); color: var(--primary); padding: 2px 8px; border-radius: 6px; font-size: var(--text-xs); font-weight: 500; }
+    .asgn-meta { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+    .meta-tag { font-size: var(--text-xs); color: var(--text-secondary); background: var(--bg-secondary); padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
     .empty-section { text-align: center; color: var(--text-tertiary); padding: var(--space-6); }
 
     .ct-timeline { display: flex; flex-direction: column; gap: var(--space-3); }
-    .ct-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); }
-    .ct-marker { font-size: 20px; }
-    .ct-class { font-weight: 500; }
-    .ct-year { font-size: var(--text-xs); color: var(--text-tertiary); }
+    .ct-item { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); }
+    .ct-marker { font-size: 20px; flex-shrink: 0; }
+    .ct-content { flex: 1; display: flex; flex-direction: column; gap: var(--space-1); }
+    .ct-class { font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+    .ct-sections { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+    .section-badge { display: inline-block; background: rgba(99,102,241,0.1); color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: var(--text-xs); font-weight: 500; }
+    .ct-year { font-size: var(--text-sm); color: var(--text-secondary); }
+    .ct-date { font-size: var(--text-xs); color: var(--text-tertiary); }
 
     .event-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-3); }
     .event-card { padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); }
@@ -278,29 +312,5 @@ export class TeacherDetailComponent implements OnInit {
       return sa.class;
     }).filter(Boolean));
     return uniqueClasses.size || (this.teacher()?.assignedClasses?.length || 0);
-  }
-
-  getSubjectName(s: any): string {
-    if (!s) return '-';
-    if (typeof s === 'string') return s;
-    return s.name || '-';
-  }
-
-  getClassName(c: any): string {
-    if (!c) return '-';
-    if (typeof c === 'string') return c;
-    return c.name || '-';
-  }
-
-  getSectionName(s: any): string {
-    if (!s) return '-';
-    if (typeof s === 'string') return s;
-    return s.name || s.division || '-';
-  }
-
-  getAcademicYearName(ay: any): string {
-    if (!ay) return '-';
-    if (typeof ay === 'string') return ay;
-    return ay.name || '-';
   }
 }
