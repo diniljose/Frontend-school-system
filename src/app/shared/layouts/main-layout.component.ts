@@ -242,7 +242,7 @@ import { TranslateService } from '@ngx-translate/core';
       display: none;
     }
 
-    .main-content { flex: 1; padding: var(--space-6); max-width: 1600px; }
+    .main-content { flex: 1; padding: var(--space-6); max-width: 1600px; width: 100%; box-sizing: border-box; overflow-x: hidden; }
 
     @media (max-width: 1024px) {
       .sidebar { transform: translateX(-100%); }

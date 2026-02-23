@@ -42,8 +42,8 @@ export class AuthService {
     const permissions = this.userPermissions();
     const role = this.userRole();
     
-    // Platform admin has all permissions
-    if (role === UserRole.PLATFORM_ADMIN || permissions.includes('*')) {
+    // Platform admin, Principal and Vice Principal have all permissions for their scope
+    if (role === UserRole.PLATFORM_ADMIN || role === UserRole.PRINCIPAL || role === UserRole.VICE_PRINCIPAL || permissions.includes('*')) {
       return true;
     }
     

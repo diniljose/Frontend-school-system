@@ -47,6 +47,7 @@ export const routes: Routes = [
       { path: 'teachers/:id', loadComponent: () => import('./features/teachers/teacher-form.component').then(m => m.TeacherFormComponent) },
       { path: 'parents', loadComponent: () => import('./features/parents/parent-list.component').then(m => m.ParentListComponent) },
       { path: 'attendance', loadComponent: () => import('./features/attendance/attendance.component').then(m => m.AttendanceComponent) },
+      { path: 'attendance/report', loadComponent: () => import('./features/attendance/attendance-report.component').then(m => m.AttendanceReportComponent) },
       { path: 'exams', loadComponent: () => import('./features/exams/exam-list.component').then(m => m.ExamListComponent) },
       { path: 'exams/new', loadComponent: () => import('./features/exams/exam-form.component').then(m => m.ExamFormComponent) },
       { path: 'results', loadComponent: () => import('./features/results/result-list.component').then(m => m.ResultListComponent) },

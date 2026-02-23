@@ -313,4 +313,19 @@ export class TeacherDetailComponent implements OnInit {
     }).filter(Boolean));
     return uniqueClasses.size || (this.teacher()?.assignedClasses?.length || 0);
   }
+
+  getSubjectName(subject: any): string {
+    if (!subject) return '-';
+    return typeof subject === 'string' ? subject : (subject.name || subject.subjectName || '-');
+  }
+
+  getClassName(classObj: any): string {
+    if (!classObj) return '-';
+    return typeof classObj === 'string' ? classObj : (classObj.name || classObj.className || '-');
+  }
+
+  getAcademicYearName(year: any): string {
+    if (!year) return '-';
+    return typeof year === 'string' ? year : (year.name || year.academicYear || `${year.startYear}-${year.endYear}` || '-');
+  }
 }

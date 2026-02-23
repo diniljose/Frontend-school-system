@@ -65,11 +65,32 @@ import { ClassTeacherAssignmentComponent } from './class-teacher-assignment.comp
                           <span class="sec-cap">{{ s.capacity || '∞' }} cap</span>
                         </div>
                         <div class="sec-teacher">
-                          👨‍🏫 {{ getTeacherDisplay(s.classTeacher) }}
-                          @if (currentAcademicYearTeacher(c._id); as teacher) {
-                            <span class="current-year-badge">{{ teacher?.firstName }} {{ teacher?.lastName }}</span>
+                          @if (getAssignmentForSection(c._id, s.name); as assignment) {
+                            <div class="assigned-teacher-info">
+                              <span class="teacher-avatar">{{ (assignment.teacher.firstName || 'T')[0] }}</span>
+                              <div class="teacher-details">
+                                <span class="teacher-name">{{ assignment.teacher.firstName }} {{ assignment.teacher.lastName }}</span>
+                                <span class="assigned-date">Since {{ formatAssignedDate(assignment.assignedAt) }}</span>
+                              </div>
+                            </div>
+                          } @else {
+                            <span class="unassigned">👨‍🏫 Unassigned</span>
                           }
                         </div>
+                        <!-- Subject Teachers for this section -->
+                        @if (getSectionTeachers(c._id, s.name).length > 0) {
+                          <div class="subject-teachers">
+                            <div class="st-label">Subject Teachers:</div>
+                            <div class="st-list">
+                              @for (st of getSectionTeachers(c._id, s.name); track st.teacherId + st.subjectId) {
+                                <div class="st-item" [title]="st.teacherName + ' teaches ' + st.subjectName">
+                                  <span class="st-subject">{{ st.subjectCode || st.subjectName }}</span>
+                                  <span class="st-teacher">{{ st.teacherName }}</span>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        }
                         <div class="sec-actions">
                           <a [routerLink]="['/students']" [queryParams]="{classId: c._id, section: s.name}" class="sec-link">View Students</a>
                           <a [routerLink]="['/enrollments']" [queryParams]="{classId: c._id, section: s.name}" class="sec-link">Enrollments</a>
@@ -101,6 +122,8 @@ import { ClassTeacherAssignmentComponent } from './class-teacher-assignment.comp
     <!-- Class Teacher Assignment Modal -->
     <app-class-teacher-assignment 
       [isOpen]="assignModalOpen()"
+      [preSelectedClass]="selectedClassId()"
+      [preSelectedSection]="selectedSectionName()"
       (onOpenChange)="assignModalOpen.set($event)"
       (onAssigned)="onAssignmentSuccess()">
     </app-class-teacher-assignment>
@@ -135,8 +158,19 @@ import { ClassTeacherAssignmentComponent } from './class-teacher-assignment.comp
     .sec-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .sec-name { font-weight: 600; font-size: var(--text-sm); }
     .sec-cap { font-size: var(--text-xs); color: var(--text-tertiary); background: var(--bg-secondary); padding: 1px 6px; border-radius: 4px; }
-    .sec-teacher { font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: 8px; }
-    .current-year-badge { display: inline-block; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px; }
+    .sec-teacher { margin-bottom: 8px; }
+    .assigned-teacher-info { display: flex; align-items: center; gap: 8px; }
+    .teacher-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+    .teacher-details { display: flex; flex-direction: column; }
+    .teacher-name { font-size: var(--text-xs); font-weight: 600; color: var(--text-primary); }
+    .assigned-date { font-size: 10px; color: var(--text-tertiary); }
+    .unassigned { font-size: var(--text-xs); color: var(--text-tertiary); }
+    .subject-teachers { margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: var(--radius-sm); }
+    .st-label { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .st-list { display: flex; flex-wrap: wrap; gap: 4px; }
+    .st-item { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; font-size: 10px; }
+    .st-subject { font-weight: 600; color: var(--primary); }
+    .st-teacher { color: var(--text-secondary); }
     .sec-actions { display: flex; gap: var(--space-2); }
     .sec-link { font-size: 11px; color: var(--primary); text-decoration: none; font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; }
     .sec-link:hover { text-decoration: underline; }
@@ -160,14 +194,18 @@ export class ClassListComponent implements OnInit {
   classes = signal<ClassModel[]>([]);
   expandedClass = '';
   currentAcademicYear = signal<any>(null);
-  classTeachersByClassId = signal<Map<string, any>>(new Map());
+  // Map key: classId-sectionName, value: { teacher, assignedAt }
+  classTeacherAssignments = signal<Map<string, any>>(new Map());
+  // Map key: classId-section, value: array of { teacherId, teacherName, subjectId, subjectName, subjectCode }
+  sectionSubjectTeachers = signal<Map<string, any[]>>(new Map());
   assignModalOpen = signal(false);
-  currentAcademicYear = signal<any>(null);
-  classTeachersByClassId = signal<Map<string, any>>(new Map());
+  selectedClassId = signal<string>('');
+  selectedSectionName = signal<string>('');
 
   ngOnInit(): void {
     this.loadCurrentAcademicYear();
     this.loadClasses();
+    this.loadSubjectTeacherAssignments();
   }
 
   private loadCurrentAcademicYear(): void {
@@ -183,6 +221,49 @@ export class ClassListComponent implements OnInit {
     });
   }
 
+  private loadSubjectTeacherAssignments(): void {
+    // Load all teachers with their subject-class assignments
+    this.api.get<any>('/teachers', { limit: 1000 }).subscribe({
+      next: (res: any) => {
+        const teachers = res.data?.data || res.data?.items || res.data || [];
+        const map = new Map<string, any[]>();
+        
+        if (Array.isArray(teachers)) {
+          teachers.forEach((teacher: any) => {
+            const assignments = teacher.subjectAssignments || [];
+            assignments.forEach((asgn: any) => {
+              const classId = typeof asgn.class === 'object' ? asgn.class._id : asgn.class;
+              const subjectName = typeof asgn.subject === 'object' ? asgn.subject.name : asgn.subject;
+              const subjectCode = typeof asgn.subject === 'object' ? asgn.subject.code : '';
+              const subjectId = typeof asgn.subject === 'object' ? asgn.subject._id : asgn.subject;
+              const sections = asgn.sections || [''];
+              
+              sections.forEach((section: string) => {
+                const key = `${classId}-${section}`;
+                const existing = map.get(key) || [];
+                existing.push({
+                  teacherId: teacher._id,
+                  teacherName: `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim(),
+                  subjectId,
+                  subjectName,
+                  subjectCode,
+                });
+                map.set(key, existing);
+              });
+            });
+          });
+        }
+        
+        this.sectionSubjectTeachers.set(map);
+      },
+    });
+  }
+
+  getSectionTeachers(classId: string, sectionName: string): any[] {
+    const key = `${classId}-${sectionName}`;
+    return this.sectionSubjectTeachers().get(key) || [];
+  }
+
   private loadClassTeacherAssignments(academicYearId: string): void {
     this.api.get<any>('/class-teacher-assignments', { academicYear: academicYearId }).subscribe({
       next: (res: any) => {
@@ -192,14 +273,31 @@ export class ClassListComponent implements OnInit {
         if (Array.isArray(assignments)) {
           assignments.forEach((assignment: any) => {
             if (assignment.class?._id && assignment.teacher) {
-              map.set(assignment.class._id, assignment.teacher);
+              // Key by classId-sectionName to support per-section assignments
+              const section = assignment.section || '';
+              const key = `${assignment.class._id}-${section}`;
+              map.set(key, {
+                teacher: assignment.teacher,
+                assignedAt: assignment.createdAt || assignment.assignedAt,
+              });
             }
           });
         }
         
-        this.classTeachersByClassId.set(map);
+        this.classTeacherAssignments.set(map);
       },
     });
+  }
+
+  getAssignmentForSection(classId: string, sectionName: string): any {
+    // Try to find assignment for specific section first
+    const sectionKey = `${classId}-${sectionName}`;
+    const sectionAssignment = this.classTeacherAssignments().get(sectionKey);
+    if (sectionAssignment) return sectionAssignment;
+    
+    // Fallback to class-level assignment
+    const classKey = `${classId}-`;
+    return this.classTeacherAssignments().get(classKey) || null;
   }
 
   private loadClasses(): void {
@@ -213,8 +311,10 @@ export class ClassListComponent implements OnInit {
     });
   }
 
-  currentAcademicYearTeacher(classId: string): any {
-    return this.classTeachersByClassId().get(classId) || null;
+  formatAssignedDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   toggleExpand(id: string): void {
@@ -253,8 +353,8 @@ export class ClassListComponent implements OnInit {
   }
 
   openAssignModal(classData: any, section: any): void {
-    // In a real scenario, you might pre-populate the modal with class/section
-    // For now, just open it
+    this.selectedClassId.set(classData._id || '');
+    this.selectedSectionName.set(section?.name || '');
     this.assignModalOpen.set(true);
   }
 

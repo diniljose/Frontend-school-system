@@ -585,7 +585,31 @@ interface StudentStatusOption {
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 768px) { .filter-group { flex-direction: column; } .grid-2 { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { 
+      .filter-group { flex-direction: column; } 
+      .grid-2 { grid-template-columns: 1fr; } 
+      .page-header { flex-direction: column; align-items: stretch; }
+      .header-actions { flex-direction: column; gap: var(--space-2); }
+      .header-actions .dropdown { width: 100%; }
+      .header-actions .dropdown .btn { width: 100%; }
+      .header-actions > .btn { width: 100%; }
+      .action-btns { flex-wrap: wrap; gap: 4px; }
+      .action-btns .btn { padding: 4px 8px; font-size: 12px; }
+      .data-table th, .data-table td { padding: 8px 6px; font-size: 12px; }
+      .student-link { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .avatar-sm { width: 28px; height: 28px; font-size: 10px; }
+      .dropdown-menu { min-width: 150px; right: 0; }
+    }
+    @media (max-width: 480px) {
+      .header-actions { gap: var(--space-2); }
+      .action-btns { gap: 2px; }
+      .action-btns .btn { padding: 2px 6px; }
+      .table-responsive { margin: 0 -16px; }
+      .data-table th:nth-child(4), .data-table td:nth-child(4),
+      .data-table th:nth-child(5), .data-table td:nth-child(5),
+      .data-table th:nth-child(6), .data-table td:nth-child(6),
+      .data-table th:nth-child(7), .data-table td:nth-child(7) { display: none; }
+    }
   `]
 })
 export class StudentListComponent implements OnInit {
