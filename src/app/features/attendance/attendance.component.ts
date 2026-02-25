@@ -240,11 +240,20 @@ export class AttendanceComponent implements OnInit {
     
     this.updateCounts();
     this.savingAll.set(true);
+    
+    // Strip out display-only fields (section, rollNumber) from records before saving
+    const cleanRecords = this.records().map(r => ({
+      studentId: r.studentId,
+      studentName: r.studentName,
+      status: r.status,
+      note: r.note || ''
+    }));
+    
     this.api.post('/attendance', {
       classId: this.selectedClass,
       section: this.selectedSection || undefined,
       date: this.selectedDate,
-      records: this.records()
+      records: cleanRecords
     }).subscribe({
       next: () => { this.toast.success('Attendance saved!'); this.savingAll.set(false); },
       error: () => { this.toast.error('Failed to save'); this.savingAll.set(false); },

@@ -167,6 +167,63 @@ interface PendingStudent {
         </div>
       </div>
     }
+
+    <!-- Approve Modal -->
+    @if (approveModalStudent()) {
+      <div class="modal-overlay" (click)="closeApproveModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Approve Student Registration</h3>
+            <button class="close-btn" (click)="closeApproveModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>Approving registration for <strong>{{ approveModalStudent()?.firstName }} {{ approveModalStudent()?.lastName }}</strong></p>
+            <p class="hint">You can modify the class/section before approving:</p>
+            
+            <div class="form-group">
+              <label class="form-label">Class</label>
+              <select class="form-select" [(ngModel)]="approveForm.classId" (change)="onApproveClassChange()">
+                <option value="">Keep original</option>
+                @for (c of classes(); track c._id) {
+                  <option [value]="c._id">{{ c.name }} (Grade {{ c.grade }})</option>
+                }
+              </select>
+            </div>
+            
+            @if (availableSections.length > 0) {
+              <div class="form-group">
+                <label class="form-label">Section</label>
+                <select class="form-select" [(ngModel)]="approveForm.section">
+                  <option value="">Select section</option>
+                  @for (s of availableSections; track s) {
+                    <option [value]="s">Section {{ s }}</option>
+                  }
+                </select>
+              </div>
+            } @else {
+              <div class="form-group">
+                <label class="form-label">Section</label>
+                <input type="text" class="form-input" [(ngModel)]="approveForm.section" placeholder="e.g., A" />
+              </div>
+            }
+            
+            <div class="form-group">
+              <label class="form-label">Roll Number (optional)</label>
+              <input type="text" class="form-input" [(ngModel)]="approveForm.rollNumber" placeholder="e.g., 101" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost" (click)="closeApproveModal()">Cancel</button>
+            <button class="btn btn-success" (click)="confirmApprove()" [disabled]="processing()">
+              @if (processing()) {
+                <span class="spinner-sm"></span>
+              }
+              Approve Student
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); }
@@ -282,12 +339,33 @@ export class PendingStudentsComponent implements OnInit {
   loading = signal(true);
   processing = signal<string | null>(null);
   students = signal<PendingStudent[]>([]);
+  classes = signal<any[]>([]);
   rejectModalStudent = signal<PendingStudent | null>(null);
+  approveModalStudent = signal<PendingStudent | null>(null);
   rejectReason = '';
   expandedId: string | null = null;
+  
+  // Approval form fields
+  approveForm = {
+    classId: '',
+    section: '',
+    rollNumber: ''
+  };
+  availableSections: string[] = [];
 
   ngOnInit(): void {
     this.loadPendingStudents();
+    this.loadClasses();
+  }
+
+  loadClasses(): void {
+    this.api.get<any>('/classes').subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data || [];
+        this.classes.set(Array.isArray(data) ? data : []);
+      },
+      error: () => this.classes.set([])
+    });
   }
 
   loadPendingStudents(): void {
@@ -312,12 +390,66 @@ export class PendingStudentsComponent implements OnInit {
 
   approve(student: PendingStudent, event: Event): void {
     event.stopPropagation();
+    this.approveModalStudent.set(student);
+    this.approveForm = {
+      classId: student.currentClass?._id || '',
+      section: student.currentSection || '',
+      rollNumber: ''
+    };
+    this.updateAvailableSections();
+  }
+
+  showApproveModal(student: PendingStudent, event: Event): void {
+    event.stopPropagation();
+    this.approveModalStudent.set(student);
+    this.approveForm = {
+      classId: student.currentClass?._id || '',
+      section: student.currentSection || '',
+      rollNumber: ''
+    };
+    this.updateAvailableSections();
+  }
+
+  closeApproveModal(): void {
+    this.approveModalStudent.set(null);
+    this.approveForm = { classId: '', section: '', rollNumber: '' };
+    this.availableSections = [];
+  }
+
+  onApproveClassChange(): void {
+    this.updateAvailableSections();
+    this.approveForm.section = '';
+  }
+
+  updateAvailableSections(): void {
+    const cls = this.classes().find(c => c._id === this.approveForm.classId);
+    // Handle sections as array or string
+    let sections = cls?.sections || [];
+    if (typeof sections === 'string') {
+      sections = sections.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+    }
+    this.availableSections = Array.isArray(sections) ? sections : [];
+    if (this.availableSections.length === 1) {
+      this.approveForm.section = this.availableSections[0];
+    }
+  }
+
+  confirmApprove(): void {
+    const student = this.approveModalStudent();
+    if (!student) return;
+
     this.processing.set(student._id);
     
-    this.api.post<any>(`/auth/students/${student._id}/approve`, {}).subscribe({
+    const payload: any = {};
+    if (this.approveForm.classId) payload.classId = this.approveForm.classId;
+    if (this.approveForm.section) payload.section = this.approveForm.section;
+    if (this.approveForm.rollNumber) payload.rollNumber = this.approveForm.rollNumber;
+    
+    this.api.post<any>(`/auth/students/${student._id}/approve`, payload).subscribe({
       next: (res) => {
         this.toast.success(`${student.firstName} ${student.lastName} has been approved!`);
         this.students.update(list => list.filter(s => s._id !== student._id));
+        this.closeApproveModal();
         this.processing.set(null);
       },
       error: (err) => {

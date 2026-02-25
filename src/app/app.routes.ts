@@ -64,6 +64,7 @@ export const routes: Routes = [
       { path: 'transfers', loadComponent: () => import('./features/transfers/transfer-list.component').then(m => m.TransferListComponent) },
       { path: 'timetable', loadComponent: () => import('./features/timetable/timetable.component').then(m => m.TimetableComponent) },
       { path: 'notifications', loadComponent: () => import('./features/notifications/notification-list.component').then(m => m.NotificationListComponent) },
+      { path: 'events', loadComponent: () => import('./features/events/event-list.component').then(m => m.EventListComponent) },
       { path: 'reports', loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent) },
       { path: 'subscriptions', loadComponent: () => import('./features/subscriptions/subscription-list.component').then(m => m.SubscriptionListComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN)] },
       { path: 'roles', loadComponent: () => import('./features/settings/roles.component').then(m => m.RolesComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN, UserRole.PRINCIPAL)] },

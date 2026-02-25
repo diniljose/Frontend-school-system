@@ -148,6 +148,47 @@ interface PendingTeacher {
         </div>
       }
 
+      <!-- Approve Modal -->
+      @if (showApproveModal()) {
+        <div class="modal-overlay" (click)="closeApproveModal()">
+          <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Approve Teacher Registration</h3>
+              <button class="modal-close" (click)="closeApproveModal()">×</button>
+            </div>
+            <div class="modal-body">
+              <p>Approving registration for <strong>{{ selectedTeacher()?.firstName }} {{ selectedTeacher()?.lastName }}</strong></p>
+              <p class="hint-text">You can modify details before approving:</p>
+              
+              <div class="form-group">
+                <label class="form-label">Designation</label>
+                <input type="text" class="form-input" [(ngModel)]="approveForm.designation" placeholder="e.g., Senior Teacher" />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Department</label>
+                <input type="text" class="form-input" [(ngModel)]="approveForm.department" placeholder="e.g., Mathematics" />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Employee ID (optional)</label>
+                <input type="text" class="form-input" [(ngModel)]="approveForm.employeeId" placeholder="e.g., EMP001" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-ghost" (click)="closeApproveModal()">Cancel</button>
+              <button class="btn btn-success" (click)="confirmApprove()" [disabled]="processingId()">
+                @if (processingId() && processingAction() === 'approve') {
+                  <span class="spinner-sm"></span> Approving...
+                } @else {
+                  Approve Teacher
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
       @if (successMessage()) {
         <div class="toast success">{{ successMessage() }}</div>
       }
@@ -303,10 +344,18 @@ export class PendingTeachersComponent implements OnInit {
   processingId = signal<string | null>(null);
   processingAction = signal<'approve' | 'reject' | null>(null);
   showRejectModal = signal(false);
+  showApproveModal = signal(false);
   selectedTeacher = signal<PendingTeacher | null>(null);
   rejectReason = '';
   successMessage = signal('');
   errorMessage = signal('');
+  
+  // Approval form fields
+  approveForm = {
+    designation: '',
+    department: '',
+    employeeId: ''
+  };
 
   ngOnInit(): void {
     this.loadPendingTeachers();
@@ -329,13 +378,37 @@ export class PendingTeachersComponent implements OnInit {
   }
 
   approveTeacher(teacher: PendingTeacher): void {
+    this.selectedTeacher.set(teacher);
+    this.approveForm = {
+      designation: teacher.designation || '',
+      department: teacher.department || '',
+      employeeId: ''
+    };
+    this.showApproveModal.set(true);
+  }
+
+  closeApproveModal(): void {
+    this.showApproveModal.set(false);
+    this.approveForm = { designation: '', department: '', employeeId: '' };
+  }
+
+  confirmApprove(): void {
+    const teacher = this.selectedTeacher();
+    if (!teacher) return;
+
     this.processingId.set(teacher._id);
     this.processingAction.set('approve');
+    
+    const payload: any = {};
+    if (this.approveForm.designation) payload.designation = this.approveForm.designation;
+    if (this.approveForm.department) payload.department = this.approveForm.department;
+    if (this.approveForm.employeeId) payload.employeeId = this.approveForm.employeeId;
 
-    this.http.post<any>(`/api/v1/auth/teachers/${teacher._id}/approve`, {}).subscribe({
+    this.http.post<any>(`/api/v1/auth/teachers/${teacher._id}/approve`, payload).subscribe({
       next: (res) => {
         this.teachers.update(list => list.filter(t => t._id !== teacher._id));
         this.showSuccess(`${teacher.firstName} ${teacher.lastName} has been approved!`);
+        this.closeApproveModal();
         this.processingId.set(null);
         this.processingAction.set(null);
       },

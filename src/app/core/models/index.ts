@@ -137,6 +137,8 @@ export interface Teacher {
   assignedClasses?: string[];
   school?: string;
   user?: string | User;
+  employeeId?: string;
+  staffId?: string;
   createdAt?: string;
 }
 

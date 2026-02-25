@@ -24,9 +24,9 @@ import { Teacher } from '../../core/models';
         @for (i of [1,2,3,4,5]; track i) { <div class="skeleton" style="height:52px;margin-bottom:8px"></div> }
       } @else {
         <table class="data-table">
-          <thead><tr><th>Name</th><th>ID</th><th>Subjects</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Staff ID</th><th>Subjects</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
-            @for (t of teachers(); track t._id) {
+            @for (t of teachers(); track t._id; let idx = $index) {
               <tr>
                 <td>
                   <div class="user-cell">
@@ -34,7 +34,7 @@ import { Teacher } from '../../core/models';
                     <div><div class="user-name">{{ t.firstName }} {{ t.lastName }}</div><div class="user-email">{{ t.email }}</div></div>
                   </div>
                 </td>
-                <td>{{ t._id }}</td>
+                <td>{{ t.employeeId || t.staffId || 'TCH-' + (idx + 1).toString().padStart(3, '0') }}</td>
                 <td>{{ t.subjects?.length || 0 }} subjects</td>
                 <td>{{ t.phone || '—' }}</td>
                 <td><span class="badge badge-success">Active</span></td>

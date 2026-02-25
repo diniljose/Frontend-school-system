@@ -31,8 +31,8 @@ import { ApiService } from '../../core/services/api.service';
 
         <div class="student-info-grid">
           <div class="info-item"><span class="label">Student Name</span><span class="value">{{ student()?.firstName }} {{ student()?.lastName }}</span></div>
-          <div class="info-item"><span class="label">Roll Number</span><span class="value">{{ student()?.rollNumber }}</span></div>
-          <div class="info-item"><span class="label">Class</span><span class="value">{{ student()?.classId }}</span></div>
+          <div class="info-item"><span class="label">Roll Number</span><span class="value">{{ student()?.rollNumber || student()?.admissionNumber || '-' }}</span></div>
+          <div class="info-item"><span class="label">Class</span><span class="value">{{ getClassName() }}</span></div>
           <div class="info-item"><span class="label">Date of Birth</span><span class="value">{{ student()?.dateOfBirth | date:'mediumDate' }}</span></div>
         </div>
 
@@ -125,7 +125,10 @@ export class ReportCardComponent implements OnInit {
   ngOnInit(): void {
     const studentId = this.route.snapshot.params['studentId'];
     this.api.get<any>(`/students/${studentId}`).subscribe({
-      next: (s) => this.student.set(s),
+      next: (res) => {
+        const s = res.data || res;
+        this.student.set(s);
+      },
     });
     // Load results or use demo data
     this.api.get<any>(`/results`, { studentId }).subscribe({
@@ -169,4 +172,16 @@ export class ReportCardComponent implements OnInit {
   }
 
   print(): void { window.print(); }
+
+  getClassName(): string {
+    const s = this.student();
+    if (!s) return '-';
+    // Try different possible class field formats
+    if (s.currentClass?.name) return `${s.currentClass.name}${s.currentSection ? ' - ' + s.currentSection : ''}`;
+    if (s.className) return `${s.className}${s.currentSection ? ' - ' + s.currentSection : ''}`;
+    if (typeof s.currentClass === 'string' && s.currentClass.length < 20) return s.currentClass;
+    if (typeof s.classId === 'object' && s.classId?.name) return s.classId.name;
+    if (typeof s.classId === 'string' && s.classId.length < 20) return s.classId;
+    return s.currentSection || '-';
+  }
 }
