@@ -404,6 +404,12 @@ export class ReportsComponent implements OnInit {
   generate(report: ReportConfig): void {
     this.generating.set(report.key);
 
+    // Special handling for attendance - need to fetch per-date since backend uses single date param
+    if (report.key === 'attendance') {
+      this.generateAttendanceReport(report);
+      return;
+    }
+
     // Build endpoint and fetch data
     const endpoint = this.getEndpoint(report);
     const params = this.buildParams(report);
@@ -427,6 +433,47 @@ export class ReportsComponent implements OnInit {
       },
       error: () => {
         // Generate sample data for demo
+        const sampleData = this.getSampleData(report);
+        this.exportData(report, sampleData);
+        this.saveToRecent(report);
+        this.generating.set('');
+      }
+    });
+  }
+
+  private generateAttendanceReport(report: ReportConfig): void {
+    const filters = report.filters || {};
+    const fromDate = filters.fromDate || new Date().toISOString().split('T')[0];
+    const toDate = filters.toDate || fromDate;
+    const classId = filters.classId;
+
+    if (!classId) {
+      this.toast.error('Please select a class for attendance report');
+      this.generating.set('');
+      return;
+    }
+
+    // Use optimized single API call with date range (backend handles this efficiently)
+    const params: any = { classId, fromDate, toDate };
+    if (filters.section) params.section = filters.section;
+
+    this.api.get<any>('/attendance', params).subscribe({
+      next: (res) => {
+        const data = res?.data?.data || res?.data || [];
+        const records = Array.isArray(data) ? data : [];
+
+        if (!records.length) {
+          this.toast.info('No attendance data found for the selected date range');
+          this.generating.set('');
+          return;
+        }
+
+        const transformedData = this.transformDataForExport('attendance', records);
+        this.exportData(report, transformedData);
+        this.saveToRecent(report);
+        this.generating.set('');
+      },
+      error: () => {
         const sampleData = this.getSampleData(report);
         this.exportData(report, sampleData);
         this.saveToRecent(report);

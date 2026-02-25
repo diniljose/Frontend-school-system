@@ -433,42 +433,36 @@ export class AttendanceReportComponent implements OnInit {
   }
 
   private loadDateRangeReport(): void {
-    // Load all dates in range by making parallel requests
-    const start = new Date(this.fromDate);
-    const end = new Date(this.toDate);
-    const dates: string[] = [];
-    
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      dates.push(d.toISOString().split('T')[0]);
-    }
+    // Use optimized single API call with date range
+    const params: any = { 
+      classId: this.selectedClass, 
+      fromDate: this.fromDate,
+      toDate: this.toDate
+    };
+    if (this.selectedSection) params.section = this.selectedSection;
 
-    // Limit to 31 days max
-    const limitedDates = dates.slice(0, 31);
-    
-    // Make requests for each date
-    const requests = limitedDates.map(date => {
-      const params: any = { classId: this.selectedClass, date };
-      if (this.selectedSection) params.section = this.selectedSection;
-      return this.api.get<any>('/attendance', params).toPromise().catch(() => ({ data: [] }));
-    });
-
-    Promise.all(requests).then(responses => {
-      const allRecords: AttendanceRecord[] = [];
-      responses.forEach((res: any, idx) => {
+    this.api.get<any>('/attendance', params).subscribe({
+      next: (res) => {
         const data = res?.data?.data || res?.data || [];
-        const dateStr = limitedDates[idx];
-        this.parseAttendanceData(data, dateStr).forEach(r => allRecords.push(r));
-      });
-      
-      this.records.set(allRecords);
-      this.applyStatusFilter();
-      
-      if (this.reportType === 'monthly') {
-        this.calculateDateStats(allRecords);
-      }
-      
-      this.reportLoaded = true;
-      this.loading.set(false);
+        const attendanceData = Array.isArray(data) ? data : [];
+        
+        const allRecords: AttendanceRecord[] = [];
+        attendanceData.forEach((attendance: any) => {
+          const dateStr = attendance.date?.split('T')[0] || this.fromDate;
+          this.parseAttendanceData([attendance], dateStr).forEach(r => allRecords.push(r));
+        });
+        
+        this.records.set(allRecords);
+        this.applyStatusFilter();
+        
+        if (this.reportType === 'monthly') {
+          this.calculateDateStats(allRecords);
+        }
+        
+        this.reportLoaded = true;
+        this.loading.set(false);
+      },
+      error: () => this.handleLoadError()
     });
   }
 

@@ -181,13 +181,45 @@ export class AttendanceComponent implements OnInit {
       next: (res) => {
         const data = res.data?.data || res.data || res || [];
         const attendanceData = Array.isArray(data) ? data : [];
-        if (attendanceData.length === 0) {
-          // Load students for fresh attendance
+        
+        if (attendanceData.length === 0 || !attendanceData[0]?.records?.length) {
+          // No existing attendance, load students for fresh attendance
           this.loadStudentsForAttendance();
         } else {
-          this.records.set(attendanceData);
-          this.updateCounts();
-          this.loading.set(false);
+          // Flatten and map attendance records from API response
+          // API returns array of attendance documents, each with records array
+          const mappedRecords: any[] = [];
+          attendanceData.forEach((attendance: any) => {
+            if (attendance.records && Array.isArray(attendance.records)) {
+              attendance.records.forEach((record: any) => {
+                // Handle student as either object or string ID
+                const student = record.student;
+                const studentId = typeof student === 'object' ? student._id : student;
+                const studentName = typeof student === 'object' 
+                  ? `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'Unknown'
+                  : 'Unknown';
+                const rollNumber = typeof student === 'object' ? student.rollNumber : '';
+                
+                mappedRecords.push({
+                  studentId: studentId,
+                  studentName: studentName,
+                  section: attendance.section || '',
+                  rollNumber: rollNumber || '',
+                  status: record.status || 'present',
+                  note: record.remarks || record.note || ''
+                });
+              });
+            }
+          });
+          
+          if (mappedRecords.length > 0) {
+            this.records.set(mappedRecords);
+            this.updateCounts();
+            this.loading.set(false);
+          } else {
+            // No records found, load students
+            this.loadStudentsForAttendance();
+          }
         }
       },
       error: () => {
@@ -241,13 +273,26 @@ export class AttendanceComponent implements OnInit {
     this.updateCounts();
     this.savingAll.set(true);
     
-    // Strip out display-only fields (section, rollNumber) from records before saving
-    const cleanRecords = this.records().map(r => ({
-      studentId: r.studentId,
-      studentName: r.studentName,
-      status: r.status,
-      note: r.note || ''
-    }));
+    // Ensure all records have valid status values before saving
+    const cleanRecords = this.records().map(r => {
+      // Ensure status is one of the valid values
+      const validStatuses = ['present', 'absent', 'late', 'half_day', 'excused'];
+      const status = validStatuses.includes(r.status) ? r.status : 'present';
+      
+      return {
+        studentId: r.studentId,
+        status: status,
+        note: r.note || ''
+      };
+    });
+    
+    // Validate that all records have studentId and status
+    const invalidRecords = cleanRecords.filter(r => !r.studentId || !r.status);
+    if (invalidRecords.length > 0) {
+      this.toast.error('Some records are missing student ID or status');
+      this.savingAll.set(false);
+      return;
+    }
     
     this.api.post('/attendance', {
       classId: this.selectedClass,
@@ -256,7 +301,11 @@ export class AttendanceComponent implements OnInit {
       records: cleanRecords
     }).subscribe({
       next: () => { this.toast.success('Attendance saved!'); this.savingAll.set(false); },
-      error: () => { this.toast.error('Failed to save'); this.savingAll.set(false); },
+      error: (err) => { 
+        console.error('Attendance save error:', err);
+        this.toast.error('Failed to save'); 
+        this.savingAll.set(false); 
+      },
     });
   }
 }
