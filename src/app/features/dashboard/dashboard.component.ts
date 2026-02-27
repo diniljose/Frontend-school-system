@@ -94,18 +94,27 @@ import { DashboardStats, UserRole } from '../../core/models';
                   <span class="schedule-subject">{{ period.subject }}</span>
                   <span class="schedule-teacher">{{ period.teacher }}</span>
                 </div>
+              } @empty {
+                <div class="empty-list">No classes scheduled for today</div>
               }
             </div>
           </div>
           <div class="card animate-in" style="animation-delay:.25s">
-            <div class="card-header"><h3>📚 Recent Assignments</h3></div>
-            <div class="assignment-list">
-              @for (a of assignments(); track a.id) {
-                <div class="assignment-item">
-                  <div class="assignment-subject">{{ a.subject }}</div>
-                  <div class="assignment-title">{{ a.title }}</div>
-                  <div class="assignment-due" [class.urgent]="a.urgent">Due: {{ a.dueDate }}</div>
+            <div class="card-header"><h3>📝 Upcoming Exams</h3><a routerLink="/exams" class="btn btn-ghost btn-sm">View All</a></div>
+            <div class="exam-list">
+              @for (exam of upcomingExamsList(); track exam._id) {
+                <div class="exam-item">
+                  <div class="exam-date">
+                    <span class="exam-day">{{ exam.startDay }}</span>
+                    <span class="exam-month">{{ exam.startMonth }}</span>
+                  </div>
+                  <div class="exam-info">
+                    <strong>{{ exam.name }}</strong>
+                    <span>{{ exam.examType | titlecase }} • {{ exam.subjectCount }} subjects</span>
+                  </div>
                 </div>
+              } @empty {
+                <div class="empty-list">No upcoming exams scheduled</div>
               }
             </div>
           </div>
@@ -222,21 +231,43 @@ import { DashboardStats, UserRole } from '../../core/models';
                   <span class="schedule-subject">{{ period.subject }}</span>
                   <span class="schedule-class">{{ period.class }}</span>
                 </div>
+              } @empty {
+                <div class="empty-list">No classes scheduled for today</div>
               }
             </div>
           </div>
           <div class="card animate-in" style="animation-delay:.25s">
-            <div class="card-header"><h3>⚡ Quick Actions</h3></div>
-            <div class="quick-actions">
-              <a routerLink="/attendance" class="quick-action-btn">📋 Mark Attendance</a>
-              <a routerLink="/results" class="quick-action-btn">📝 Enter Marks</a>
-              @if (userRole() === 'class_teacher') {
-                <a routerLink="/pending-students" class="quick-action-btn">👥 Approve Students</a>
+            <div class="card-header"><h3>📝 Upcoming Exams</h3><a routerLink="/exams" class="btn btn-ghost btn-sm">Manage</a></div>
+            <div class="exam-list">
+              @for (exam of upcomingExamsList(); track exam._id) {
+                <div class="exam-item">
+                  <div class="exam-date">
+                    <span class="exam-day">{{ exam.startDay }}</span>
+                    <span class="exam-month">{{ exam.startMonth }}</span>
+                  </div>
+                  <div class="exam-info">
+                    <strong>{{ exam.name }}</strong>
+                    <span>{{ exam.examType | titlecase }} • {{ exam.subjectCount }} subjects</span>
+                  </div>
+                </div>
+              } @empty {
+                <div class="empty-list">No upcoming exams</div>
               }
-              <a routerLink="/exams" class="quick-action-btn">📅 Schedule Exam</a>
-              <a routerLink="/notifications" class="quick-action-btn">📣 Send Notice</a>
-              <a routerLink="/students" class="quick-action-btn">🎓 View Students</a>
             </div>
+          </div>
+        </div>
+
+        <div class="card animate-in" style="margin-top: var(--space-6); animation-delay:.3s">
+          <div class="card-header"><h3>⚡ Quick Actions</h3></div>
+          <div class="quick-actions">
+            <a routerLink="/attendance" class="quick-action-btn">📋 Mark Attendance</a>
+            <a routerLink="/results" class="quick-action-btn">📝 Enter Marks</a>
+            @if (userRole() === 'class_teacher') {
+              <a routerLink="/pending-students" class="quick-action-btn">👥 Approve Students</a>
+            }
+            <a routerLink="/exams" class="quick-action-btn">📅 Schedule Exam</a>
+            <a routerLink="/notifications" class="quick-action-btn">📣 Send Notice</a>
+            <a routerLink="/students" class="quick-action-btn">🎓 View Students</a>
           </div>
         </div>
       }
@@ -414,6 +445,18 @@ import { DashboardStats, UserRole } from '../../core/models';
     .assignment-due { font-size: var(--text-sm); color: var(--text-tertiary); }
     .assignment-due.urgent { color: var(--danger); font-weight: 600; }
     
+    /* Exam list styles */
+    .exam-list { display: flex; flex-direction: column; gap: var(--space-3); }
+    .exam-item { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-2); background: var(--surface-hover); border-radius: var(--radius-md); }
+    .exam-date { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: var(--radius-md); background: rgba(245,158,11,0.15); flex-shrink: 0; }
+    .exam-day { font-size: var(--text-lg); font-weight: 700; color: #f59e0b; line-height: 1; }
+    .exam-month { font-size: var(--text-xs); color: #f59e0b; text-transform: uppercase; }
+    .exam-info { display: flex; flex-direction: column; gap: 2px; }
+    .exam-info strong { font-size: var(--text-sm); }
+    .exam-info span { font-size: var(--text-xs); color: var(--text-tertiary); }
+    
+    .empty-list { text-align: center; padding: var(--space-6); color: var(--text-tertiary); font-size: var(--text-sm); }
+    
     /* Children cards (parent dashboard) */
     .children-section h3 { margin-bottom: var(--space-4); }
     .children-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); }
@@ -497,6 +540,9 @@ export class DashboardComponent implements OnInit {
   teacherData = signal<any>(null);
   teacherSchedule = signal<any[]>([]);
 
+  // Exam data - for all roles
+  upcomingExamsList = signal<any[]>([]);
+
   recentActivities = signal<any[]>([]);
   upcomingEvents = signal<any[]>([]);
 
@@ -532,6 +578,7 @@ export class DashboardComponent implements OnInit {
     this.loadRoleSpecificData();
     this.loadEvents();
     this.loadActivities();
+    this.loadUpcomingExams();
   }
 
   getGreeting(): string {
@@ -650,6 +697,33 @@ export class DashboardComponent implements OnInit {
     this.api.get('/dashboard/recent-activities').subscribe({
       next: (res: any) => this.recentActivities.set(res.data || []),
       error: () => this.recentActivities.set([])
+    });
+  }
+
+  private loadUpcomingExams(): void {
+    this.api.get('/exams/upcoming').subscribe({
+      next: (res: any) => {
+        const exams = (res.data || res || []).slice(0, 5).map((e: any) => {
+          const startDate = new Date(e.startDate);
+          return {
+            _id: e._id,
+            name: e.name,
+            examType: e.examType?.replace(/_/g, ' ') || 'Exam',
+            startDay: startDate.getDate().toString(),
+            startMonth: startDate.toLocaleString('default', { month: 'short' }),
+            subjectCount: e.schedule?.length || 0,
+            startDate: e.startDate,
+            endDate: e.endDate,
+          };
+        });
+        this.upcomingExamsList.set(exams);
+        
+        // Update studentData with exam count
+        if (this.studentData()) {
+          this.studentData.set({ ...this.studentData(), upcomingExams: exams.length });
+        }
+      },
+      error: () => this.upcomingExamsList.set([])
     });
   }
 

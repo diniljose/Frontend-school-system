@@ -91,9 +91,26 @@ import { ClassTeacherAssignmentComponent } from './class-teacher-assignment.comp
                             </div>
                           </div>
                         }
+                        <!-- Upcoming Exams for Section -->
+                        @if (getSectionExams(c._id, s.name).length) {
+                          <div class="sec-exams">
+                            <div class="sec-exams-title">📅 Upcoming Exams</div>
+                            <div class="sec-exams-list">
+                              @for (exam of getSectionExams(c._id, s.name).slice(0, 3); track exam._id) {
+                                <div class="sec-exam-item">
+                                  <span class="sec-exam-date">{{ exam.startDate | date:'d MMM' }}</span>
+                                  <span class="sec-exam-name">{{ exam.name }}</span>
+                                  <span class="sec-exam-type">{{ formatExamType(exam.examType) }}</span>
+                                </div>
+                              }
+                            </div>
+                            <a [routerLink]="['/exams']" [queryParams]="{classId: c._id, section: s.name}" class="sec-link">View All Exams →</a>
+                          </div>
+                        }
                         <div class="sec-actions">
                           <a [routerLink]="['/students']" [queryParams]="{classId: c._id, section: s.name}" class="sec-link">View Students</a>
                           <a [routerLink]="['/enrollments']" [queryParams]="{classId: c._id, section: s.name}" class="sec-link">Enrollments</a>
+                          <a [routerLink]="['/exams']" [queryParams]="{classId: c._id, section: s.name}" class="sec-link">Exams</a>
                           <button class="sec-link sec-assign-btn" (click)="openAssignModal(c, s)">Assign Class Teacher</button>
                         </div>
                       </div>
@@ -176,6 +193,13 @@ import { ClassTeacherAssignmentComponent } from './class-teacher-assignment.comp
     .sec-link:hover { text-decoration: underline; }
     .sec-assign-btn { color: #059669; font-weight: 600; }
     .sec-assign-btn:hover { color: #047857; }
+    .sec-exams { margin-bottom: 8px; padding: 8px; background: #eff6ff; border-radius: var(--radius-sm); border: 1px solid #dbeafe; }
+    .sec-exams-title { font-size: 10px; color: #1e40af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600; }
+    .sec-exams-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+    .sec-exam-item { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 2px 0; }
+    .sec-exam-date { font-weight: 600; color: #3b82f6; min-width: 45px; }
+    .sec-exam-name { flex: 1; color: var(--text-primary); }
+    .sec-exam-type { font-size: 10px; background: #dbeafe; color: #1e40af; padding: 1px 6px; border-radius: 4px; }
     .no-sections { text-align: center; padding: var(--space-4); color: var(--text-tertiary); font-size: var(--text-sm); }
     .no-sections p { margin-bottom: var(--space-3); }
     .empty-state { text-align: center; padding: var(--space-8); color: var(--text-tertiary); }
@@ -198,6 +222,8 @@ export class ClassListComponent implements OnInit {
   classTeacherAssignments = signal<Map<string, any>>(new Map());
   // Map key: classId-section, value: array of { teacherId, teacherName, subjectId, subjectName, subjectCode }
   sectionSubjectTeachers = signal<Map<string, any[]>>(new Map());
+  // Map key: classId-section, value: array of exams
+  sectionExams = signal<Map<string, any[]>>(new Map());
   assignModalOpen = signal(false);
   selectedClassId = signal<string>('');
   selectedSectionName = signal<string>('');
@@ -206,6 +232,7 @@ export class ClassListComponent implements OnInit {
     this.loadCurrentAcademicYear();
     this.loadClasses();
     this.loadSubjectTeacherAssignments();
+    this.loadUpcomingExams();
   }
 
   private loadCurrentAcademicYear(): void {
@@ -363,5 +390,77 @@ export class ClassListComponent implements OnInit {
     if (this.currentAcademicYear()) {
       this.loadClassTeacherAssignments(this.currentAcademicYear()._id);
     }
+  }
+
+  private loadUpcomingExams(): void {
+    this.api.get<any>('/exams/upcoming').subscribe({
+      next: (res: any) => {
+        const exams = res.data || [];
+        const map = new Map<string, any[]>();
+        
+        exams.forEach((exam: any) => {
+          // Map exams to classes and sections
+          const examClasses = exam.classes || [];
+          const examSections = exam.sections || [];
+          const scheduleItems = exam.schedule || [];
+          
+          // If schedule has class/section info, use that
+          if (scheduleItems.length > 0) {
+            scheduleItems.forEach((item: any) => {
+              const classId = typeof item.class === 'object' ? item.class._id : item.class;
+              const section = item.section || '';
+              if (classId) {
+                const key = `${classId}-${section}`;
+                const existing = map.get(key) || [];
+                if (!existing.find((e: any) => e._id === exam._id)) {
+                  existing.push(exam);
+                }
+                map.set(key, existing);
+              }
+            });
+          } else if (examClasses.length > 0) {
+            // Map to all assigned classes and sections
+            examClasses.forEach((cls: any) => {
+              const classId = typeof cls === 'object' ? cls._id : cls;
+              if (examSections.length > 0) {
+                examSections.forEach((sec: string) => {
+                  const key = `${classId}-${sec}`;
+                  const existing = map.get(key) || [];
+                  if (!existing.find((e: any) => e._id === exam._id)) {
+                    existing.push(exam);
+                  }
+                  map.set(key, existing);
+                });
+              } else {
+                const key = `${classId}-`;
+                const existing = map.get(key) || [];
+                if (!existing.find((e: any) => e._id === exam._id)) {
+                  existing.push(exam);
+                }
+                map.set(key, existing);
+              }
+            });
+          }
+        });
+        
+        this.sectionExams.set(map);
+      },
+    });
+  }
+
+  getSectionExams(classId: string, sectionName: string): any[] {
+    // Try section-specific first
+    const sectionKey = `${classId}-${sectionName}`;
+    const sectionExams = this.sectionExams().get(sectionKey);
+    if (sectionExams?.length) return sectionExams;
+    
+    // Fallback to class-level exams
+    const classKey = `${classId}-`;
+    return this.sectionExams().get(classKey) || [];
+  }
+
+  formatExamType(type: string): string {
+    if (!type) return 'Exam';
+    return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
 }

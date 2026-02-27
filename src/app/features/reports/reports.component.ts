@@ -109,7 +109,7 @@ interface ReportConfig {
                 <div class="filter-row">
                   <div class="filter-item">
                     <label>Class</label>
-                    <select class="form-select" [(ngModel)]="report.filters.classId">
+                    <select class="form-select" [(ngModel)]="report.filters.classId" (change)="onClassFilterChange(report)">
                       <option value="">All Classes</option>
                       @for (c of classes(); track c._id) {
                         <option [value]="c._id">{{ c.name }}</option>
@@ -117,10 +117,19 @@ interface ReportConfig {
                     </select>
                   </div>
                   <div class="filter-item">
+                    <label>Section</label>
+                    <select class="form-select" [(ngModel)]="report.filters.section">
+                      <option value="">All Sections</option>
+                      @for (s of getSectionsForClass(report.filters.classId); track s) {
+                        <option [value]="s">{{ s }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="filter-item">
                     <label>Exam</label>
                     <select class="form-select" [(ngModel)]="report.filters.examId">
                       <option value="">All Exams</option>
-                      @for (e of exams(); track e._id) {
+                      @for (e of getFilteredExams(report.filters.classId); track e._id) {
                         <option [value]="e._id">{{ e.name }}</option>
                       }
                     </select>
@@ -312,7 +321,7 @@ export class ReportsComponent implements OnInit {
       key: 'results', icon: '📝', title: 'Results Report', 
       description: 'Exam results analysis and grade distribution', 
       format: 'pdf',
-      filters: { classId: '', examId: '', include: '' }
+      filters: { classId: '', section: '', examId: '', include: '' }
     },
     { 
       key: 'fees', icon: '💰', title: 'Financial Report', 
@@ -399,6 +408,43 @@ export class ReportsComponent implements OnInit {
 
   toggleExpand(key: string): void {
     this.expandedReport = this.expandedReport === key ? '' : key;
+  }
+
+  getFilteredExams(classId: string): any[] {
+    if (!classId) return this.exams();
+    
+    return this.exams().filter(exam => {
+      // Check if exam is assigned to this class via schedule
+      const hasScheduleForClass = exam.schedule?.some((s: any) => {
+        const scheduleClassId = typeof s.class === 'object' ? s.class._id : s.class;
+        return scheduleClassId === classId;
+      });
+      if (hasScheduleForClass) return true;
+      
+      // Check if exam is directly assigned to this class
+      const hasClassAssignment = exam.classes?.some((c: any) => {
+        const examClassId = typeof c === 'object' ? c._id : c;
+        return examClassId === classId;
+      });
+      return hasClassAssignment;
+    });
+  }
+
+  getSectionsForClass(classId: string): string[] {
+    if (!classId) return ['A', 'B', 'C', 'D'];
+    const cls = this.classes().find(c => c._id === classId);
+    if (!cls?.sections?.length) return ['A', 'B', 'C', 'D'];
+    return cls.sections.map((s: any) => typeof s === 'string' ? s : s.name);
+  }
+
+  onClassFilterChange(report: ReportConfig): void {
+    // Reset exam selection when class changes
+    if (report.filters?.examId) {
+      report.filters.examId = '';
+    }
+    if (report.filters?.section) {
+      report.filters.section = '';
+    }
   }
 
   generate(report: ReportConfig): void {

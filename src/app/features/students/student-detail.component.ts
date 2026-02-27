@@ -219,6 +219,222 @@ import { Student, Enrollment } from '../../core/models';
               }
             </div>
           }
+          @case ('exams') {
+            <div class="tab-content animate-in">
+              <h3>Exam Schedule</h3>
+              @if (loadingExams()) {
+                <div class="skeleton" style="height:150px;border-radius:8px"></div>
+              } @else if (studentExams().upcoming.length || studentExams().ongoing.length || studentExams().completed.length) {
+                <!-- Ongoing Exams -->
+                @if (studentExams().ongoing.length) {
+                  <div class="exam-section">
+                    <h4 class="exam-section-title ongoing-title">🔴 Ongoing Exams</h4>
+                    <div class="exam-list">
+                      @for (e of studentExams().ongoing; track e._id) {
+                        <div class="exam-card-container">
+                          <div class="exam-item ongoing" (click)="toggleExamSchedule(e._id)">
+                            <div class="exam-date-badge">
+                              <span class="exam-day">{{ e.startDate | date:'d' }}</span>
+                              <span class="exam-month">{{ e.startDate | date:'MMM' }}</span>
+                            </div>
+                            <div class="exam-details">
+                              <div class="exam-name">{{ e.name }}</div>
+                              <div class="exam-meta">
+                                <span class="exam-type-badge">{{ formatExamType(e.examType) }}</span>
+                                <span>{{ e.startDate | date:'mediumDate' }} - {{ e.endDate | date:'mediumDate' }}</span>
+                              </div>
+                              @if (e.schedule?.length) {
+                                <div class="exam-subjects-toggle">
+                                  {{ expandedExam() === e._id ? '▼' : '▶' }} {{ e.schedule.length }} subjects scheduled - Click to view details
+                                </div>
+                              }
+                            </div>
+                          </div>
+                          @if (expandedExam() === e._id) {
+                            <div class="exam-schedule-detail">
+                              <!-- Exam Overview -->
+                              <div class="exam-overview">
+                                <div class="overview-stats">
+                                  <div class="overview-stat"><span class="stat-icon">📚</span><span class="stat-value">{{ e.schedule?.length || 0 }}</span><span class="stat-label">Subjects</span></div>
+                                  <div class="overview-stat"><span class="stat-icon">📊</span><span class="stat-value">{{ getTotalMarks(e) }}</span><span class="stat-label">Total Marks</span></div>
+                                  <div class="overview-stat"><span class="stat-icon">📅</span><span class="stat-value">{{ getExamDays(e) }}</span><span class="stat-label">Days</span></div>
+                                  <div class="overview-stat"><span class="stat-icon">⏱️</span><span class="stat-value">{{ e.status || 'scheduled' }}</span><span class="stat-label">Status</span></div>
+                                </div>
+                                @if (e.description) {
+                                  <div class="exam-description">ℹ️ {{ e.description }}</div>
+                                }
+                              </div>
+                              <!-- Schedule by Day -->
+                              @if (e.schedule?.length) {
+                                <div class="schedule-section-title">📋 Exam Schedule</div>
+                                @for (day of getGroupedSchedule(e); track day.date) {
+                                  <div class="schedule-day">
+                                    <div class="schedule-day-header">📅 {{ day.date | date:'EEEE, MMMM d, yyyy' }}</div>
+                                    <div class="schedule-slots">
+                                      @for (slot of day.slots; track slot._id) {
+                                        <div class="schedule-slot">
+                                          <span class="slot-time">🕐 {{ slot.startTime }} - {{ slot.endTime }}</span>
+                                          <span class="slot-subject">📚 {{ getScheduleSubjectName(slot) }}</span>
+                                          @if (slot.room) { <span class="slot-room">🚪 {{ slot.room }}</span> }
+                                          <span class="slot-marks">{{ slot.maxMarks }} marks (pass: {{ slot.passingMarks }})</span>
+                                          @if (slot.instructions) { <div class="slot-instructions">💡 {{ slot.instructions }}</div> }
+                                        </div>
+                                      }
+                                    </div>
+                                  </div>
+                                }
+                              } @else {
+                                <div class="no-schedule">Schedule not yet published for this exam.</div>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+                <!-- Upcoming Exams -->
+                @if (studentExams().upcoming.length) {
+                  <div class="exam-section">
+                    <h4 class="exam-section-title upcoming-title">📅 Upcoming Exams</h4>
+                    <div class="exam-list">
+                      @for (e of studentExams().upcoming; track e._id) {
+                        <div class="exam-card-container">
+                          <div class="exam-item upcoming" (click)="toggleExamSchedule(e._id)">
+                            <div class="exam-date-badge">
+                              <span class="exam-day">{{ e.startDate | date:'d' }}</span>
+                              <span class="exam-month">{{ e.startDate | date:'MMM' }}</span>
+                            </div>
+                            <div class="exam-details">
+                              <div class="exam-name">{{ e.name }}</div>
+                              <div class="exam-meta">
+                                <span class="exam-type-badge">{{ formatExamType(e.examType) }}</span>
+                                <span>{{ e.startDate | date:'mediumDate' }} - {{ e.endDate | date:'mediumDate' }}</span>
+                                <span class="days-left">{{ getDaysUntil(e.startDate) }} days left</span>
+                              </div>
+                              @if (e.schedule?.length) {
+                                <div class="exam-subjects-toggle">
+                                  {{ expandedExam() === e._id ? '▼' : '▶' }} {{ e.schedule.length }} subjects scheduled - Click to view details
+                                </div>
+                              } @else {
+                                <div class="exam-subjects-toggle">Click to view exam details</div>
+                              }
+                            </div>
+                          </div>
+                          @if (expandedExam() === e._id) {
+                            <div class="exam-schedule-detail">
+                              <div class="exam-overview">
+                                <div class="overview-stats">
+                                  <div class="overview-stat"><span class="stat-icon">📚</span><span class="stat-value">{{ e.schedule?.length || 0 }}</span><span class="stat-label">Subjects</span></div>
+                                  <div class="overview-stat"><span class="stat-icon">📊</span><span class="stat-value">{{ getTotalMarks(e) }}</span><span class="stat-label">Total Marks</span></div>
+                                  <div class="overview-stat"><span class="stat-icon">📅</span><span class="stat-value">{{ getExamDays(e) }}</span><span class="stat-label">Days</span></div>
+                                  <div class="overview-stat"><span class="stat-icon">⏰</span><span class="stat-value">{{ getDaysUntil(e.startDate) }}</span><span class="stat-label">Days Left</span></div>
+                                </div>
+                                @if (e.description) {
+                                  <div class="exam-description">ℹ️ {{ e.description }}</div>
+                                }
+                              </div>
+                              @if (e.schedule?.length) {
+                                <div class="schedule-section-title">📋 Exam Schedule</div>
+                                @for (day of getGroupedSchedule(e); track day.date) {
+                                  <div class="schedule-day">
+                                    <div class="schedule-day-header">📅 {{ day.date | date:'EEEE, MMMM d, yyyy' }}</div>
+                                    <div class="schedule-slots">
+                                      @for (slot of day.slots; track slot._id) {
+                                        <div class="schedule-slot">
+                                          <span class="slot-time">🕐 {{ slot.startTime }} - {{ slot.endTime }}</span>
+                                          <span class="slot-subject">📚 {{ getScheduleSubjectName(slot) }}</span>
+                                          @if (slot.room) { <span class="slot-room">🚪 {{ slot.room }}</span> }
+                                          <span class="slot-marks">{{ slot.maxMarks }} marks (pass: {{ slot.passingMarks }})</span>
+                                          @if (slot.instructions) { <div class="slot-instructions">💡 {{ slot.instructions }}</div> }
+                                        </div>
+                                      }
+                                    </div>
+                                  </div>
+                                }
+                              } @else {
+                                <div class="no-schedule">Schedule not yet published for this exam.</div>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+                <!-- Completed Exams -->
+                @if (studentExams().completed.length) {
+                  <div class="exam-section">
+                    <h4 class="exam-section-title completed-title">✅ Completed Exams</h4>
+                    <div class="exam-list">
+                      @for (e of studentExams().completed; track e._id) {
+                        <div class="exam-card-container">
+                          <div class="exam-item completed" (click)="toggleExamSchedule(e._id)">
+                            <div class="exam-date-badge completed-badge">
+                              <span class="exam-day">{{ e.endDate | date:'d' }}</span>
+                              <span class="exam-month">{{ e.endDate | date:'MMM' }}</span>
+                            </div>
+                            <div class="exam-details">
+                              <div class="exam-name">{{ e.name }}</div>
+                              <div class="exam-meta">
+                                <span class="exam-type-badge">{{ formatExamType(e.examType) }}</span>
+                                <span>{{ e.startDate | date:'mediumDate' }} - {{ e.endDate | date:'mediumDate' }}</span>
+                              </div>
+                              @if (e.schedule?.length) {
+                                <div class="exam-subjects-toggle">
+                                  {{ expandedExam() === e._id ? '▼' : '▶' }} {{ e.schedule.length }} subjects
+                                </div>
+                              } @else {
+                                <div class="exam-subjects-toggle">Click to view exam details</div>
+                              }
+                              <a [routerLink]="['/results']" [queryParams]="{examId: e._id, studentId: student()!._id}" class="view-results-link" (click)="$event.stopPropagation()">View Results →</a>
+                            </div>
+                          </div>
+                          @if (expandedExam() === e._id) {
+                            <div class="exam-schedule-detail">
+                              <div class="exam-overview">
+                                <div class="overview-stats">
+                                  <div class="overview-stat"><span class="stat-icon">📚</span><span class="stat-value">{{ e.schedule?.length || 0 }}</span><span class="stat-label">Subjects</span></div>
+                                  <div class="overview-stat"><span class="stat-icon">📊</span><span class="stat-value">{{ getTotalMarks(e) }}</span><span class="stat-label">Total Marks</span></div>
+                                  <div class="overview-stat"><span class="stat-icon">📅</span><span class="stat-value">{{ getExamDays(e) }}</span><span class="stat-label">Days</span></div>
+                                  <div class="overview-stat"><span class="stat-icon">✅</span><span class="stat-value">Completed</span><span class="stat-label">Status</span></div>
+                                </div>
+                                @if (e.description) {
+                                  <div class="exam-description">ℹ️ {{ e.description }}</div>
+                                }
+                              </div>
+                              @if (e.schedule?.length) {
+                                <div class="schedule-section-title">📋 Exam Schedule</div>
+                                @for (day of getGroupedSchedule(e); track day.date) {
+                                  <div class="schedule-day">
+                                    <div class="schedule-day-header">📅 {{ day.date | date:'EEEE, MMMM d, yyyy' }}</div>
+                                    <div class="schedule-slots">
+                                      @for (slot of day.slots; track slot._id) {
+                                        <div class="schedule-slot">
+                                          <span class="slot-time">🕐 {{ slot.startTime }} - {{ slot.endTime }}</span>
+                                          <span class="slot-subject">📚 {{ getScheduleSubjectName(slot) }}</span>
+                                          @if (slot.room) { <span class="slot-room">🚪 {{ slot.room }}</span> }
+                                          <span class="slot-marks">{{ slot.maxMarks }} marks</span>
+                                        </div>
+                                      }
+                                    </div>
+                                  </div>
+                                }
+                              } @else {
+                                <div class="no-schedule">No schedule details available for this exam.</div>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              } @else {
+                <p class="tab-empty">No exams scheduled for this student's class.</p>
+              }
+            </div>
+          }
         }
       </div>
     }
@@ -311,6 +527,57 @@ import { Student, Enrollment } from '../../core/models';
     .parent-name { font-weight: 500; }
     .parent-detail { font-size: var(--text-xs); color: var(--text-tertiary); }
 
+    /* Exam Tab Styles */
+    .exam-section { margin-bottom: var(--space-5); }
+    .exam-section-title { font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2); }
+    .ongoing-title { color: #ef4444; }
+    .upcoming-title { color: #3b82f6; }
+    .completed-title { color: #22c55e; }
+    .exam-list { display: flex; flex-direction: column; gap: var(--space-3); }
+    .exam-card-container { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s; }
+    .exam-card-container:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .exam-item { display: flex; gap: var(--space-4); padding: var(--space-3); cursor: pointer; transition: all 0.2s; }
+    .exam-item.ongoing { border-left: 3px solid #ef4444; background: #fef2f2; }
+    .exam-item.upcoming { border-left: 3px solid #3b82f6; }
+    .exam-item.completed { border-left: 3px solid #22c55e; opacity: 0.85; }
+    .exam-date-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 50px; padding: var(--space-2); background: var(--primary); color: white; border-radius: var(--radius-md); }
+    .exam-date-badge.completed-badge { background: #22c55e; }
+    .exam-day { font-size: var(--text-xl); font-weight: 700; line-height: 1; }
+    .exam-month { font-size: var(--text-xs); text-transform: uppercase; }
+    .exam-details { flex: 1; }
+    .exam-name { font-weight: 600; margin-bottom: 4px; }
+    .exam-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); font-size: var(--text-xs); color: var(--text-tertiary); }
+    .exam-type-badge { background: var(--bg-secondary); padding: 2px 8px; border-radius: 8px; font-weight: 500; }
+    .days-left { color: #3b82f6; font-weight: 500; }
+    .exam-subjects-toggle { font-size: var(--text-xs); color: var(--primary); margin-top: 4px; font-weight: 500; cursor: pointer; }
+    .view-results-link { font-size: var(--text-xs); color: var(--primary); font-weight: 500; margin-top: 4px; display: inline-block; }
+    
+    /* Expandable Schedule Detail */
+    .exam-schedule-detail { background: var(--bg-secondary); padding: var(--space-4); border-top: 1px solid var(--border); animation: slideDown 0.2s ease; }
+    @keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
+    .schedule-day { margin-bottom: var(--space-4); }
+    .schedule-day:last-child { margin-bottom: 0; }
+    .schedule-day-header { font-weight: 600; font-size: var(--text-sm); color: var(--primary); margin-bottom: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px dashed var(--border); }
+    .schedule-slots { display: flex; flex-direction: column; gap: var(--space-2); }
+    .schedule-slot { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-2) var(--space-3); background: var(--surface); border-radius: var(--radius-md); font-size: var(--text-sm); border: 1px solid var(--border); }
+    .slot-time { font-weight: 500; color: var(--text-secondary); min-width: 120px; }
+    .slot-subject { font-weight: 600; color: var(--text-primary); flex: 1; min-width: 150px; }
+    .slot-room { color: var(--text-tertiary); font-size: var(--text-xs); }
+    .slot-marks { color: var(--text-secondary); font-size: var(--text-xs); background: var(--bg-secondary); padding: 2px 8px; border-radius: 8px; }
+    .slot-instructions { width: 100%; font-size: var(--text-xs); color: var(--text-tertiary); background: #fefce8; padding: 4px 8px; border-radius: 4px; margin-top: 4px; }
+    
+    /* Exam Overview Stats */
+    .exam-overview { margin-bottom: var(--space-4); }
+    .overview-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
+    .overview-stat { display: flex; flex-direction: column; align-items: center; padding: var(--space-3); background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center; }
+    .stat-icon { font-size: var(--text-lg); margin-bottom: 4px; }
+    .stat-value { font-size: var(--text-lg); font-weight: 700; color: var(--text-primary); }
+    .stat-label { font-size: var(--text-xs); color: var(--text-tertiary); }
+    .exam-description { font-size: var(--text-sm); color: var(--text-secondary); padding: var(--space-2) var(--space-3); background: #f0f9ff; border-radius: var(--radius-md); border-left: 3px solid #3b82f6; }
+    .schedule-section-title { font-weight: 600; font-size: var(--text-sm); color: var(--text-primary); margin-bottom: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); }
+    .no-schedule { padding: var(--space-4); text-align: center; color: var(--text-tertiary); font-style: italic; }
+    @media (max-width: 600px) { .overview-stats { grid-template-columns: repeat(2, 1fr); } }
+
     .grid { display: grid; gap: var(--space-4); }
     .grid-3 { grid-template-columns: repeat(3, 1fr); }
     @media (max-width: 900px) {
@@ -335,15 +602,36 @@ export class StudentDetailComponent implements OnInit {
 
   tabs = [
     { key: 'attendance', icon: '📋', label: 'Attendance' },
+    { key: 'exams', icon: '📅', label: 'Exams' },
     { key: 'results', icon: '📝', label: 'Results' },
     { key: 'fees', icon: '💰', label: 'Fees' },
     { key: 'parents', icon: '👨‍👩‍👧', label: 'Parents' },
   ];
+  loadingExams = signal(false);
+  studentExams = signal<{ upcoming: any[]; ongoing: any[]; completed: any[] }>({ upcoming: [], ongoing: [], completed: [] });
+  expandedExam = signal<string>('');
+  subjects = signal<any[]>([]);
+  subjectMap = signal<Map<string, string>>(new Map());
 
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
     this.loadStudent(id);
     this.loadEnrollmentHistory(id);
+    this.loadStudentExams(id);
+    this.loadSubjects();
+  }
+
+  loadSubjects(): void {
+    this.api.get<any>('/subjects').subscribe({
+      next: (res) => {
+        const list = res.data?.data || res.data || [];
+        this.subjects.set(list);
+        const map = new Map<string, string>();
+        list.forEach((s: any) => map.set(s._id, s.name || s.code || 'Subject'));
+        this.subjectMap.set(map);
+      },
+      error: () => {}
+    });
   }
 
   loadStudent(id: string): void {
@@ -412,4 +700,139 @@ export class StudentDetailComponent implements OnInit {
     if (!p) return '?';
     return `${p.firstName?.charAt(0) || ''}${p.lastName?.charAt(0) || ''}`;
   }
+
+  loadStudentExams(studentId: string): void {
+    this.loadingExams.set(true);
+    this.api.get<any>(`/exams/student/${studentId}`).subscribe({
+      next: (res) => {
+        const data = res.data || res || {};
+        this.studentExams.set({
+          upcoming: data.upcoming || [],
+          ongoing: data.ongoing || [],
+          completed: data.completed || []
+        });
+        this.loadingExams.set(false);
+      },
+      error: () => {
+        // Fallback: load exams by class if student endpoint fails
+        const student = this.student();
+        if (student?.currentClass) {
+          const classId = typeof student.currentClass === 'object' 
+            ? (student.currentClass as any)._id 
+            : student.currentClass;
+          const section = student.currentSection || '';
+          this.loadExamsByClass(classId, section);
+        } else {
+          this.loadingExams.set(false);
+        }
+      }
+    });
+  }
+
+  private loadExamsByClass(classId: string, section: string): void {
+    const params: any = { limit: 50 };
+    if (section) params.section = section;
+    
+    this.api.get<any>(`/exams/class/${classId}/section/${section || 'A'}`).subscribe({
+      next: (res) => {
+        const exams = res.data || [];
+        const now = new Date();
+        const upcoming: any[] = [];
+        const ongoing: any[] = [];
+        const completed: any[] = [];
+
+        exams.forEach((exam: any) => {
+          const start = new Date(exam.startDate);
+          const end = new Date(exam.endDate);
+          if (end < now) {
+            completed.push(exam);
+          } else if (start <= now && end >= now) {
+            ongoing.push(exam);
+          } else {
+            upcoming.push(exam);
+          }
+        });
+
+        upcoming.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+        completed.sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+
+        this.studentExams.set({ upcoming, ongoing, completed });
+        this.loadingExams.set(false);
+      },
+      error: () => this.loadingExams.set(false)
+    });
+  }
+
+  formatExamType(type: string): string {
+    if (!type) return 'Exam';
+    return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+
+  getDaysUntil(date: string): number {
+    if (!date) return 0;
+    const target = new Date(date);
+    const now = new Date();
+    const diff = target.getTime() - now.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  }
+
+  toggleExamSchedule(examId: string): void {
+    this.expandedExam.set(this.expandedExam() === examId ? '' : examId);
+  }
+
+  getGroupedSchedule(exam: any): { date: Date; slots: any[] }[] {
+    if (!exam?.schedule?.length) return [];
+    
+    const grouped: { [date: string]: any[] } = {};
+    exam.schedule.forEach((item: any) => {
+      const dateKey = new Date(item.date).toISOString().split('T')[0];
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(item);
+    });
+
+    return Object.entries(grouped)
+      .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+      .map(([date, slots]) => ({
+        date: new Date(date),
+        slots: slots.sort((a: any, b: any) => (a.startTime || '').localeCompare(b.startTime || ''))
+      }));
+  }
+
+  getSubjectName(subject: any): string {
+    if (!subject) return 'Unknown Subject';
+    if (typeof subject === 'string') return subject;
+    return subject.name || subject.code || 'Subject';
+  }
+
+  getScheduleSubjectName(slot: any): string {
+    // 1. Try the denormalized subjectName field (best - no lookup needed)
+    if (slot.subjectName) return slot.subjectName;
+    
+    // 2. Try populated subject object
+    if (slot.subject && typeof slot.subject === 'object' && slot.subject.name) {
+      return slot.subject.name;
+    }
+    
+    // 3. Try lookup from subjects map by ID
+    const subjectId = typeof slot.subject === 'string' ? slot.subject : slot.subject?._id;
+    if (subjectId && this.subjectMap().has(subjectId)) {
+      return this.subjectMap().get(subjectId) || 'Subject';
+    }
+    
+    // 4. Fallback
+    return 'Subject TBD';
+  }
+
+  getTotalMarks(exam: any): number {
+    if (!exam?.schedule?.length) return 0;
+    return exam.schedule.reduce((sum: number, slot: any) => sum + (slot.maxMarks || 0), 0);
+  }
+
+  getExamDays(exam: any): number {
+    if (!exam?.startDate || !exam?.endDate) return 0;
+    const start = new Date(exam.startDate);
+    const end = new Date(exam.endDate);
+    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  }
 }
+
