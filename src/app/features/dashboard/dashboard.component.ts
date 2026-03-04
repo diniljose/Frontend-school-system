@@ -4,10 +4,13 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration } from 'chart.js';
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardStats, UserRole } from '../../core/models';
+
+// Register Chart.js components
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-dashboard',
@@ -59,27 +62,27 @@ import { DashboardStats, UserRole } from '../../core/models';
           <div class="stat-card animate-in" routerLink="/attendance" style="cursor:pointer">
             <div class="stat-icon" style="background: rgba(16,185,129,0.12); color: #10b981;">📋</div>
             <div class="stat-label">Attendance Rate</div>
-            <div class="stat-value">{{ studentData()?.attendanceRate || 92 }}%</div>
-            <div class="stat-change positive">Good standing</div>
+            <div class="stat-value">{{ studentData()?.attendanceRate ?? '-' }}{{ studentData()?.attendanceRate ? '%' : '' }}</div>
+            <div class="stat-change" [class.positive]="(studentData()?.attendanceRate || 0) >= 75">{{ getAttendanceStatus() }}</div>
           </div>
           <div class="stat-card animate-in" routerLink="/results" style="cursor:pointer;animation-delay:.05s">
             <div class="stat-icon" style="background: rgba(99,102,241,0.12); color: #6366f1;">📊</div>
             <div class="stat-label">Current Grade</div>
-            <div class="stat-value">{{ studentData()?.currentGrade || 'A' }}</div>
-            <div class="stat-change positive">Top 10%</div>
+            <div class="stat-value">{{ studentData()?.currentGrade || '-' }}</div>
+            <div class="stat-change" [class.positive]="studentData()?.currentGrade">{{ studentData()?.currentGrade ? 'Latest result' : 'No results yet' }}</div>
           </div>
           <div class="stat-card animate-in" routerLink="/exams" style="cursor:pointer;animation-delay:.1s">
             <div class="stat-icon" style="background: rgba(245,158,11,0.12); color: #f59e0b;">📝</div>
             <div class="stat-label">Upcoming Exams</div>
-            <div class="stat-value">{{ studentData()?.upcomingExams || 3 }}</div>
-            <div class="stat-change neutral">Next week</div>
+            <div class="stat-value">{{ studentData()?.upcomingExams ?? 0 }}</div>
+            <div class="stat-change neutral">{{ studentData()?.upcomingExams ? 'Scheduled' : 'None scheduled' }}</div>
           </div>
           <div class="stat-card animate-in" routerLink="/fees" style="cursor:pointer;animation-delay:.15s">
             <div class="stat-icon" style="background: rgba(239,68,68,0.12); color: #ef4444;">💰</div>
             <div class="stat-label">Fee Status</div>
-            <div class="stat-value">{{ studentData()?.feeStatus || 'Paid' }}</div>
-            <div class="stat-change" [class.positive]="studentData()?.feeStatus === 'Paid'" [class.negative]="studentData()?.feeStatus !== 'Paid'">
-              {{ studentData()?.feeStatus === 'Paid' ? 'All clear' : 'Due' }}
+            <div class="stat-value">{{ studentData()?.feeStatus || '-' }}</div>
+            <div class="stat-change" [class.positive]="studentData()?.feeStatus === 'Paid'" [class.negative]="studentData()?.feeStatus === 'Pending'">
+              {{ getFeeStatusText() }}
             </div>
           </div>
         </div>
@@ -189,35 +192,35 @@ import { DashboardStats, UserRole } from '../../core/models';
           <div class="stat-card animate-in" routerLink="/classes" style="cursor:pointer">
             <div class="stat-icon" style="background: rgba(99,102,241,0.12); color: #6366f1;">🏫</div>
             <div class="stat-label">My Classes</div>
-            <div class="stat-value">{{ teacherData()?.classCount || 4 }}</div>
-            <div class="stat-change neutral">{{ teacherData()?.totalStudents || 120 }} students</div>
+            <div class="stat-value">{{ teacherData()?.classCount ?? 0 }}</div>
+            <div class="stat-change neutral">{{ teacherData()?.totalStudents ?? 0 }} students</div>
           </div>
           <div class="stat-card animate-in" routerLink="/attendance" style="cursor:pointer;animation-delay:.05s">
             <div class="stat-icon" style="background: rgba(16,185,129,0.12); color: #10b981;">📋</div>
             <div class="stat-label">Today's Attendance</div>
-            <div class="stat-value">{{ teacherData()?.todayAttendance || 94 }}%</div>
-            <div class="stat-change positive">{{ teacherData()?.presentToday || 113 }} present</div>
+            <div class="stat-value">{{ teacherData()?.todayAttendance ?? '-' }}{{ teacherData()?.todayAttendance ? '%' : '' }}</div>
+            <div class="stat-change" [class.positive]="teacherData()?.presentToday">{{ teacherData()?.presentToday ?? 0 }} present</div>
           </div>
           @if (userRole() === 'class_teacher') {
             <div class="stat-card animate-in" routerLink="/pending-students" style="cursor:pointer;animation-delay:.1s">
               <div class="stat-icon" style="background: rgba(245,158,11,0.12); color: #f59e0b;">⏳</div>
               <div class="stat-label">Pending Approvals</div>
-              <div class="stat-value">{{ teacherData()?.pendingApprovals || 0 }}</div>
-              <div class="stat-change" [class.negative]="(teacherData()?.pendingApprovals || 0) > 0">Needs review</div>
+              <div class="stat-value">{{ teacherData()?.pendingApprovals ?? 0 }}</div>
+              <div class="stat-change" [class.negative]="(teacherData()?.pendingApprovals ?? 0) > 0">{{ (teacherData()?.pendingApprovals ?? 0) > 0 ? 'Needs review' : 'All clear' }}</div>
             </div>
           } @else {
             <div class="stat-card animate-in" routerLink="/subjects" style="cursor:pointer;animation-delay:.1s">
               <div class="stat-icon" style="background: rgba(245,158,11,0.12); color: #f59e0b;">📖</div>
               <div class="stat-label">My Subjects</div>
-              <div class="stat-value">{{ teacherData()?.subjectCount || 3 }}</div>
+              <div class="stat-value">{{ teacherData()?.subjectCount ?? 0 }}</div>
               <div class="stat-change neutral">Across classes</div>
             </div>
           }
-          <div class="stat-card animate-in" routerLink="/exams" style="cursor:pointer;animation-delay:.15s">
+          <div class="stat-card animate-in" routerLink="/results/entry" style="cursor:pointer;animation-delay:.15s">
             <div class="stat-icon" style="background: rgba(239,68,68,0.12); color: #ef4444;">📝</div>
             <div class="stat-label">Pending Evaluations</div>
-            <div class="stat-value">{{ teacherData()?.pendingEvaluations || 12 }}</div>
-            <div class="stat-change negative">Due this week</div>
+            <div class="stat-value">{{ teacherData()?.pendingEvaluations ?? 0 }}</div>
+            <div class="stat-change" [class.negative]="(teacherData()?.pendingEvaluations ?? 0) > 0">{{ (teacherData()?.pendingEvaluations ?? 0) > 0 ? 'Due this week' : 'All done' }}</div>
           </div>
         </div>
 
@@ -598,6 +601,23 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  getAttendanceStatus(): string {
+    const rate = this.studentData()?.attendanceRate;
+    if (rate === undefined || rate === null) return 'No data';
+    if (rate >= 90) return 'Excellent';
+    if (rate >= 75) return 'Good standing';
+    if (rate >= 50) return 'Needs improvement';
+    return 'Critical';
+  }
+
+  getFeeStatusText(): string {
+    const status = this.studentData()?.feeStatus;
+    if (!status) return 'Check status';
+    if (status === 'Paid') return 'All clear';
+    if (status === 'Pending') return 'Payment due';
+    return status;
+  }
+
   loadStats(): void {
     this.api.get<DashboardStats>('/dashboard/stats').subscribe({
       next: (res) => {
@@ -676,7 +696,11 @@ export class DashboardComponent implements OnInit {
   private loadEvents(): void {
     this.api.get('/events?limit=5&upcoming=true').subscribe({
       next: (res: any) => {
-        const events = (res.data?.items || res.data || []).map((e: any) => {
+        let rawEvents = res?.data?.items || res?.data?.data || res?.data || [];
+        if (!Array.isArray(rawEvents)) {
+          rawEvents = [];
+        }
+        const events = rawEvents.map((e: any) => {
           const date = new Date(e.startDate || e.date);
           return {
             id: e._id,
@@ -695,7 +719,13 @@ export class DashboardComponent implements OnInit {
 
   private loadActivities(): void {
     this.api.get('/dashboard/recent-activities').subscribe({
-      next: (res: any) => this.recentActivities.set(res.data || []),
+      next: (res: any) => {
+        let activities = res?.data?.data || res?.data?.items || res?.data || [];
+        if (!Array.isArray(activities)) {
+          activities = [];
+        }
+        this.recentActivities.set(activities);
+      },
       error: () => this.recentActivities.set([])
     });
   }
@@ -703,7 +733,12 @@ export class DashboardComponent implements OnInit {
   private loadUpcomingExams(): void {
     this.api.get('/exams/upcoming').subscribe({
       next: (res: any) => {
-        const exams = (res.data || res || []).slice(0, 5).map((e: any) => {
+        // Handle both paginated response and direct array
+        let rawExams = res?.data?.data || res?.data?.items || res?.data || res || [];
+        if (!Array.isArray(rawExams)) {
+          rawExams = [];
+        }
+        const exams = rawExams.slice(0, 5).map((e: any) => {
           const startDate = new Date(e.startDate);
           return {
             _id: e._id,

@@ -120,6 +120,9 @@ import { Exam } from '../../core/models';
             <div class="exam-actions">
               <a [routerLink]="['/exams', exam._id]" class="btn btn-ghost btn-sm">✏️ Edit</a>
               <a [routerLink]="['/exams', exam._id, 'schedule']" class="btn btn-ghost btn-sm">📅 Schedule</a>
+              @if (isCompleted(exam)) {
+                <a [routerLink]="['/results/entry']" [queryParams]="{examId: exam._id}" class="btn btn-primary btn-sm">📝 Enter Marks</a>
+              }
               <button class="btn btn-ghost btn-sm text-danger" (click)="delete(exam._id)">🗑️ Delete</button>
             </div>
           </div>

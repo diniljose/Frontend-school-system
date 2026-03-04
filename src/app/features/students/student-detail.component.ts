@@ -1,14 +1,16 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Student, Enrollment } from '../../core/models';
 
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
   template: `
     <div class="page-header">
       <div>
@@ -18,6 +20,7 @@ import { Student, Enrollment } from '../../core/models';
       <div class="header-actions">
         <a routerLink="/students" class="btn btn-secondary">← Back</a>
         @if (student()) {
+          <a [routerLink]="['/students', student()!._id, 'analytics']" class="btn btn-info">📊 Analytics</a>
           <a [routerLink]="['/students', student()!._id, 'edit']" class="btn btn-primary">Edit Student</a>
         }
       </div>
@@ -176,19 +179,159 @@ import { Student, Enrollment } from '../../core/models';
               }
             </div>
           }
+          @case ('analytics') {
+            <div class="tab-content animate-in">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4)">
+                <h3>📊 Performance Analytics</h3>
+                <button class="btn btn-primary btn-sm" (click)="loadStudentAnalytics()">🔄 Refresh</button>
+              </div>
+              
+              @if (loadingAnalytics()) {
+                <div class="skeleton" style="height:300px;border-radius:8px"></div>
+              } @else if (!studentAnalytics()) {
+                <div class="analytics-empty">
+                  <div class="empty-icon">📊</div>
+                  <p>Click refresh to load performance analytics</p>
+                  <button class="btn btn-primary" (click)="loadStudentAnalytics()">Load Analytics</button>
+                </div>
+              } @else {
+                <!-- Summary Stats -->
+                <div class="analytics-summary">
+                  <div class="analytics-stat">
+                    <span class="analytics-stat-value">{{ studentAnalytics()?.summary?.totalExams || 0 }}</span>
+                    <span class="analytics-stat-label">Exams Taken</span>
+                  </div>
+                  <div class="analytics-stat">
+                    <span class="analytics-stat-value">{{ studentAnalytics()?.summary?.averagePercentage?.toFixed(1) || 0 }}%</span>
+                    <span class="analytics-stat-label">Average Score</span>
+                  </div>
+                  <div class="analytics-stat success">
+                    <span class="analytics-stat-value">{{ studentAnalytics()?.summary?.passedExams || 0 }}</span>
+                    <span class="analytics-stat-label">Exams Passed</span>
+                  </div>
+                  <div class="analytics-stat danger">
+                    <span class="analytics-stat-value">{{ studentAnalytics()?.summary?.failedExams || 0 }}</span>
+                    <span class="analytics-stat-label">Exams Failed</span>
+                  </div>
+                </div>
+
+                <!-- Subject-wise Performance -->
+                @if (studentAnalytics()?.subjectAnalysis?.length) {
+                  <h4 style="margin:var(--space-6) 0 var(--space-3)">📚 Subject-wise Performance</h4>
+                  <div class="subject-analytics-grid">
+                    @for (sub of studentAnalytics()?.subjectAnalysis || []; track sub.subjectId) {
+                      <div class="subject-analytics-card">
+                        <div class="subject-header">
+                          <span class="subject-name">{{ sub.subjectName }}</span>
+                          <span class="trend-icon" [class]="getAnalyticsTrendClass(sub.trend)">
+                            {{ getAnalyticsTrendIcon(sub.trend) }} {{ sub.trendPercentage > 0 ? '+' : '' }}{{ sub.trendPercentage?.toFixed(1) || 0 }}%
+                          </span>
+                        </div>
+                        <div class="subject-avg">{{ sub.averagePercentage?.toFixed(1) }}% avg</div>
+                        <div class="subject-range">
+                          <span class="high">↑ {{ sub.highestPercentage?.toFixed(0) }}%</span>
+                          <span class="low">↓ {{ sub.lowestPercentage?.toFixed(0) }}%</span>
+                        </div>
+                        <div class="subject-pass-rate">
+                          <div class="progress-mini">
+                            <div class="progress-fill" [style.width.%]="sub.passRate"></div>
+                          </div>
+                          <span>{{ sub.passRate?.toFixed(0) }}% pass rate</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Performance Trend / Exam History -->
+                @if (studentAnalytics()?.examResults?.length) {
+                  <h4 style="margin:var(--space-6) 0 var(--space-3)">📈 Exam History</h4>
+                  <table class="data-table">
+                    <thead><tr><th>Exam</th><th>Type</th><th>Marks</th><th>%</th><th>Grade</th><th>Rank</th></tr></thead>
+                    <tbody>
+                      @for (exam of studentAnalytics()?.examResults || []; track exam.examId) {
+                        <tr>
+                          <td><strong>{{ exam.examName }}</strong></td>
+                          <td><span class="badge badge-info">{{ exam.examType }}</span></td>
+                          <td>{{ exam.obtainedMarks }}/{{ exam.totalMarks }}</td>
+                          <td>{{ exam.percentage?.toFixed(1) }}%</td>
+                          <td><span class="badge" [class]="getAnalyticsGradeBadge(exam.grade)">{{ exam.grade }}</span></td>
+                          <td>{{ exam.rank || '-' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+
+                <!-- Exam Comparisons -->
+                @if (studentAnalytics()?.examComparisons?.length) {
+                  <h4 style="margin:var(--space-6) 0 var(--space-3)">📊 Exam Comparisons</h4>
+                  @for (comparison of studentAnalytics()?.examComparisons || []; track comparison.currentExam?.examId) {
+                    <div class="comparison-card">
+                      <div class="comparison-header">
+                        <span>{{ comparison.previousExam?.examName }} → {{ comparison.currentExam?.examName }}</span>
+                        <span class="comparison-diff" [class]="comparison.overallDifference > 0 ? 'positive' : comparison.overallDifference < 0 ? 'negative' : ''">
+                          {{ comparison.overallDifference > 0 ? '+' : '' }}{{ comparison.overallDifference?.toFixed(1) }}%
+                        </span>
+                      </div>
+                      <div class="comparison-subjects">
+                        @for (sub of comparison.subjectComparisons || []; track sub.subjectId) {
+                          <div class="comparison-subject">
+                            <span class="cs-name">{{ sub.subjectName }}</span>
+                            <span class="cs-current">{{ sub.currentPercentage?.toFixed(0) }}%</span>
+                            @if (sub.status === 'improved') {
+                              <span class="cs-diff positive">+{{ sub.difference?.toFixed(0) }}%</span>
+                            } @else if (sub.status === 'declined') {
+                              <span class="cs-diff negative">{{ sub.difference?.toFixed(0) }}%</span>
+                            } @else if (sub.status === 'same') {
+                              <span class="cs-diff">→ same</span>
+                            } @else {
+                              <span class="cs-diff new">new</span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                }
+              }
+            </div>
+          }
           @case ('fees') {
             <div class="tab-content animate-in">
               <h3>Fee Records</h3>
-              @if (feeData().length > 0) {
+              @if (loadingFees()) {
+                <div class="skeleton" style="height:150px;border-radius:8px"></div>
+              } @else if (feeData().length > 0) {
+                <!-- Fee Summary -->
+                <div class="fee-summary">
+                  <div class="fee-summary-item">
+                    <span class="fee-label">Total Due</span>
+                    <span class="fee-value text-danger">{{ getTotalFeeDue() | currency:'INR' }}</span>
+                  </div>
+                  <div class="fee-summary-item">
+                    <span class="fee-label">Total Paid</span>
+                    <span class="fee-value text-success">{{ getTotalFeePaid() | currency:'INR' }}</span>
+                  </div>
+                </div>
                 <table class="data-table">
-                  <thead><tr><th>Fee Type</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead>
+                  <thead><tr><th>Period</th><th class="text-right">Total</th><th class="text-right">Paid</th><th class="text-right">Due</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
                   <tbody>
-                    @for (f of feeData(); track f) {
+                    @for (f of feeData(); track f._id || $index) {
                       <tr>
                         <td>{{ f.type }}</td>
-                        <td>{{ f.amount }}</td>
+                        <td class="text-right">{{ f.amount | currency:'INR' }}</td>
+                        <td class="text-right text-success">{{ f.paidAmount | currency:'INR' }}</td>
+                        <td class="text-right text-danger">{{ f.dueAmount | currency:'INR' }}</td>
                         <td>{{ f.dueDate | date:'mediumDate' }}</td>
-                        <td><span class="badge" [class]="f.status === 'paid' ? 'badge-success' : 'badge-warning'">{{ f.status }}</span></td>
+                        <td><span class="badge" [class]="getFeeBadgeClass(f.status)">{{ f.status }}</span></td>
+                        <td>
+                          @if (f.status !== 'paid') {
+                            <button class="btn btn-primary btn-sm" (click)="openPaymentModal(f)">💰 Pay</button>
+                          } @else {
+                            <span class="text-success">✓ Paid</span>
+                          }
+                        </td>
                       </tr>
                     }
                   </tbody>
@@ -437,6 +580,69 @@ import { Student, Enrollment } from '../../core/models';
           }
         }
       </div>
+
+      <!-- Payment Modal -->
+      @if (showPaymentModal()) {
+        <div class="modal-backdrop" (click)="closePaymentModal()">
+          <div class="modal-content card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h2>Record Payment</h2>
+              <button class="close-btn" (click)="closePaymentModal()">×</button>
+            </div>
+            
+            <div class="payment-info">
+              <p><strong>Period:</strong> {{ selectedFee()?.type }}</p>
+              <p><strong>Total Amount:</strong> {{ selectedFee()?.amount | currency:'INR' }}</p>
+              <p><strong>Already Paid:</strong> {{ selectedFee()?.paidAmount | currency:'INR' }}</p>
+              <p><strong>Balance Due:</strong> {{ selectedFee()?.dueAmount | currency:'INR' }}</p>
+            </div>
+            
+            <form (ngSubmit)="recordPayment()">
+              <div class="form-group">
+                <label>Payment Amount *</label>
+                <input type="number" class="form-input" [(ngModel)]="paymentForm.amount" name="amount" 
+                       [max]="selectedFee()?.dueAmount" min="1" required />
+                <div class="quick-btns">
+                  <button type="button" class="btn btn-sm btn-secondary" (click)="setPaymentAmount('full')">Full Amount</button>
+                  <button type="button" class="btn btn-sm btn-secondary" (click)="setPaymentAmount('half')">Half</button>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>Payment Method *</label>
+                <select class="form-select" [(ngModel)]="paymentForm.method" name="method" required>
+                  <option value="cash">Cash</option>
+                  <option value="card">Card</option>
+                  <option value="upi">UPI</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="online">Online</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label>Transaction ID</label>
+                <input type="text" class="form-input" [(ngModel)]="paymentForm.transactionId" name="transactionId" 
+                       placeholder="Reference/Transaction ID (optional)" />
+              </div>
+              
+              <div class="form-group">
+                <label>Remarks</label>
+                <input type="text" class="form-input" [(ngModel)]="paymentForm.remarks" name="remarks" 
+                       placeholder="Payment remarks (optional)" />
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" (click)="closePaymentModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" [disabled]="processingPayment() || !paymentForm.amount">
+                  @if (processingPayment()) { <span class="spinner"></span> }
+                  Record Payment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
     }
   `,
   styles: [`
@@ -585,11 +791,85 @@ import { Student, Enrollment } from '../../core/models';
       .quick-stats { grid-template-columns: repeat(2, 1fr); }
       .hero-content { flex-direction: column; align-items: center; text-align: center; }
     }
+    
+    /* Fee Styles */
+    .fee-summary { display: flex; gap: var(--space-4); margin-bottom: var(--space-4); padding: var(--space-4); background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); }
+    .fee-summary-item { display: flex; flex-direction: column; }
+    .fee-label { font-size: var(--text-sm); color: var(--text-tertiary); }
+    .fee-value { font-size: var(--text-xl); font-weight: 700; }
+    .text-right { text-align: right; }
+    .text-success { color: #22c55e; }
+    .text-danger { color: #ef4444; }
+    
+    /* Payment Modal Styles */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-6); width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+    .modal-header h2 { margin: 0; font-size: var(--text-xl); }
+    .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
+    .payment-info { background: var(--bg-surface); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); }
+    .payment-info p { margin: var(--space-1) 0; font-size: var(--text-sm); }
+    .form-group { margin-bottom: var(--space-4); }
+    .form-group label { display: block; font-weight: 500; margin-bottom: var(--space-1); font-size: var(--text-sm); }
+    .form-input, .form-select { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: var(--text-base); }
+    .quick-btns { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+    .form-actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Analytics Styles */
+    .analytics-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--space-8); text-align: center; color: var(--text-tertiary); }
+    .analytics-empty .empty-icon { font-size: 48px; margin-bottom: var(--space-3); opacity: 0.5; }
+    .analytics-empty p { margin-bottom: var(--space-4); }
+    
+    .analytics-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-4); }
+    .analytics-stat { display: flex; flex-direction: column; align-items: center; padding: var(--space-4); background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); text-align: center; }
+    .analytics-stat.success { border-color: #22c55e; background: #f0fdf4; }
+    .analytics-stat.danger { border-color: #ef4444; background: #fef2f2; }
+    .analytics-stat-value { font-size: var(--text-2xl); font-weight: 700; color: var(--text-primary); }
+    .analytics-stat.success .analytics-stat-value { color: #15803d; }
+    .analytics-stat.danger .analytics-stat-value { color: #dc2626; }
+    .analytics-stat-label { font-size: var(--text-sm); color: var(--text-tertiary); margin-top: 4px; }
+    
+    .subject-analytics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-3); }
+    .subject-analytics-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
+    .subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); }
+    .subject-name { font-weight: 600; color: var(--text-primary); }
+    .trend-icon { font-size: var(--text-sm); padding: 2px 6px; border-radius: 4px; }
+    .trend-icon.trend-up { color: #15803d; background: #dcfce7; }
+    .trend-icon.trend-down { color: #dc2626; background: #fee2e2; }
+    .trend-icon.trend-same { color: #6b7280; background: #f3f4f6; }
+    .subject-avg { font-size: var(--text-lg); font-weight: 700; color: var(--primary); margin-bottom: var(--space-2); }
+    .subject-range { display: flex; gap: var(--space-3); font-size: var(--text-sm); margin-bottom: var(--space-2); }
+    .subject-range .high { color: #15803d; }
+    .subject-range .low { color: #dc2626; }
+    .subject-pass-rate { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--text-tertiary); }
+    .progress-mini { flex: 1; height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; min-width: 60px; }
+    .progress-mini .progress-fill { height: 100%; background: #22c55e; border-radius: 3px; transition: width 0.3s; }
+    
+    .comparison-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-3); }
+    .comparison-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); font-weight: 600; }
+    .comparison-diff { padding: 2px 8px; border-radius: 4px; font-size: var(--text-sm); }
+    .comparison-diff.positive { color: #15803d; background: #dcfce7; }
+    .comparison-diff.negative { color: #dc2626; background: #fee2e2; }
+    .comparison-subjects { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .comparison-subject { display: flex; align-items: center; gap: var(--space-2); padding: 4px 8px; background: var(--bg-secondary); border-radius: 4px; font-size: var(--text-sm); }
+    .cs-name { color: var(--text-secondary); }
+    .cs-current { font-weight: 600; color: var(--text-primary); }
+    .cs-diff { font-weight: 500; }
+    .cs-diff.positive { color: #15803d; }
+    .cs-diff.negative { color: #dc2626; }
+    .cs-diff.new { color: #3b82f6; }
+    
+    @media (max-width: 768px) {
+      .analytics-summary { grid-template-columns: repeat(2, 1fr); }
+    }
   `]
 })
 export class StudentDetailComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   loading = signal(true);
   student = signal<Student | null>(null);
@@ -604,14 +884,29 @@ export class StudentDetailComponent implements OnInit {
     { key: 'attendance', icon: '📋', label: 'Attendance' },
     { key: 'exams', icon: '📅', label: 'Exams' },
     { key: 'results', icon: '📝', label: 'Results' },
+    { key: 'analytics', icon: '📊', label: 'Analytics' },
     { key: 'fees', icon: '💰', label: 'Fees' },
     { key: 'parents', icon: '👨‍👩‍👧', label: 'Parents' },
   ];
   loadingExams = signal(false);
+  loadingAnalytics = signal(false);
   studentExams = signal<{ upcoming: any[]; ongoing: any[]; completed: any[] }>({ upcoming: [], ongoing: [], completed: [] });
+  studentAnalytics = signal<any>(null);
   expandedExam = signal<string>('');
   subjects = signal<any[]>([]);
   subjectMap = signal<Map<string, string>>(new Map());
+  loadingFees = signal(false);
+
+  // Payment modal
+  showPaymentModal = signal(false);
+  selectedFee = signal<any>(null);
+  processingPayment = signal(false);
+  paymentForm = {
+    amount: 0,
+    method: 'cash',
+    transactionId: '',
+    remarks: '',
+  };
 
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
@@ -619,6 +914,39 @@ export class StudentDetailComponent implements OnInit {
     this.loadEnrollmentHistory(id);
     this.loadStudentExams(id);
     this.loadSubjects();
+    this.loadStudentFees(id);
+  }
+
+  loadStudentFees(studentId: string): void {
+    this.loadingFees.set(true);
+    // Get fees for the student - trying without academicYearId first to get all fees
+    this.api.get<any>(`/fees`, { studentId, limit: 50 }).subscribe({
+      next: (res) => {
+        const data = res.data?.items || res.data?.data || res.data || [];
+        const fees = Array.isArray(data) ? data : [];
+        // Transform fee data for display
+        const transformedFees = fees.map((fee: any) => ({
+          _id: fee._id,
+          type: fee.periodLabel || `${this.getMonthName(fee.month)} ${fee.year}` || 'Monthly Fee',
+          amount: fee.totalAmount || 0,
+          paidAmount: fee.paidAmount || 0,
+          dueAmount: fee.dueAmount || fee.balanceAmount || 0,
+          dueDate: fee.dueDate,
+          status: fee.status || 'pending',
+          components: fee.feeComponents || [],
+        }));
+        this.feeData.set(transformedFees);
+        this.loadingFees.set(false);
+      },
+      error: () => {
+        this.loadingFees.set(false);
+      }
+    });
+  }
+
+  private getMonthName(month: number): string {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month - 1] || '';
   }
 
   loadSubjects(): void {
@@ -833,6 +1161,117 @@ export class StudentDetailComponent implements OnInit {
     const start = new Date(exam.startDate);
     const end = new Date(exam.endDate);
     return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  }
+
+  loadStudentAnalytics(): void {
+    const studentId = this.student()?._id;
+    if (!studentId) return;
+    
+    this.loadingAnalytics.set(true);
+    this.api.get<any>(`/results/analytics/student/${studentId}`).subscribe({
+      next: (res) => {
+        const data = res.data || res;
+        this.studentAnalytics.set(data);
+        this.loadingAnalytics.set(false);
+      },
+      error: () => {
+        this.studentAnalytics.set(null);
+        this.loadingAnalytics.set(false);
+      }
+    });
+  }
+
+  getAnalyticsTrendIcon(trend: string): string {
+    switch (trend) {
+      case 'improving': return '📈';
+      case 'declining': return '📉';
+      default: return '➡️';
+    }
+  }
+
+  getAnalyticsTrendClass(trend: string): string {
+    switch (trend) {
+      case 'improving': return 'trend-up';
+      case 'declining': return 'trend-down';
+      default: return 'trend-stable';
+    }
+  }
+
+  getAnalyticsGradeBadge(grade: string): string {
+    if (grade?.startsWith('A')) return 'badge-success';
+    if (grade?.startsWith('B')) return 'badge-info';
+    if (grade?.startsWith('C')) return 'badge-warning';
+    return 'badge-danger';
+  }
+
+  // Fee helper methods
+  getTotalFeeDue(): number {
+    return this.feeData().reduce((sum, f) => sum + (f.dueAmount || 0), 0);
+  }
+
+  getTotalFeePaid(): number {
+    return this.feeData().reduce((sum, f) => sum + (f.paidAmount || 0), 0);
+  }
+
+  getFeeBadgeClass(status: string): string {
+    switch (status) {
+      case 'paid': return 'badge-success';
+      case 'partial': return 'badge-warning';
+      case 'overdue': return 'badge-danger';
+      case 'waived': return 'badge-info';
+      default: return 'badge-secondary';
+    }
+  }
+
+  // Payment modal methods
+  openPaymentModal(fee: any): void {
+    this.selectedFee.set(fee);
+    this.paymentForm = {
+      amount: fee.dueAmount || 0,
+      method: 'cash',
+      transactionId: '',
+      remarks: '',
+    };
+    this.showPaymentModal.set(true);
+  }
+
+  closePaymentModal(): void {
+    this.showPaymentModal.set(false);
+    this.selectedFee.set(null);
+  }
+
+  setPaymentAmount(type: 'full' | 'half'): void {
+    const fee = this.selectedFee();
+    if (!fee) return;
+    this.paymentForm.amount = type === 'full' ? fee.dueAmount : Math.floor(fee.dueAmount / 2);
+  }
+
+  recordPayment(): void {
+    const fee = this.selectedFee();
+    if (!fee || !this.paymentForm.amount) return;
+
+    this.processingPayment.set(true);
+    this.api.post(`/fees/${fee._id}/payment`, {
+      amount: this.paymentForm.amount,
+      method: this.paymentForm.method,
+      transactionId: this.paymentForm.transactionId || undefined,
+      remarks: this.paymentForm.remarks || undefined,
+    }).subscribe({
+      next: (res: any) => {
+        this.processingPayment.set(false);
+        this.toast.success(`Payment of ₹${this.paymentForm.amount} recorded successfully`);
+        this.closePaymentModal();
+        // Refresh fee data
+        const studentId = this.student()?._id;
+        if (studentId) {
+          this.loadStudentFees(studentId);
+        }
+      },
+      error: (err) => {
+        this.processingPayment.set(false);
+        this.toast.error(err?.error?.message || 'Failed to record payment');
+      },
+    });
   }
 }
 

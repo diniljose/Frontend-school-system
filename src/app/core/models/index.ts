@@ -302,18 +302,30 @@ export interface ResultSubject {
 export interface Fee {
   _id: string;
   student: string | Student;
+  class?: string | ClassModel;
+  section?: string;
   academicYear?: string;
+  feeStructure?: string;
+  periodType?: FeePeriodType;
+  periodNumber?: number;
+  periodLabel?: string;
   month?: number;
   year?: number;
   totalAmount?: number;
   paidAmount?: number;
   dueAmount?: number;
+  balanceAmount?: number;
+  netAmount?: number;
+  discount?: number;
+  fine?: number;
   status?: FeeStatus;
   dueDate?: string;
   feeComponents?: FeeComponent[];
   payments?: Payment[];
   discounts?: Discount[];
   fines?: Fine[];
+  isCustom?: boolean;
+  remarks?: string;
 }
 
 export enum FeeStatus {
@@ -324,8 +336,61 @@ export enum FeeStatus {
   WAIVED = 'waived',
 }
 
+export enum FeePeriodType {
+  MONTHLY = 'monthly',
+  QUARTERLY = 'quarterly',
+  HALF_YEARLY = 'half_yearly',
+  YEARLY = 'yearly',
+}
+
+export enum BillingCycle {
+  MONTHLY = 'monthly',
+  QUARTERLY = 'quarterly',
+  HALF_YEARLY = 'half_yearly',
+  YEARLY = 'yearly',
+}
+
+export enum SplitOption {
+  NO_SPLIT = 'no_split',
+  MONTHLY = 'monthly',
+  QUARTERLY = 'quarterly',
+  HALF_YEARLY = 'half_yearly',
+}
+
+export interface FeeStructure {
+  _id: string;
+  academicYear: string | AcademicYear;
+  class: string | ClassModel;
+  section?: string;
+  name: string;
+  billingCycle: BillingCycle;
+  splitOption?: SplitOption;
+  components: FeeComponentDef[];
+  totalAmount: number;
+  dueDays?: number[];
+  lateFeePenalty?: number;
+  gracePeriodDays?: number;
+  isActive: boolean;
+  description?: string;
+}
+
+export interface FeeComponentDef {
+  name: string;
+  amount: number;
+  isOptional?: boolean;
+  description?: string;
+}
+
 export interface FeeComponent { name: string; amount: number; dueDate?: string; }
-export interface Payment { amount: number; method?: string; date?: string; remarks?: string; }
+export interface Payment { 
+  amount: number; 
+  method?: string; 
+  paymentMethod?: string;
+  date?: string; 
+  paidAt?: string;
+  transactionId?: string;
+  remarks?: string; 
+}
 export interface Discount { amount: number; reason?: string; }
 export interface Fine { amount: number; reason?: string; }
 

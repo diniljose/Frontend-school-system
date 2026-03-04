@@ -19,6 +19,14 @@ import { ApiService } from '../../core/services/api.service';
 
     @if (loading()) {
       <div class="skeleton" style="height:600px"></div>
+    } @else if (!hasResults()) {
+      <div class="card empty-state">
+        <div class="empty-icon">📋</div>
+        <h2>No Results Available</h2>
+        <p>No examination results have been entered for this student yet.</p>
+        <p class="text-muted">Results will appear here once teachers have entered marks for completed exams.</p>
+        <a routerLink="/results/entry" class="btn btn-primary">📝 Enter Marks</a>
+      </div>
     } @else {
       <div class="report-card card" id="reportCard">
         <div class="report-header">
@@ -36,7 +44,7 @@ import { ApiService } from '../../core/services/api.service';
           <div class="info-item"><span class="label">Date of Birth</span><span class="value">{{ student()?.dateOfBirth | date:'mediumDate' }}</span></div>
         </div>
 
-        <h3 class="section-title">Examination Results</h3>
+        <h3 class="section-title">{{ examName() || 'Examination' }} Results</h3>
         <table class="report-table">
           <thead>
             <tr><th>Subject</th><th>Max Marks</th><th>Obtained</th><th>Percentage</th><th>Grade</th></tr>
@@ -117,43 +125,68 @@ export class ReportCardComponent implements OnInit {
   loading = signal(true);
   student = signal<any>(null);
   subjects = signal<any[]>([]);
+  hasResults = signal(false);
   totalMax = signal(0);
   totalObtained = signal(0);
   overallPercentage = signal(0);
   overallGrade = signal('');
+  examName = signal('');
 
   ngOnInit(): void {
     const studentId = this.route.snapshot.params['studentId'];
+    const examId = this.route.snapshot.queryParams['examId'];
+    
+    // Load student info
     this.api.get<any>(`/students/${studentId}`).subscribe({
       next: (res) => {
         const s = res.data || res;
         this.student.set(s);
       },
     });
-    // Load results or use demo data
-    this.api.get<any>(`/results`, { studentId }).subscribe({
+    
+    // Build params for results query - filter by examId if provided
+    const resultsParams: any = { studentId };
+    if (examId) {
+      resultsParams.examId = examId;
+    }
+    
+    // Load results from backend
+    this.api.get<any>(`/results`, resultsParams).subscribe({
       next: (res) => {
-        const data = res.data || res || [];
-        if (data.length > 0 && data[0].subjects) {
-          this.subjects.set(data[0].subjects);
+        const responseData = res.data || res;
+        const data = responseData?.data || responseData?.items || responseData || [];
+        const results = Array.isArray(data) ? data : [];
+        
+        if (results.length > 0 && results[0].subjects?.length > 0) {
+          // Use the first matching result (the specific exam if examId provided, or most recent)
+          const targetResult = results[0];
+          
+          // Set exam name for display
+          const examInfo = targetResult.exam;
+          this.examName.set(typeof examInfo === 'object' ? examInfo.name : examInfo || 'Examination');
+          
+          const subs = targetResult.subjects.map((s: any) => ({
+            name: s.subject?.name || s.subjectName || 'Unknown',
+            maxMarks: s.maxMarks || 100,
+            obtainedMarks: s.obtainedMarks || 0,
+            percentage: s.maxMarks > 0 ? Math.round((s.obtainedMarks / s.maxMarks) * 100) : 0,
+            grade: s.grade || '-',
+            isPassed: s.isPassed
+          }));
+          this.subjects.set(subs);
+          this.hasResults.set(true);
         } else {
-          this.subjects.set([
-            { name: 'Mathematics', maxMarks: 100, obtainedMarks: 85, percentage: 85, grade: 'A' },
-            { name: 'Science', maxMarks: 100, obtainedMarks: 78, percentage: 78, grade: 'B+' },
-            { name: 'English', maxMarks: 100, obtainedMarks: 92, percentage: 92, grade: 'A+' },
-            { name: 'History', maxMarks: 100, obtainedMarks: 71, percentage: 71, grade: 'B' },
-            { name: 'Computer Science', maxMarks: 100, obtainedMarks: 95, percentage: 95, grade: 'A+' },
-          ]);
+          // No results - show empty state
+          this.subjects.set([]);
+          this.hasResults.set(false);
         }
         this.calculateTotals();
         this.loading.set(false);
       },
       error: () => {
-        this.subjects.set([
-          { name: 'Mathematics', maxMarks: 100, obtainedMarks: 85, percentage: 85, grade: 'A' },
-          { name: 'Science', maxMarks: 100, obtainedMarks: 78, percentage: 78, grade: 'B+' },
-          { name: 'English', maxMarks: 100, obtainedMarks: 92, percentage: 92, grade: 'A+' },
-        ]);
+        // Error - show empty state
+        this.subjects.set([]);
+        this.hasResults.set(false);
         this.calculateTotals();
         this.loading.set(false);
       }
