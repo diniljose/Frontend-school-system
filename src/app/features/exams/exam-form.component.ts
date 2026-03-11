@@ -40,8 +40,13 @@ interface ExamScheduleItem {
         <h3>📋 Basic Information</h3>
         <div class="grid grid-2">
           <div class="form-group">
-            <label>Exam Name *</label>
-            <input type="text" class="form-input" [(ngModel)]="exam.name" name="name" required placeholder="e.g. First Term Exam" />
+            <label>Academic Year *</label>
+            <select class="form-select" [(ngModel)]="exam.academicYear" name="academicYear" required>
+              <option value="">Select Academic Year</option>
+              @for (ay of academicYears(); track ay._id) {
+                <option [value]="ay._id">{{ ay.name }}{{ ay.isCurrent ? ' (Current)' : '' }}</option>
+              }
+            </select>
           </div>
           <div class="form-group">
             <label>Exam Type *</label>
@@ -62,19 +67,26 @@ interface ExamScheduleItem {
 
         <div class="grid grid-2">
           <div class="form-group">
+            <label>Exam Name *</label>
+            <input type="text" class="form-input" [(ngModel)]="exam.name" name="name" required placeholder="e.g. First Term Exam" />
+          </div>
+          <div class="form-group">
             <label>Start Date *</label>
             <input type="date" class="form-input" [(ngModel)]="exam.startDate" name="startDate" required />
           </div>
+        </div>
+
+        <div class="grid grid-2">
           <div class="form-group">
             <label>End Date *</label>
             <input type="date" class="form-input" [(ngModel)]="exam.endDate" name="endDate" required />
           </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea class="form-input" [(ngModel)]="exam.description" name="description" rows="2" placeholder="Optional exam description"></textarea>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Description</label>
-          <textarea class="form-input" [(ngModel)]="exam.description" name="description" rows="2" placeholder="Optional exam description"></textarea>
-        </div>
       </div>
 
       <!-- Class & Section Assignment -->
@@ -319,6 +331,7 @@ export class ExamFormComponent implements OnInit {
   saving = signal(false);
   classes = signal<ClassModel[]>([]);
   subjects = signal<any[]>([]);
+  academicYears = signal<any[]>([]);
   selectedClasses = signal<string[]>([]);
   selectedSections = signal<string[]>([]);
   schedule = signal<ExamScheduleItem[]>([]);
@@ -327,6 +340,7 @@ export class ExamFormComponent implements OnInit {
   exam: any = {
     name: '',
     examType: '',
+    academicYear: '',
     startDate: '',
     endDate: '',
     description: '',
@@ -338,6 +352,7 @@ export class ExamFormComponent implements OnInit {
   ngOnInit(): void {
     this.loadClasses();
     this.loadSubjects();
+    this.loadAcademicYears();
     
     const id = this.route.snapshot.params['id'];
     if (id && id !== 'new') {
@@ -354,6 +369,7 @@ export class ExamFormComponent implements OnInit {
         this.exam = {
           name: data.name || '',
           examType: data.examType || '',
+          academicYear: data.academicYear?._id || data.academicYear || '',
           startDate: data.startDate ? String(data.startDate).substring(0, 10) : '',
           endDate: data.endDate ? String(data.endDate).substring(0, 10) : '',
           description: data.description || '',
@@ -407,6 +423,24 @@ export class ExamFormComponent implements OnInit {
       next: (res) => {
         const data = res.data?.data || res.data?.items || res.data || [];
         this.subjects.set(Array.isArray(data) ? data : []);
+      }
+    });
+  }
+
+  loadAcademicYears(): void {
+    this.api.get<any>('/academic-years', { limit: 100 }).subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        const years = Array.isArray(data) ? data : [];
+        this.academicYears.set(years);
+        
+        // Auto-select current academic year for new exams
+        if (!this.isEdit() && !this.exam.academicYear) {
+          const currentYear = years.find((y: any) => y.isCurrent);
+          if (currentYear) {
+            this.exam.academicYear = currentYear._id;
+          }
+        }
       }
     });
   }
@@ -477,8 +511,8 @@ export class ExamFormComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.exam.name || !this.exam.examType || !this.exam.startDate || !this.exam.endDate) {
-      this.toast.error('Please fill in all required fields');
+    if (!this.exam.name || !this.exam.examType || !this.exam.startDate || !this.exam.endDate || !this.exam.academicYear) {
+      this.toast.error('Please fill in all required fields including Academic Year');
       return;
     }
 
@@ -487,6 +521,7 @@ export class ExamFormComponent implements OnInit {
     const payload: any = {
       name: this.exam.name,
       examType: this.exam.examType,
+      academicYear: this.exam.academicYear,
       startDate: this.exam.startDate,
       endDate: this.exam.endDate,
       description: this.exam.description || '',

@@ -119,12 +119,15 @@ export class PromotionListComponent implements OnInit {
     if (typeof p.student === 'object' && p.student) {
       return `${(p.student as any).firstName || ''} ${(p.student as any).lastName || ''}`.trim();
     }
-    return p.student as string || 'N/A';
+    // If string ID, return generic label
+    return 'Student';
   }
 
   getClassName(cls: any): string {
     if (typeof cls === 'object' && cls) return cls.name || 'N/A';
-    return cls || 'N/A';
+    // If string ID, look up from loaded classes
+    const found = this.classes().find(c => c._id === cls);
+    return found?.name || 'Class';
   }
 
   openPromoteModal(): void {

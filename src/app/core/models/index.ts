@@ -501,7 +501,7 @@ export interface Subscription {
   status?: string;
 }
 
-// ── Dashboard Stats ──
+// ── Dashboard Stats (flat version for component use) ──
 export interface DashboardStats {
   totalStudents: number;
   totalTeachers: number;
@@ -513,4 +513,57 @@ export interface DashboardStats {
   totalFeePending: number;
   activeTransport: number;
   upcomingExams: number;
+  // Additional fields from backend
+  activeStudents?: number;
+  activeTeachers?: number;
+  activeClasses?: number;
+  totalSubjects?: number;
+  totalEnrollments?: number;
+  todayPresent?: number;
+  todayAbsent?: number;
+  todayLate?: number;
+}
+
+// ── Dashboard Stats API Response (nested backend format) ──
+export interface DashboardStatsApiResponse {
+  success: boolean;
+  data: {
+    overview?: {
+      totalStudents?: number;
+      activeStudents?: number;
+      totalTeachers?: number;
+      activeTeachers?: number;
+      totalClasses?: number;
+      activeClasses?: number;
+      totalSubjects?: number;
+      totalEnrollments?: number;
+    };
+    attendance?: {
+      today?: {
+        present?: number;
+        absent?: number;
+        late?: number;
+        total?: number;
+        percentage?: number | string;
+      };
+    };
+    fees?: {
+      thisMonth?: {
+        total?: number;
+        collected?: number;
+        pending?: number;
+        collectionPercentage?: number | string;
+      };
+    };
+    enrollments?: {
+      totalActive?: number;
+      classWise?: any[];
+    };
+    events?: {
+      upcoming?: any[];
+      today?: any[];
+      upcomingCount?: number;
+      todayCount?: number;
+    };
+  };
 }

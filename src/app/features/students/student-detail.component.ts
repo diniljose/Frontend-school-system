@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { finalize } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Student, Enrollment } from '../../core/models';
@@ -12,857 +13,691 @@ import { Student, Enrollment } from '../../core/models';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
   template: `
-    <div class="page-header">
-      <div>
-        <h1>Student Profile</h1>
-        <p>Complete academic journey and history</p>
+    <!-- Elegant Header -->
+    <header class="profile-header">
+      <div class="header-left">
+        <a routerLink="/students" class="back-link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          <span>Students</span>
+        </a>
       </div>
-      <div class="header-actions">
-        <a routerLink="/students" class="btn btn-secondary">← Back</a>
-        @if (student()) {
-          <a [routerLink]="['/students', student()!._id, 'analytics']" class="btn btn-info">📊 Analytics</a>
-          <a [routerLink]="['/students', student()!._id, 'edit']" class="btn btn-primary">Edit Student</a>
-        }
-      </div>
-    </div>
+      @if (student()) {
+        <div class="header-right">
+          <a [routerLink]="['/students', student()!._id, 'analytics']" class="btn-outline">Analytics</a>
+          <a [routerLink]="['/students', student()!._id, 'edit']" class="btn-primary">Edit Student</a>
+        </div>
+      }
+    </header>
 
     @if (loading()) {
-      <div class="skeleton" style="height:500px;border-radius:12px"></div>
+      <div class="loading-state">
+        <div class="loader"></div>
+        <p>Loading profile...</p>
+      </div>
     } @else if (student()) {
-      <!-- Profile Hero -->
-      <div class="profile-hero">
-        <div class="hero-bg"></div>
-        <div class="hero-content">
-          <div class="avatar-xl">{{ student()!.firstName?.charAt(0) }}{{ student()!.lastName?.charAt(0) }}</div>
-          <div class="hero-info">
-            <h2>{{ student()!.firstName }} {{ student()!.middleName || '' }} {{ student()!.lastName }}</h2>
-            <div class="hero-meta">
-              <span class="meta-chip">🎓 {{ getClassName(student()!.currentClass) }}</span>
-              @if (student()!.currentSection) { <span class="meta-chip">📍 Section {{ student()!.currentSection }}</span> }
-              @if (student()!.rollNumber) { <span class="meta-chip">📋 Roll #{{ student()!.rollNumber }}</span> }
-              <span class="meta-chip adm-chip">{{ student()!.admissionNumber }}</span>
+      <!-- Profile Card -->
+      <section class="profile-card fade-in">
+        <div class="profile-main">
+          <div class="avatar">
+            <span class="avatar-initials">{{ student()!.firstName?.charAt(0) }}{{ student()!.lastName?.charAt(0) }}</span>
+            <span class="status-indicator" [class]="'status-' + student()!.status"></span>
+          </div>
+          <div class="profile-info">
+            <h1 class="name">{{ student()!.firstName }} {{ student()!.middleName || '' }} {{ student()!.lastName }}</h1>
+            <p class="role">{{ getClassName(student()!.currentClass) }} @if (student()!.currentSection) { - Section {{ student()!.currentSection }} }</p>
+            <div class="meta-row">
+              @if (student()!.admissionNumber) {
+                <span class="meta-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  {{ student()!.admissionNumber }}
+                </span>
+              }
+              @if (student()!.rollNumber) {
+                <span class="meta-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  Roll #{{ student()!.rollNumber }}
+                </span>
+              }
+              <span class="status-chip" [class]="'chip-' + student()!.status">{{ student()!.status | titlecase }}</span>
             </div>
-            <span class="status-pill" [class]="'status-' + student()!.status">{{ student()!.status }}</span>
           </div>
         </div>
-      </div>
-
-      <!-- Quick Stats -->
-      <div class="quick-stats">
-        <div class="qs-card">
-          <div class="qs-icon" style="background:#dbeafe;color:#3b82f6">📅</div>
-          <div><div class="qs-value">{{ yearsInSchool() }}</div><div class="qs-label">Years in School</div></div>
-        </div>
-        <div class="qs-card">
-          <div class="qs-icon" style="background:#dcfce7;color:#22c55e">📈</div>
-          <div><div class="qs-value">{{ enrollmentHistory().length }}</div><div class="qs-label">Enrollments</div></div>
-        </div>
-        <div class="qs-card">
-          <div class="qs-icon" style="background:#fef3c7;color:#f59e0b">🏆</div>
-          <div><div class="qs-value">{{ getPassCount() }}</div><div class="qs-label">Years Passed</div></div>
-        </div>
-        <div class="qs-card">
-          <div class="qs-icon" style="background:#f3e8ff;color:#8b5cf6">📊</div>
-          <div><div class="qs-value">{{ getCurrentAcademicYear() }}</div><div class="qs-label">Current Year</div></div>
-        </div>
-      </div>
-
-      <!-- Dashboard Grid -->
-      <div class="dashboard-grid">
-        <!-- Left: Personal Details -->
-        <div class="card info-card">
-          <h3 class="card-title">Personal Information</h3>
-          <div class="info-list">
-            <div class="info-row"><span class="label">Full Name</span><span>{{ student()!.firstName }} {{ student()!.middleName || '' }} {{ student()!.lastName }}</span></div>
-            <div class="info-row"><span class="label">Gender</span><span>{{ student()!.gender || '—' }}</span></div>
-            <div class="info-row"><span class="label">Date of Birth</span><span>{{ student()!.dateOfBirth ? (student()!.dateOfBirth | date:'mediumDate') : '—' }}</span></div>
-            <div class="info-row"><span class="label">Blood Group</span><span>{{ $any(student()).bloodGroup || '—' }}</span></div>
-            <div class="info-row"><span class="label">Email</span><span>{{ student()!.contact?.phone || student()!.email || '—' }}</span></div>
-            <div class="info-row"><span class="label">Phone</span><span>{{ student()!.contact?.phone || '—' }}</span></div>
-            <div class="info-row"><span class="label">Admission Date</span><span>{{ student()!.admissionDate ? (student()!.admissionDate | date:'mediumDate') : '—' }}</span></div>
-            <div class="info-row"><span class="label">Nationality</span><span>{{ $any(student()).nationality || '—' }}</span></div>
+        <div class="profile-stats">
+          <div class="stat-item slide-up" style="--delay: 0.1s">
+            <span class="stat-number">{{ yearsInSchool() }}</span>
+            <span class="stat-label">Years</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item slide-up" style="--delay: 0.15s">
+            <span class="stat-number">{{ enrollmentHistory().length }}</span>
+            <span class="stat-label">Enrollments</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item slide-up" style="--delay: 0.2s">
+            <span class="stat-number">{{ getPassCount() }}</span>
+            <span class="stat-label">Passed</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item slide-up" style="--delay: 0.25s">
+            <span class="stat-number">{{ getCurrentAcademicYear() }}</span>
+            <span class="stat-label">Current Year</span>
           </div>
         </div>
+      </section>
 
-        <!-- Right: Academic Journey Timeline -->
-        <div class="card timeline-card">
-          <h3 class="card-title">Academic Journey</h3>
+      <!-- Content Grid -->
+      <div class="content-grid">
+        <!-- Personal Details -->
+        <section class="content-card slide-up" style="--delay: 0.3s">
+          <h2 class="section-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Personal Details
+          </h2>
+          <div class="details-list">
+            <div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value">{{ student()!.firstName }} {{ student()!.middleName || '' }} {{ student()!.lastName }}</span></div>
+            <div class="detail-row"><span class="detail-label">Gender</span><span class="detail-value">{{ student()!.gender || '—' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Date of Birth</span><span class="detail-value">{{ student()!.dateOfBirth ? (student()!.dateOfBirth | date:'mediumDate') : '—' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Blood Group</span><span class="detail-value">{{ $any(student()).bloodGroup || '—' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">{{ student()!.email || $any(student()!.contact)?.email || '—' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">{{ student()!.contact?.phone || '—' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Admission Date</span><span class="detail-value">{{ student()!.admissionDate ? (student()!.admissionDate | date:'mediumDate') : '—' }}</span></div>
+            <div class="detail-row"><span class="detail-label">Admission No.</span><span class="detail-value highlight">{{ student()!.admissionNumber || '—' }}</span></div>
+          </div>
+        </section>
+
+        <!-- Academic Journey -->
+        <section class="content-card slide-up" style="--delay: 0.35s">
+          <h2 class="section-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Academic Journey
+            <span class="badge">{{ enrollmentHistory().length }}</span>
+          </h2>
           @if (enrollmentHistory().length > 0) {
             <div class="timeline">
-              @for (e of enrollmentHistory(); track e._id; let i = $index) {
-                <div class="timeline-item" [class.current]="e.status === 'active'">
-                  <div class="timeline-marker" [class]="'marker-' + (e.result || e.status)">
-                    @if (e.result === 'pass' || e.result === 'promoted') { ✓ }
-                    @else if (e.result === 'fail' || e.result === 'retained') { ✗ }
-                    @else { {{ enrollmentHistory().length - i }} }
+              @for (e of enrollmentHistory(); track e._id; let i = $index; let last = $last) {
+                <div class="timeline-item" [style.--delay]="(0.4 + i * 0.05) + 's'" [class.current]="e.status === 'active'">
+                  <div class="timeline-marker" [class.last]="last">
+                    <span class="marker-dot" [class]="'dot-' + (e.result || e.status)"></span>
+                    @if (!last) { <span class="marker-line"></span> }
                   </div>
                   <div class="timeline-content">
-                    <div class="tl-header">
-                      <span class="tl-year">{{ getAcademicYearName(e.academicYear) }}</span>
-                      @if (e.status === 'active') { <span class="tl-current-badge">CURRENT</span> }
+                    <div class="timeline-header">
+                      <h4>{{ getClassName(e.class) }}</h4>
+                      @if (e.status === 'active') { <span class="current-badge">CURRENT</span> }
                     </div>
-                    <div class="tl-class">{{ getClassName(e.class) }} — Section {{ e.section }}</div>
-                    <div class="tl-details">
-                      <span class="tl-roll">Roll #{{ e.rollNumber || '-' }}</span>
-                      @if (e.result) {
-                        <span class="tl-result" [class]="'result-' + e.result">{{ e.result | titlecase }}</span>
-                      }
-                      @if (e.percentage) {
-                        <span class="tl-pct">{{ e.percentage }}%</span>
-                      }
-                      @if (e.rank) {
-                        <span class="tl-rank">Rank #{{ e.rank }}</span>
-                      }
+                    <p class="timeline-year">{{ getAcademicYearName(e.academicYear) }} @if (e.section) { - Section {{ e.section }} }</p>
+                    <div class="timeline-meta">
+                      @if (e.rollNumber) { <span class="meta-chip">Roll #{{ e.rollNumber }}</span> }
+                      @if (e.result) { <span class="result-chip" [class]="'result-' + e.result">{{ e.result | titlecase }}</span> }
+                      @if (e.percentage) { <span class="meta-chip">{{ e.percentage }}%</span> }
                     </div>
-                    @if (e.remarks) {
-                      <div class="tl-remarks">{{ e.remarks }}</div>
-                    }
                   </div>
                 </div>
               }
             </div>
           } @else {
-            <div class="empty-timeline">
-              <div style="font-size:48px;margin-bottom:8px">📚</div>
-              <p>No enrollment history found.</p>
-              <a routerLink="/enrollments" class="btn btn-primary btn-sm">Enroll Student</a>
+            <div class="empty-state">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <p>No enrollment history found</p>
+              <a routerLink="/enrollments" class="link-btn">Enroll Student</a>
             </div>
           }
-        </div>
+        </section>
       </div>
 
       <!-- Tab Section -->
-      <div class="card tab-section">
+      <section class="tab-section slide-up" style="--delay: 0.4s">
         <div class="tab-bar">
           @for (tab of tabs; track tab.key) {
-            <button class="tab-btn" [class.active]="activeTab() === tab.key" (click)="activeTab.set(tab.key)">{{ tab.icon }} {{ tab.label }}</button>
+            <button class="tab-btn" [class.active]="activeTab() === tab.key" (click)="activeTab.set(tab.key)">
+              <span class="tab-icon">{{ tab.icon }}</span>
+              <span class="tab-label">{{ tab.label }}</span>
+            </button>
           }
         </div>
 
-        @switch (activeTab()) {
-          @case ('attendance') {
-            <div class="tab-content animate-in">
-              <h3>Attendance Summary</h3>
-              @if (attendanceData().length > 0) {
-                <div class="grid grid-3">
-                  @for (a of attendanceData(); track a.label) {
-                    <div class="stat-mini"><div class="stat-mini-val" [style.color]="a.color">{{ a.value }}</div><div class="stat-mini-label">{{ a.label }}</div></div>
-                  }
-                </div>
-              } @else {
-                <p class="tab-empty">No attendance data available yet.</p>
-              }
-            </div>
-          }
-          @case ('results') {
-            <div class="tab-content animate-in">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4)">
-                <h3>Exam Results</h3>
-                <a [routerLink]="['/results/report-card', student()!._id]" class="btn btn-primary btn-sm">📄 Report Card</a>
-              </div>
-              @if (resultsData().length > 0) {
-                <table class="data-table">
-                  <thead><tr><th>Exam</th><th>Subject</th><th>Marks</th><th>Grade</th></tr></thead>
-                  <tbody>
-                    @for (r of resultsData(); track r) {
-                      <tr>
-                        <td>{{ r.examName }}</td>
-                        <td>{{ r.subjectName }}</td>
-                        <td>{{ r.obtained }}/{{ r.max }}</td>
-                        <td><span class="badge badge-success">{{ r.grade }}</span></td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              } @else {
-                <p class="tab-empty">No exam results available yet.</p>
-              }
-            </div>
-          }
-          @case ('analytics') {
-            <div class="tab-content animate-in">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4)">
-                <h3>📊 Performance Analytics</h3>
-                <button class="btn btn-primary btn-sm" (click)="loadStudentAnalytics()">🔄 Refresh</button>
-              </div>
-              
-              @if (loadingAnalytics()) {
-                <div class="skeleton" style="height:300px;border-radius:8px"></div>
-              } @else if (!studentAnalytics()) {
-                <div class="analytics-empty">
-                  <div class="empty-icon">📊</div>
-                  <p>Click refresh to load performance analytics</p>
-                  <button class="btn btn-primary" (click)="loadStudentAnalytics()">Load Analytics</button>
-                </div>
-              } @else {
-                <!-- Summary Stats -->
-                <div class="analytics-summary">
-                  <div class="analytics-stat">
-                    <span class="analytics-stat-value">{{ studentAnalytics()?.summary?.totalExams || 0 }}</span>
-                    <span class="analytics-stat-label">Exams Taken</span>
-                  </div>
-                  <div class="analytics-stat">
-                    <span class="analytics-stat-value">{{ studentAnalytics()?.summary?.averagePercentage?.toFixed(1) || 0 }}%</span>
-                    <span class="analytics-stat-label">Average Score</span>
-                  </div>
-                  <div class="analytics-stat success">
-                    <span class="analytics-stat-value">{{ studentAnalytics()?.summary?.passedExams || 0 }}</span>
-                    <span class="analytics-stat-label">Exams Passed</span>
-                  </div>
-                  <div class="analytics-stat danger">
-                    <span class="analytics-stat-value">{{ studentAnalytics()?.summary?.failedExams || 0 }}</span>
-                    <span class="analytics-stat-label">Exams Failed</span>
-                  </div>
-                </div>
-
-                <!-- Subject-wise Performance -->
-                @if (studentAnalytics()?.subjectAnalysis?.length) {
-                  <h4 style="margin:var(--space-6) 0 var(--space-3)">📚 Subject-wise Performance</h4>
-                  <div class="subject-analytics-grid">
-                    @for (sub of studentAnalytics()?.subjectAnalysis || []; track sub.subjectId) {
-                      <div class="subject-analytics-card">
-                        <div class="subject-header">
-                          <span class="subject-name">{{ sub.subjectName }}</span>
-                          <span class="trend-icon" [class]="getAnalyticsTrendClass(sub.trend)">
-                            {{ getAnalyticsTrendIcon(sub.trend) }} {{ sub.trendPercentage > 0 ? '+' : '' }}{{ sub.trendPercentage?.toFixed(1) || 0 }}%
-                          </span>
-                        </div>
-                        <div class="subject-avg">{{ sub.averagePercentage?.toFixed(1) }}% avg</div>
-                        <div class="subject-range">
-                          <span class="high">↑ {{ sub.highestPercentage?.toFixed(0) }}%</span>
-                          <span class="low">↓ {{ sub.lowestPercentage?.toFixed(0) }}%</span>
-                        </div>
-                        <div class="subject-pass-rate">
-                          <div class="progress-mini">
-                            <div class="progress-fill" [style.width.%]="sub.passRate"></div>
-                          </div>
-                          <span>{{ sub.passRate?.toFixed(0) }}% pass rate</span>
-                        </div>
+        <div class="tab-content">
+          @switch (activeTab()) {
+            @case ('attendance') {
+              <div class="tab-panel">
+                <h3 class="panel-title">Attendance Summary</h3>
+                @if (attendanceData().length > 0) {
+                  <div class="mini-stats">
+                    @for (a of attendanceData(); track a.label) {
+                      <div class="mini-stat">
+                        <span class="mini-value" [style.color]="a.color">{{ a.value }}</span>
+                        <span class="mini-label">{{ a.label }}</span>
                       </div>
                     }
                   </div>
+                } @else {
+                  <p class="tab-empty">No attendance data available yet.</p>
                 }
-
-                <!-- Performance Trend / Exam History -->
-                @if (studentAnalytics()?.examResults?.length) {
-                  <h4 style="margin:var(--space-6) 0 var(--space-3)">📈 Exam History</h4>
+              </div>
+            }
+            @case ('exams') {
+              <div class="tab-panel">
+                <h3 class="panel-title">Upcoming Exams</h3>
+                @if (loadingExams()) {
+                  <div class="loading-inline"><div class="loader-sm"></div></div>
+                } @else if (studentExams().upcoming.length > 0) {
+                  <div class="exams-list">
+                    @for (exam of studentExams().upcoming; track exam._id) {
+                      <div class="exam-card">
+                        <div class="exam-header">
+                          <span class="exam-name">{{ exam.name }}</span>
+                          <span class="exam-type">{{ formatExamType(exam.examType || exam.type) }}</span>
+                        </div>
+                        <div class="exam-info">
+                          <span class="exam-date">{{ exam.startDate | date:'mediumDate' }}</span>
+                          <span class="exam-countdown" [class.urgent]="getDaysUntil(exam.startDate) <= 3">
+                            {{ getDaysUntil(exam.startDate) }} days left
+                          </span>
+                        </div>
+                        @if (exam.schedule?.length) {
+                          <button class="toggle-btn" (click)="toggleExamSchedule(exam._id)">
+                            {{ expandedExam() === exam._id ? 'Hide' : 'View' }} Schedule
+                          </button>
+                          @if (expandedExam() === exam._id) {
+                            <div class="schedule-details">
+                              @for (group of getGroupedSchedule(exam); track group.date) {
+                                <div class="schedule-day">
+                                  <span class="day-label">{{ group.date | date:'EEE, MMM d' }}</span>
+                                  @for (slot of group.slots; track slot) {
+                                    <div class="slot-item">
+                                      <span class="slot-time">{{ slot.startTime }} - {{ slot.endTime }}</span>
+                                      <span class="slot-subject">{{ getScheduleSubjectName(slot) }}</span>
+                                      <span class="slot-marks">{{ slot.maxMarks }} marks</span>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          }
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="tab-empty">No upcoming exams.</p>
+                }
+              </div>
+            }
+            @case ('results') {
+              <div class="tab-panel">
+                <div class="panel-header">
+                  <h3 class="panel-title">Exam Results</h3>
+                  <div class="header-actions">
+                    @if (examsForResults().length > 0) {
+                      <select class="form-select-sm" [ngModel]="selectedExamForResults()" (ngModelChange)="onExamSelectForResults($event)">
+                        <option value="">Select Exam</option>
+                        @for (exam of examsForResults(); track exam._id) {
+                          <option [value]="exam._id">{{ exam.name }}</option>
+                        }
+                      </select>
+                      @if (selectedExamForResults()) {
+                        <a [routerLink]="['/results/report-card', student()!._id]" [queryParams]="{examId: selectedExamForResults()}" class="btn-sm">📄 Report Card</a>
+                      }
+                    }
+                  </div>
+                </div>
+                @if (loadingExams()) {
+                  <div class="loading-inline"><div class="loader-sm"></div></div>
+                } @else if (examsForResults().length === 0) {
+                  <div class="empty-state-sm">
+                    <p>📚 No exams found. Create exams first to view results.</p>
+                  </div>
+                } @else if (loadingResults()) {
+                  <div class="loading-inline"><div class="loader-sm"></div></div>
+                } @else if (!selectedExamForResults()) {
+                  <div class="empty-state-sm">
+                    <p>📝 Select an exam above to view results</p>
+                  </div>
+                } @else if (resultsData().length > 0) {
+                  <div class="results-summary">
+                    <div class="summary-stat"><span class="stat-val">{{ getResultsSummary().percentage.toFixed(1) }}%</span><span class="stat-lbl">Overall</span></div>
+                    <div class="summary-stat"><span class="stat-val">{{ getResultsSummary().obtained }}/{{ getResultsSummary().max }}</span><span class="stat-lbl">Total Marks</span></div>
+                    <div class="summary-stat" [class.success]="getResultsSummary().passed" [class.danger]="!getResultsSummary().passed">
+                      <span class="stat-val">{{ getResultsSummary().passed ? 'Pass' : 'Fail' }}</span>
+                      <span class="stat-lbl">Status</span>
+                    </div>
+                  </div>
                   <table class="data-table">
-                    <thead><tr><th>Exam</th><th>Type</th><th>Marks</th><th>%</th><th>Grade</th><th>Rank</th></tr></thead>
+                    <thead><tr><th>Subject</th><th>Marks</th><th>Percentage</th><th>Grade</th><th>Status</th></tr></thead>
                     <tbody>
-                      @for (exam of studentAnalytics()?.examResults || []; track exam.examId) {
+                      @for (r of resultsData(); track r) {
                         <tr>
-                          <td><strong>{{ exam.examName }}</strong></td>
-                          <td><span class="badge badge-info">{{ exam.examType }}</span></td>
-                          <td>{{ exam.obtainedMarks }}/{{ exam.totalMarks }}</td>
-                          <td>{{ exam.percentage?.toFixed(1) }}%</td>
-                          <td><span class="badge" [class]="getAnalyticsGradeBadge(exam.grade)">{{ exam.grade }}</span></td>
-                          <td>{{ exam.rank || '-' }}</td>
+                          <td>{{ r.subjectName }}</td>
+                          <td>{{ r.obtained }}/{{ r.max }}</td>
+                          <td>{{ r.percentage?.toFixed(1) || ((r.obtained / r.max) * 100).toFixed(1) }}%</td>
+                          <td><span class="grade-badge">{{ r.grade }}</span></td>
+                          <td><span class="status-chip" [class.pass]="r.isPassed" [class.fail]="!r.isPassed">{{ r.isPassed ? 'Pass' : 'Fail' }}</span></td>
                         </tr>
                       }
                     </tbody>
                   </table>
+                } @else {
+                  <p class="tab-empty">No results found for this exam.</p>
                 }
-
-                <!-- Exam Comparisons -->
-                @if (studentAnalytics()?.examComparisons?.length) {
-                  <h4 style="margin:var(--space-6) 0 var(--space-3)">📊 Exam Comparisons</h4>
-                  @for (comparison of studentAnalytics()?.examComparisons || []; track comparison.currentExam?.examId) {
-                    <div class="comparison-card">
-                      <div class="comparison-header">
-                        <span>{{ comparison.previousExam?.examName }} → {{ comparison.currentExam?.examName }}</span>
-                        <span class="comparison-diff" [class]="comparison.overallDifference > 0 ? 'positive' : comparison.overallDifference < 0 ? 'negative' : ''">
-                          {{ comparison.overallDifference > 0 ? '+' : '' }}{{ comparison.overallDifference?.toFixed(1) }}%
-                        </span>
-                      </div>
-                      <div class="comparison-subjects">
-                        @for (sub of comparison.subjectComparisons || []; track sub.subjectId) {
-                          <div class="comparison-subject">
-                            <span class="cs-name">{{ sub.subjectName }}</span>
-                            <span class="cs-current">{{ sub.currentPercentage?.toFixed(0) }}%</span>
-                            @if (sub.status === 'improved') {
-                              <span class="cs-diff positive">+{{ sub.difference?.toFixed(0) }}%</span>
-                            } @else if (sub.status === 'declined') {
-                              <span class="cs-diff negative">{{ sub.difference?.toFixed(0) }}%</span>
-                            } @else if (sub.status === 'same') {
-                              <span class="cs-diff">→ same</span>
-                            } @else {
-                              <span class="cs-diff new">new</span>
-                            }
-                          </div>
-                        }
-                      </div>
+              </div>
+            }
+            @case ('analytics') {
+              <div class="tab-panel">
+                <div class="panel-header">
+                  <h3 class="panel-title">Performance Analytics</h3>
+                  <button class="btn-sm" (click)="loadStudentAnalytics()">Refresh</button>
+                </div>
+                @if (loadingAnalytics()) {
+                  <div class="loading-inline"><div class="loader-sm"></div></div>
+                } @else if (!studentAnalytics()) {
+                  <div class="empty-state-sm">
+                    <p>Click refresh to load analytics</p>
+                    <button class="btn-primary-sm" (click)="loadStudentAnalytics()">Load Analytics</button>
+                  </div>
+                } @else {
+                  <div class="analytics-summary">
+                    <div class="analytics-stat"><span class="stat-val">{{ studentAnalytics()?.summary?.totalExams || 0 }}</span><span class="stat-lbl">Exams</span></div>
+                    <div class="analytics-stat"><span class="stat-val">{{ studentAnalytics()?.summary?.averagePercentage?.toFixed(1) || 0 }}%</span><span class="stat-lbl">Average</span></div>
+                    <div class="analytics-stat success"><span class="stat-val">{{ studentAnalytics()?.summary?.passedExams || 0 }}</span><span class="stat-lbl">Passed</span></div>
+                    <div class="analytics-stat danger"><span class="stat-val">{{ studentAnalytics()?.summary?.failedExams || 0 }}</span><span class="stat-lbl">Failed</span></div>
+                  </div>
+                  @if (studentAnalytics()?.subjectAnalysis?.length) {
+                    <h4 class="subsection-title">Subject Performance</h4>
+                    <div class="subject-cards">
+                      @for (sub of studentAnalytics()?.subjectAnalysis || []; track sub.subjectId) {
+                        <div class="subject-card">
+                          <div class="subj-header"><span class="subj-name">{{ sub.subjectName }}</span><span class="subj-trend" [class]="getAnalyticsTrendClass(sub.trend)">{{ getAnalyticsTrendIcon(sub.trend) }}</span></div>
+                          <div class="subj-avg">{{ sub.averagePercentage?.toFixed(1) }}%</div>
+                          <div class="subj-range"><span>High: {{ sub.highestPercentage?.toFixed(0) }}%</span><span>Low: {{ sub.lowestPercentage?.toFixed(0) }}%</span></div>
+                        </div>
+                      }
                     </div>
                   }
                 }
-              }
-            </div>
-          }
-          @case ('fees') {
-            <div class="tab-content animate-in">
-              <h3>Fee Records</h3>
-              @if (loadingFees()) {
-                <div class="skeleton" style="height:150px;border-radius:8px"></div>
-              } @else if (feeData().length > 0) {
-                <!-- Fee Summary -->
-                <div class="fee-summary">
-                  <div class="fee-summary-item">
-                    <span class="fee-label">Total Due</span>
-                    <span class="fee-value text-danger">{{ getTotalFeeDue() | currency:'INR' }}</span>
+              </div>
+            }
+            @case ('fees') {
+              <div class="tab-panel">
+                <h3 class="panel-title">Fee Details</h3>
+                @if (loadingFees()) {
+                  <div class="loading-inline"><div class="loader-sm"></div></div>
+                } @else if (feeData().length > 0) {
+                  <div class="fee-summary">
+                    <div class="fee-stat"><span class="fee-val">₹{{ getTotalFeePaid() | number }}</span><span class="fee-lbl">Paid</span></div>
+                    <div class="fee-stat danger"><span class="fee-val">₹{{ getTotalFeeDue() | number }}</span><span class="fee-lbl">Due</span></div>
                   </div>
-                  <div class="fee-summary-item">
-                    <span class="fee-label">Total Paid</span>
-                    <span class="fee-value text-success">{{ getTotalFeePaid() | currency:'INR' }}</span>
-                  </div>
-                </div>
-                <table class="data-table">
-                  <thead><tr><th>Period</th><th class="text-right">Total</th><th class="text-right">Paid</th><th class="text-right">Due</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
-                  <tbody>
-                    @for (f of feeData(); track f._id || $index) {
-                      <tr>
-                        <td>{{ f.type }}</td>
-                        <td class="text-right">{{ f.amount | currency:'INR' }}</td>
-                        <td class="text-right text-success">{{ f.paidAmount | currency:'INR' }}</td>
-                        <td class="text-right text-danger">{{ f.dueAmount | currency:'INR' }}</td>
-                        <td>{{ f.dueDate | date:'mediumDate' }}</td>
-                        <td><span class="badge" [class]="getFeeBadgeClass(f.status)">{{ f.status }}</span></td>
-                        <td>
-                          @if (f.status !== 'paid') {
-                            <button class="btn btn-primary btn-sm" (click)="openPaymentModal(f)">💰 Pay</button>
-                          } @else {
-                            <span class="text-success">✓ Paid</span>
+                  <div class="fee-list">
+                    @for (fee of feeData(); track fee._id) {
+                      <div class="fee-item">
+                        <div class="fee-info">
+                          <span class="fee-type">{{ fee.type }}</span>
+                          <span class="fee-status" [class]="'status-' + fee.status">{{ fee.status | titlecase }}</span>
+                        </div>
+                        <div class="fee-amounts">
+                          <span class="fee-amount">₹{{ fee.amount | number }}</span>
+                          @if (fee.dueAmount > 0) {
+                            <button class="pay-btn" (click)="openPaymentModal(fee)">Pay ₹{{ fee.dueAmount | number }}</button>
                           }
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     }
-                  </tbody>
-                </table>
-              } @else {
-                <p class="tab-empty">No fee records available yet.</p>
-              }
-            </div>
-          }
-          @case ('parents') {
-            <div class="tab-content animate-in">
-              <h3>Parent / Guardian Information</h3>
-              @if (parents().length > 0) {
-                <div class="parent-grid">
-                  @for (p of parents(); track p._id || p) {
-                    <div class="parent-card">
-                      <div class="parent-avatar">{{ getInitials(p) }}</div>
-                      <div>
-                        <div class="parent-name">{{ p.firstName }} {{ p.lastName }}</div>
-                        <div class="parent-detail">{{ p.relationship || p.relation || 'Parent' }}</div>
-                        <div class="parent-detail">{{ p.phone || p.email || '' }}</div>
+                  </div>
+                } @else {
+                  <p class="tab-empty">No fee records found.</p>
+                }
+              </div>
+            }
+            @case ('parents') {
+              <div class="tab-panel">
+                <h3 class="panel-title">Parent/Guardian Information</h3>
+                @if (parents().length > 0) {
+                  <div class="parents-list">
+                    @for (p of parents(); track p._id) {
+                      <div class="parent-card">
+                        <div class="parent-avatar">{{ getInitials(p) }}</div>
+                        <div class="parent-info">
+                          <span class="parent-name">{{ p.firstName }} {{ p.lastName }}</span>
+                          <span class="parent-relation">{{ p.relation || 'Guardian' }}</span>
+                          @if (p.phone) { <span class="parent-contact">{{ p.phone }}</span> }
+                          @if (p.email) { <span class="parent-contact">{{ p.email }}</span> }
+                        </div>
                       </div>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <p class="tab-empty">No parent records linked.</p>
-              }
-            </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="tab-empty">No parent information available.</p>
+                }
+              </div>
+            }
           }
-          @case ('exams') {
-            <div class="tab-content animate-in">
-              <h3>Exam Schedule</h3>
-              @if (loadingExams()) {
-                <div class="skeleton" style="height:150px;border-radius:8px"></div>
-              } @else if (studentExams().upcoming.length || studentExams().ongoing.length || studentExams().completed.length) {
-                <!-- Ongoing Exams -->
-                @if (studentExams().ongoing.length) {
-                  <div class="exam-section">
-                    <h4 class="exam-section-title ongoing-title">🔴 Ongoing Exams</h4>
-                    <div class="exam-list">
-                      @for (e of studentExams().ongoing; track e._id) {
-                        <div class="exam-card-container">
-                          <div class="exam-item ongoing" (click)="toggleExamSchedule(e._id)">
-                            <div class="exam-date-badge">
-                              <span class="exam-day">{{ e.startDate | date:'d' }}</span>
-                              <span class="exam-month">{{ e.startDate | date:'MMM' }}</span>
-                            </div>
-                            <div class="exam-details">
-                              <div class="exam-name">{{ e.name }}</div>
-                              <div class="exam-meta">
-                                <span class="exam-type-badge">{{ formatExamType(e.examType) }}</span>
-                                <span>{{ e.startDate | date:'mediumDate' }} - {{ e.endDate | date:'mediumDate' }}</span>
-                              </div>
-                              @if (e.schedule?.length) {
-                                <div class="exam-subjects-toggle">
-                                  {{ expandedExam() === e._id ? '▼' : '▶' }} {{ e.schedule.length }} subjects scheduled - Click to view details
-                                </div>
-                              }
-                            </div>
-                          </div>
-                          @if (expandedExam() === e._id) {
-                            <div class="exam-schedule-detail">
-                              <!-- Exam Overview -->
-                              <div class="exam-overview">
-                                <div class="overview-stats">
-                                  <div class="overview-stat"><span class="stat-icon">📚</span><span class="stat-value">{{ e.schedule?.length || 0 }}</span><span class="stat-label">Subjects</span></div>
-                                  <div class="overview-stat"><span class="stat-icon">📊</span><span class="stat-value">{{ getTotalMarks(e) }}</span><span class="stat-label">Total Marks</span></div>
-                                  <div class="overview-stat"><span class="stat-icon">📅</span><span class="stat-value">{{ getExamDays(e) }}</span><span class="stat-label">Days</span></div>
-                                  <div class="overview-stat"><span class="stat-icon">⏱️</span><span class="stat-value">{{ e.status || 'scheduled' }}</span><span class="stat-label">Status</span></div>
-                                </div>
-                                @if (e.description) {
-                                  <div class="exam-description">ℹ️ {{ e.description }}</div>
-                                }
-                              </div>
-                              <!-- Schedule by Day -->
-                              @if (e.schedule?.length) {
-                                <div class="schedule-section-title">📋 Exam Schedule</div>
-                                @for (day of getGroupedSchedule(e); track day.date) {
-                                  <div class="schedule-day">
-                                    <div class="schedule-day-header">📅 {{ day.date | date:'EEEE, MMMM d, yyyy' }}</div>
-                                    <div class="schedule-slots">
-                                      @for (slot of day.slots; track slot._id) {
-                                        <div class="schedule-slot">
-                                          <span class="slot-time">🕐 {{ slot.startTime }} - {{ slot.endTime }}</span>
-                                          <span class="slot-subject">📚 {{ getScheduleSubjectName(slot) }}</span>
-                                          @if (slot.room) { <span class="slot-room">🚪 {{ slot.room }}</span> }
-                                          <span class="slot-marks">{{ slot.maxMarks }} marks (pass: {{ slot.passingMarks }})</span>
-                                          @if (slot.instructions) { <div class="slot-instructions">💡 {{ slot.instructions }}</div> }
-                                        </div>
-                                      }
-                                    </div>
-                                  </div>
-                                }
-                              } @else {
-                                <div class="no-schedule">Schedule not yet published for this exam.</div>
-                              }
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
-                <!-- Upcoming Exams -->
-                @if (studentExams().upcoming.length) {
-                  <div class="exam-section">
-                    <h4 class="exam-section-title upcoming-title">📅 Upcoming Exams</h4>
-                    <div class="exam-list">
-                      @for (e of studentExams().upcoming; track e._id) {
-                        <div class="exam-card-container">
-                          <div class="exam-item upcoming" (click)="toggleExamSchedule(e._id)">
-                            <div class="exam-date-badge">
-                              <span class="exam-day">{{ e.startDate | date:'d' }}</span>
-                              <span class="exam-month">{{ e.startDate | date:'MMM' }}</span>
-                            </div>
-                            <div class="exam-details">
-                              <div class="exam-name">{{ e.name }}</div>
-                              <div class="exam-meta">
-                                <span class="exam-type-badge">{{ formatExamType(e.examType) }}</span>
-                                <span>{{ e.startDate | date:'mediumDate' }} - {{ e.endDate | date:'mediumDate' }}</span>
-                                <span class="days-left">{{ getDaysUntil(e.startDate) }} days left</span>
-                              </div>
-                              @if (e.schedule?.length) {
-                                <div class="exam-subjects-toggle">
-                                  {{ expandedExam() === e._id ? '▼' : '▶' }} {{ e.schedule.length }} subjects scheduled - Click to view details
-                                </div>
-                              } @else {
-                                <div class="exam-subjects-toggle">Click to view exam details</div>
-                              }
-                            </div>
-                          </div>
-                          @if (expandedExam() === e._id) {
-                            <div class="exam-schedule-detail">
-                              <div class="exam-overview">
-                                <div class="overview-stats">
-                                  <div class="overview-stat"><span class="stat-icon">📚</span><span class="stat-value">{{ e.schedule?.length || 0 }}</span><span class="stat-label">Subjects</span></div>
-                                  <div class="overview-stat"><span class="stat-icon">📊</span><span class="stat-value">{{ getTotalMarks(e) }}</span><span class="stat-label">Total Marks</span></div>
-                                  <div class="overview-stat"><span class="stat-icon">📅</span><span class="stat-value">{{ getExamDays(e) }}</span><span class="stat-label">Days</span></div>
-                                  <div class="overview-stat"><span class="stat-icon">⏰</span><span class="stat-value">{{ getDaysUntil(e.startDate) }}</span><span class="stat-label">Days Left</span></div>
-                                </div>
-                                @if (e.description) {
-                                  <div class="exam-description">ℹ️ {{ e.description }}</div>
-                                }
-                              </div>
-                              @if (e.schedule?.length) {
-                                <div class="schedule-section-title">📋 Exam Schedule</div>
-                                @for (day of getGroupedSchedule(e); track day.date) {
-                                  <div class="schedule-day">
-                                    <div class="schedule-day-header">📅 {{ day.date | date:'EEEE, MMMM d, yyyy' }}</div>
-                                    <div class="schedule-slots">
-                                      @for (slot of day.slots; track slot._id) {
-                                        <div class="schedule-slot">
-                                          <span class="slot-time">🕐 {{ slot.startTime }} - {{ slot.endTime }}</span>
-                                          <span class="slot-subject">📚 {{ getScheduleSubjectName(slot) }}</span>
-                                          @if (slot.room) { <span class="slot-room">🚪 {{ slot.room }}</span> }
-                                          <span class="slot-marks">{{ slot.maxMarks }} marks (pass: {{ slot.passingMarks }})</span>
-                                          @if (slot.instructions) { <div class="slot-instructions">💡 {{ slot.instructions }}</div> }
-                                        </div>
-                                      }
-                                    </div>
-                                  </div>
-                                }
-                              } @else {
-                                <div class="no-schedule">Schedule not yet published for this exam.</div>
-                              }
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
-                <!-- Completed Exams -->
-                @if (studentExams().completed.length) {
-                  <div class="exam-section">
-                    <h4 class="exam-section-title completed-title">✅ Completed Exams</h4>
-                    <div class="exam-list">
-                      @for (e of studentExams().completed; track e._id) {
-                        <div class="exam-card-container">
-                          <div class="exam-item completed" (click)="toggleExamSchedule(e._id)">
-                            <div class="exam-date-badge completed-badge">
-                              <span class="exam-day">{{ e.endDate | date:'d' }}</span>
-                              <span class="exam-month">{{ e.endDate | date:'MMM' }}</span>
-                            </div>
-                            <div class="exam-details">
-                              <div class="exam-name">{{ e.name }}</div>
-                              <div class="exam-meta">
-                                <span class="exam-type-badge">{{ formatExamType(e.examType) }}</span>
-                                <span>{{ e.startDate | date:'mediumDate' }} - {{ e.endDate | date:'mediumDate' }}</span>
-                              </div>
-                              @if (e.schedule?.length) {
-                                <div class="exam-subjects-toggle">
-                                  {{ expandedExam() === e._id ? '▼' : '▶' }} {{ e.schedule.length }} subjects
-                                </div>
-                              } @else {
-                                <div class="exam-subjects-toggle">Click to view exam details</div>
-                              }
-                              <a [routerLink]="['/results']" [queryParams]="{examId: e._id, studentId: student()!._id}" class="view-results-link" (click)="$event.stopPropagation()">View Results →</a>
-                            </div>
-                          </div>
-                          @if (expandedExam() === e._id) {
-                            <div class="exam-schedule-detail">
-                              <div class="exam-overview">
-                                <div class="overview-stats">
-                                  <div class="overview-stat"><span class="stat-icon">📚</span><span class="stat-value">{{ e.schedule?.length || 0 }}</span><span class="stat-label">Subjects</span></div>
-                                  <div class="overview-stat"><span class="stat-icon">📊</span><span class="stat-value">{{ getTotalMarks(e) }}</span><span class="stat-label">Total Marks</span></div>
-                                  <div class="overview-stat"><span class="stat-icon">📅</span><span class="stat-value">{{ getExamDays(e) }}</span><span class="stat-label">Days</span></div>
-                                  <div class="overview-stat"><span class="stat-icon">✅</span><span class="stat-value">Completed</span><span class="stat-label">Status</span></div>
-                                </div>
-                                @if (e.description) {
-                                  <div class="exam-description">ℹ️ {{ e.description }}</div>
-                                }
-                              </div>
-                              @if (e.schedule?.length) {
-                                <div class="schedule-section-title">📋 Exam Schedule</div>
-                                @for (day of getGroupedSchedule(e); track day.date) {
-                                  <div class="schedule-day">
-                                    <div class="schedule-day-header">📅 {{ day.date | date:'EEEE, MMMM d, yyyy' }}</div>
-                                    <div class="schedule-slots">
-                                      @for (slot of day.slots; track slot._id) {
-                                        <div class="schedule-slot">
-                                          <span class="slot-time">🕐 {{ slot.startTime }} - {{ slot.endTime }}</span>
-                                          <span class="slot-subject">📚 {{ getScheduleSubjectName(slot) }}</span>
-                                          @if (slot.room) { <span class="slot-room">🚪 {{ slot.room }}</span> }
-                                          <span class="slot-marks">{{ slot.maxMarks }} marks</span>
-                                        </div>
-                                      }
-                                    </div>
-                                  </div>
-                                }
-                              } @else {
-                                <div class="no-schedule">No schedule details available for this exam.</div>
-                              }
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
-              } @else {
-                <p class="tab-empty">No exams scheduled for this student's class.</p>
-              }
-            </div>
-          }
-        }
-      </div>
+        </div>
+      </section>
+    }
 
-      <!-- Payment Modal -->
-      @if (showPaymentModal()) {
-        <div class="modal-backdrop" (click)="closePaymentModal()">
-          <div class="modal-content card" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-              <h2>Record Payment</h2>
-              <button class="close-btn" (click)="closePaymentModal()">×</button>
+    <!-- Payment Modal -->
+    @if (showPaymentModal()) {
+      <div class="modal-backdrop" (click)="closePaymentModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Record Payment</h3>
+            <button class="modal-close" (click)="closePaymentModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Amount</label>
+              <input type="number" [(ngModel)]="paymentForm.amount" class="form-input">
+              <div class="quick-amounts">
+                <button (click)="setPaymentAmount('full')">Full (₹{{ selectedFee()?.dueAmount }})</button>
+                <button (click)="setPaymentAmount('half')">Half</button>
+              </div>
             </div>
-            
-            <div class="payment-info">
-              <p><strong>Period:</strong> {{ selectedFee()?.type }}</p>
-              <p><strong>Total Amount:</strong> {{ selectedFee()?.amount | currency:'INR' }}</p>
-              <p><strong>Already Paid:</strong> {{ selectedFee()?.paidAmount | currency:'INR' }}</p>
-              <p><strong>Balance Due:</strong> {{ selectedFee()?.dueAmount | currency:'INR' }}</p>
+            <div class="form-group">
+              <label>Payment Method</label>
+              <select [(ngModel)]="paymentForm.method" class="form-input">
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+                <option value="upi">UPI</option>
+                <option value="bank_transfer">Bank Transfer</option>
+              </select>
             </div>
-            
-            <form (ngSubmit)="recordPayment()">
-              <div class="form-group">
-                <label>Payment Amount *</label>
-                <input type="number" class="form-input" [(ngModel)]="paymentForm.amount" name="amount" 
-                       [max]="selectedFee()?.dueAmount" min="1" required />
-                <div class="quick-btns">
-                  <button type="button" class="btn btn-sm btn-secondary" (click)="setPaymentAmount('full')">Full Amount</button>
-                  <button type="button" class="btn btn-sm btn-secondary" (click)="setPaymentAmount('half')">Half</button>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label>Payment Method *</label>
-                <select class="form-select" [(ngModel)]="paymentForm.method" name="method" required>
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
-                  <option value="upi">UPI</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="cheque">Cheque</option>
-                  <option value="online">Online</option>
-                </select>
-              </div>
-              
-              <div class="form-group">
-                <label>Transaction ID</label>
-                <input type="text" class="form-input" [(ngModel)]="paymentForm.transactionId" name="transactionId" 
-                       placeholder="Reference/Transaction ID (optional)" />
-              </div>
-              
-              <div class="form-group">
-                <label>Remarks</label>
-                <input type="text" class="form-input" [(ngModel)]="paymentForm.remarks" name="remarks" 
-                       placeholder="Payment remarks (optional)" />
-              </div>
-              
-              <div class="form-actions">
-                <button type="button" class="btn btn-secondary" (click)="closePaymentModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary" [disabled]="processingPayment() || !paymentForm.amount">
-                  @if (processingPayment()) { <span class="spinner"></span> }
-                  Record Payment
-                </button>
-              </div>
-            </form>
+            <div class="form-group">
+              <label>Transaction ID (optional)</label>
+              <input type="text" [(ngModel)]="paymentForm.transactionId" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Remarks (optional)</label>
+              <textarea [(ngModel)]="paymentForm.remarks" class="form-input" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-cancel" (click)="closePaymentModal()">Cancel</button>
+            <button class="btn-confirm" (click)="recordPayment()" [disabled]="processingPayment()">
+              {{ processingPayment() ? 'Processing...' : 'Confirm Payment' }}
+            </button>
           </div>
         </div>
-      }
+      </div>
     }
   `,
   styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-6); }
-    .header-actions { display: flex; gap: var(--space-3); }
-
-    /* Profile Hero */
-    .profile-hero { position: relative; border-radius: var(--radius-xl); overflow: hidden; margin-bottom: var(--space-6); background: var(--surface); border: 1px solid var(--border); }
-    .hero-bg { height: 120px; background: linear-gradient(135deg, var(--primary), #8b5cf6, #ec4899); }
-    .hero-content { display: flex; align-items: flex-end; gap: var(--space-5); padding: 0 var(--space-6) var(--space-5); margin-top: -48px; }
-    .avatar-xl {
-      width: 96px; height: 96px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      background: var(--primary); color: white; font-size: var(--text-3xl); font-weight: 700; border: 4px solid var(--surface);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-shrink: 0;
+    /* ===== CSS Variables (from global theme) ===== */
+    :host {
+      --accent: var(--primary, #2563eb);
+      --accent-light: var(--primary-hover, #eff6ff);
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --text-primary: var(--text-primary, #111827);
+      --text-secondary: var(--text-secondary, #6b7280);
+      --text-muted: var(--text-tertiary, #9ca3af);
+      --bg-primary: var(--bg-surface, #ffffff);
+      --bg-secondary: var(--bg-secondary, #f9fafb);
+      --border: var(--border-color, #e5e7eb);
+      --shadow-sm: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
+      --shadow-md: var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04));
+      --shadow-lg: var(--shadow-lg, 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04));
+      --radius: 12px;
+      --transition: 0.2s ease;
     }
-    .hero-info h2 { font-size: var(--text-xl); font-weight: 700; margin-bottom: 4px; }
-    .hero-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
-    .meta-chip { background: var(--bg-secondary); padding: 2px 10px; border-radius: 12px; font-size: var(--text-xs); font-weight: 500; }
-    .adm-chip { background: #dbeafe; color: #1e40af; font-family: monospace; }
-    .status-pill { display: inline-block; padding: 2px 12px; border-radius: 12px; font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; }
-    .status-active { background: #dcfce7; color: #166534; }
-    .status-inactive { background: #fee2e2; color: #991b1b; }
 
-    /* Quick Stats */
-    .quick-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
-    .qs-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; align-items: center; gap: var(--space-3); }
-    .qs-icon { width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 18px; }
-    .qs-value { font-size: var(--text-xl); font-weight: 700; }
-    .qs-label { font-size: var(--text-xs); color: var(--text-tertiary); }
-
-    /* Dashboard Grid */
-    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-bottom: var(--space-6); }
-    .card-title { font-size: var(--text-lg); font-weight: 600; margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
-    .info-list { display: flex; flex-direction: column; }
-    .info-row { display: flex; justify-content: space-between; padding: var(--space-2) 0; border-bottom: 1px solid var(--border); font-size: var(--text-sm); }
-    .info-row:last-child { border-bottom: none; }
-    .info-row .label { color: var(--text-tertiary); font-weight: 500; }
-
-    /* Timeline */
-    .timeline { position: relative; padding-left: 32px; }
-    .timeline::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: var(--border); }
-    .timeline-item { position: relative; margin-bottom: var(--space-5); }
-    .timeline-item.current .timeline-content { border-color: var(--primary); background: rgba(59,130,246,0.04); }
-    .timeline-marker {
-      position: absolute; left: -32px; top: 4px; width: 28px; height: 28px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; font-size: 11px; font-weight: 700; z-index: 1;
-      background: var(--surface); border: 2px solid var(--border); color: var(--text-secondary);
+    :host-context(.dark) {
+      --success-light: rgba(34, 197, 94, 0.15);
+      --danger-light: rgba(239, 68, 68, 0.15);
+      --warning-light: rgba(245, 158, 11, 0.15);
     }
-    .marker-pass, .marker-promoted { border-color: #22c55e; color: #22c55e; background: #f0fdf4; }
-    .marker-fail, .marker-retained { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
-    .marker-active { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
-    .timeline-content { padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-md); }
-    .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .tl-year { font-weight: 600; font-size: var(--text-sm); color: var(--primary); }
-    .tl-current-badge { background: var(--primary); color: white; padding: 1px 8px; border-radius: 8px; font-size: 10px; font-weight: 700; }
-    .tl-class { font-weight: 500; margin-bottom: 4px; }
-    .tl-details { display: flex; gap: var(--space-3); flex-wrap: wrap; font-size: var(--text-xs); }
-    .tl-roll { color: var(--text-secondary); }
-    .tl-result { padding: 1px 8px; border-radius: 8px; font-weight: 600; }
-    .result-pass, .result-promoted { background: #dcfce7; color: #166534; }
-    .result-fail, .result-retained { background: #fee2e2; color: #991b1b; }
-    .tl-pct { color: var(--text-secondary); }
-    .tl-rank { color: #f59e0b; font-weight: 600; }
-    .tl-remarks { font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 4px; font-style: italic; }
-    .empty-timeline { text-align: center; padding: var(--space-8); }
-    .empty-timeline p { color: var(--text-tertiary); margin-bottom: var(--space-3); }
 
-    /* Tabs */
-    .tab-section { margin-bottom: var(--space-6); }
-    .tab-bar { display: flex; gap: var(--space-2); border-bottom: 1px solid var(--border); margin-bottom: var(--space-4); }
-    .tab-btn {
-      padding: var(--space-2) var(--space-4); background: none; border: none; border-bottom: 2px solid transparent;
-      cursor: pointer; font-size: var(--text-sm); font-weight: 500; color: var(--text-secondary); transition: all 0.2s;
-    }
-    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-    .tab-content h3 { margin-bottom: var(--space-4); }
-    .tab-empty { text-align: center; color: var(--text-tertiary); padding: var(--space-6); }
-    .stat-mini { text-align: center; padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-md); }
-    .stat-mini-val { font-size: var(--text-2xl); font-weight: 700; }
-    .stat-mini-label { font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 2px; }
-    .animate-in { animation: slideIn 0.3s ease; }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* Parents */
-    .parent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4); }
-    .parent-card { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-md); }
-    .parent-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #f3e8ff; color: #8b5cf6; font-weight: 700; flex-shrink: 0; }
-    .parent-name { font-weight: 500; }
-    .parent-detail { font-size: var(--text-xs); color: var(--text-tertiary); }
-
-    /* Exam Tab Styles */
-    .exam-section { margin-bottom: var(--space-5); }
-    .exam-section-title { font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2); }
-    .ongoing-title { color: #ef4444; }
-    .upcoming-title { color: #3b82f6; }
-    .completed-title { color: #22c55e; }
-    .exam-list { display: flex; flex-direction: column; gap: var(--space-3); }
-    .exam-card-container { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s; }
-    .exam-card-container:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .exam-item { display: flex; gap: var(--space-4); padding: var(--space-3); cursor: pointer; transition: all 0.2s; }
-    .exam-item.ongoing { border-left: 3px solid #ef4444; background: #fef2f2; }
-    .exam-item.upcoming { border-left: 3px solid #3b82f6; }
-    .exam-item.completed { border-left: 3px solid #22c55e; opacity: 0.85; }
-    .exam-date-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 50px; padding: var(--space-2); background: var(--primary); color: white; border-radius: var(--radius-md); }
-    .exam-date-badge.completed-badge { background: #22c55e; }
-    .exam-day { font-size: var(--text-xl); font-weight: 700; line-height: 1; }
-    .exam-month { font-size: var(--text-xs); text-transform: uppercase; }
-    .exam-details { flex: 1; }
-    .exam-name { font-weight: 600; margin-bottom: 4px; }
-    .exam-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); font-size: var(--text-xs); color: var(--text-tertiary); }
-    .exam-type-badge { background: var(--bg-secondary); padding: 2px 8px; border-radius: 8px; font-weight: 500; }
-    .days-left { color: #3b82f6; font-weight: 500; }
-    .exam-subjects-toggle { font-size: var(--text-xs); color: var(--primary); margin-top: 4px; font-weight: 500; cursor: pointer; }
-    .view-results-link { font-size: var(--text-xs); color: var(--primary); font-weight: 500; margin-top: 4px; display: inline-block; }
-    
-    /* Expandable Schedule Detail */
-    .exam-schedule-detail { background: var(--bg-secondary); padding: var(--space-4); border-top: 1px solid var(--border); animation: slideDown 0.2s ease; }
-    @keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
-    .schedule-day { margin-bottom: var(--space-4); }
-    .schedule-day:last-child { margin-bottom: 0; }
-    .schedule-day-header { font-weight: 600; font-size: var(--text-sm); color: var(--primary); margin-bottom: var(--space-2); padding-bottom: var(--space-2); border-bottom: 1px dashed var(--border); }
-    .schedule-slots { display: flex; flex-direction: column; gap: var(--space-2); }
-    .schedule-slot { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-2) var(--space-3); background: var(--surface); border-radius: var(--radius-md); font-size: var(--text-sm); border: 1px solid var(--border); }
-    .slot-time { font-weight: 500; color: var(--text-secondary); min-width: 120px; }
-    .slot-subject { font-weight: 600; color: var(--text-primary); flex: 1; min-width: 150px; }
-    .slot-room { color: var(--text-tertiary); font-size: var(--text-xs); }
-    .slot-marks { color: var(--text-secondary); font-size: var(--text-xs); background: var(--bg-secondary); padding: 2px 8px; border-radius: 8px; }
-    .slot-instructions { width: 100%; font-size: var(--text-xs); color: var(--text-tertiary); background: #fefce8; padding: 4px 8px; border-radius: 4px; margin-top: 4px; }
-    
-    /* Exam Overview Stats */
-    .exam-overview { margin-bottom: var(--space-4); }
-    .overview-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); }
-    .overview-stat { display: flex; flex-direction: column; align-items: center; padding: var(--space-3); background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center; }
-    .stat-icon { font-size: var(--text-lg); margin-bottom: 4px; }
-    .stat-value { font-size: var(--text-lg); font-weight: 700; color: var(--text-primary); }
-    .stat-label { font-size: var(--text-xs); color: var(--text-tertiary); }
-    .exam-description { font-size: var(--text-sm); color: var(--text-secondary); padding: var(--space-2) var(--space-3); background: #f0f9ff; border-radius: var(--radius-md); border-left: 3px solid #3b82f6; }
-    .schedule-section-title { font-weight: 600; font-size: var(--text-sm); color: var(--text-primary); margin-bottom: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); }
-    .no-schedule { padding: var(--space-4); text-align: center; color: var(--text-tertiary); font-style: italic; }
-    @media (max-width: 600px) { .overview-stats { grid-template-columns: repeat(2, 1fr); } }
-
-    .grid { display: grid; gap: var(--space-4); }
-    .grid-3 { grid-template-columns: repeat(3, 1fr); }
-    @media (max-width: 900px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
-      .quick-stats { grid-template-columns: repeat(2, 1fr); }
-      .hero-content { flex-direction: column; align-items: center; text-align: center; }
-    }
-    
-    /* Fee Styles */
-    .fee-summary { display: flex; gap: var(--space-4); margin-bottom: var(--space-4); padding: var(--space-4); background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); }
-    .fee-summary-item { display: flex; flex-direction: column; }
-    .fee-label { font-size: var(--text-sm); color: var(--text-tertiary); }
-    .fee-value { font-size: var(--text-xl); font-weight: 700; }
-    .text-right { text-align: right; }
-    .text-success { color: #22c55e; }
-    .text-danger { color: #ef4444; }
-    
-    /* Payment Modal Styles */
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal-content { background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-6); width: 100%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
-    .modal-header h2 { margin: 0; font-size: var(--text-xl); }
-    .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
-    .payment-info { background: var(--bg-surface); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); }
-    .payment-info p { margin: var(--space-1) 0; font-size: var(--text-sm); }
-    .form-group { margin-bottom: var(--space-4); }
-    .form-group label { display: block; font-weight: 500; margin-bottom: var(--space-1); font-size: var(--text-sm); }
-    .form-input, .form-select { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: var(--text-base); }
-    .quick-btns { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
-    .form-actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border); }
-    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; margin-right: 8px; }
+    /* ===== Animations ===== */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    .slide-up { animation: slideUp 0.5s ease forwards; animation-delay: var(--delay, 0s); opacity: 0; }
+
+    /* ===== Header ===== */
+    .profile-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; margin-bottom: 24px; }
+    .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: color var(--transition); }
+    .back-link:hover { color: var(--text-primary); }
+    .back-link:hover svg { transform: translateX(-4px); }
+    .back-link svg { transition: transform var(--transition); }
+    .header-right { display: flex; gap: 12px; }
+    .btn-outline { padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary); font-size: 14px; font-weight: 500; text-decoration: none; transition: all var(--transition); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-primary { padding: 10px 20px; border-radius: 8px; border: none; background: var(--accent); color: white; font-size: 14px; font-weight: 500; text-decoration: none; transition: all var(--transition); }
+    .btn-primary:hover { background: #1d4ed8; }
+
+    /* ===== Loading ===== */
+    .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 0; color: var(--text-muted); }
+    .loader { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+    .loader-sm { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .loading-inline { display: flex; justify-content: center; padding: 40px; }
+
+    /* ===== Profile Card ===== */
+    .profile-card { background: var(--bg-primary); border-radius: var(--radius); border: 1px solid var(--border); padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow-sm); }
+    .profile-main { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; }
+    .avatar { position: relative; width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .avatar-initials { color: white; font-size: 28px; font-weight: 600; letter-spacing: 1px; }
+    .status-indicator { position: absolute; bottom: 4px; right: 4px; width: 16px; height: 16px; border-radius: 50%; background: #9ca3af; border: 3px solid var(--bg-primary); }
+    .status-indicator.status-active { background: #22c55e; }
+    .status-indicator.status-graduated { background: #3b82f6; }
+    .status-indicator.status-transferred { background: #f59e0b; }
+    .status-indicator.status-inactive { background: #ef4444; }
+
+    .profile-info { flex: 1; }
+    .name { font-size: 28px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; letter-spacing: -0.5px; }
+    .role { font-size: 16px; color: var(--text-secondary); margin: 0 0 12px; }
+    .meta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .meta-item { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+    .meta-item svg { stroke: var(--text-muted); }
+    .status-chip { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--success-light); color: #166534; }
+    .status-chip.chip-active { background: var(--success-light); color: #166534; }
+    .status-chip.chip-inactive { background: var(--danger-light); color: #991b1b; }
+    .status-chip.chip-graduated { background: var(--accent-light); color: var(--accent); }
+
+    .profile-stats { display: flex; align-items: center; justify-content: center; padding-top: 24px; border-top: 1px solid var(--border); }
+    .stat-item { text-align: center; padding: 0 32px; }
+    .stat-number { display: block; font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+    .stat-label { display: block; font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .stat-divider { width: 1px; height: 40px; background: var(--border); }
+
+    /* ===== Content Grid ===== */
+    .content-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px; }
+    .content-card { background: var(--bg-primary); border-radius: var(--radius); border: 1px solid var(--border); padding: 24px; box-shadow: var(--shadow-sm); transition: box-shadow var(--transition); }
+    .content-card:hover { box-shadow: var(--shadow-md); }
+    .section-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0 0 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .section-title svg { stroke: var(--accent); }
+    .section-title .badge { margin-left: auto; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 12px; }
+
+    /* ===== Details List ===== */
+    .details-list { display: flex; flex-direction: column; }
+    .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { font-size: 14px; color: var(--text-muted); }
+    .detail-value { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+    .detail-value.highlight { background: var(--bg-secondary); padding: 4px 12px; border-radius: 6px; font-family: 'SF Mono', monospace; font-size: 13px; }
+
+    /* ===== Timeline ===== */
+    .timeline { display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; }
+    .timeline-item { display: flex; gap: 16px; animation: slideUp 0.4s ease forwards; animation-delay: var(--delay, 0s); opacity: 0; }
+    .timeline-item.current .timeline-content { border-color: var(--accent); background: var(--accent-light); }
+    .timeline-marker { display: flex; flex-direction: column; align-items: center; width: 20px; }
+    .marker-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .marker-dot.dot-pass, .marker-dot.dot-promoted { background: var(--success); }
+    .marker-dot.dot-fail, .marker-dot.dot-retained { background: var(--danger); }
+    .marker-dot.dot-active { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-light); }
+    .marker-line { flex: 1; width: 2px; background: var(--border); margin-top: 8px; }
+    .timeline-content { flex: 1; padding: 16px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid transparent; margin-bottom: 12px; }
+    .timeline-header { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+    .timeline-header h4 { margin: 0; font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .current-badge { background: var(--accent); color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .timeline-year { font-size: 13px; color: var(--text-secondary); margin: 0 0 8px; }
+    .timeline-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+    .meta-chip { background: var(--bg-primary); border: 1px solid var(--border); padding: 2px 10px; border-radius: 6px; font-size: 12px; color: var(--text-secondary); }
+    .result-chip { padding: 2px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .result-chip.result-pass, .result-chip.result-promoted { background: var(--success-light); color: #166534; }
+    .result-chip.result-fail, .result-chip.result-retained { background: var(--danger-light); color: #991b1b; }
+
+    /* ===== Empty State ===== */
+    .empty-state { display: flex; flex-direction: column; align-items: center; padding: 40px; text-align: center; color: var(--text-muted); }
+    .empty-state svg { margin-bottom: 12px; stroke: var(--border); }
+    .empty-state p { margin: 0 0 16px; font-size: 14px; }
+    .link-btn { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .link-btn:hover { text-decoration: underline; }
+    .empty-state-sm { text-align: center; padding: 24px; }
+    .empty-state-sm p { color: var(--text-muted); margin-bottom: 12px; }
+
+    /* ===== Tab Section ===== */
+    .tab-section { background: var(--bg-primary); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+    .tab-bar { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .tab-btn { display: flex; align-items: center; gap: 8px; padding: 16px 24px; background: none; border: none; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-secondary); border-bottom: 2px solid transparent; transition: all var(--transition); white-space: nowrap; }
+    .tab-btn:hover { color: var(--text-primary); background: var(--bg-secondary); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-icon { font-size: 16px; }
+    .tab-content { padding: 24px; }
+    .tab-panel { animation: fadeIn 0.3s ease; }
+    .panel-title { font-size: 16px; font-weight: 600; margin: 0 0 16px; color: var(--text-primary); }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .btn-sm { padding: 8px 16px; border-radius: 6px; background: var(--accent); color: white; border: none; font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; }
+    .btn-sm:hover { background: #1d4ed8; }
+    .btn-primary-sm { padding: 8px 16px; border-radius: 6px; background: var(--accent); color: white; border: none; font-size: 13px; cursor: pointer; }
+    .tab-empty { color: var(--text-muted); text-align: center; padding: 24px; }
+    .subsection-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 24px 0 12px; }
+
+    /* ===== Mini Stats ===== */
+    .mini-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; }
+    .mini-stat { text-align: center; padding: 16px; background: var(--bg-secondary); border-radius: 10px; }
+    .mini-value { display: block; font-size: 24px; font-weight: 700; }
+    .mini-label { display: block; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ===== Exams List ===== */
+    .exams-list { display: flex; flex-direction: column; gap: 12px; }
+    .exam-card { padding: 16px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border); }
+    .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .exam-name { font-weight: 600; color: var(--text-primary); }
+    .exam-type { background: var(--accent-light); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .exam-info { display: flex; gap: 16px; font-size: 13px; color: var(--text-secondary); }
+    .exam-countdown { font-weight: 600; }
+    .exam-countdown.urgent { color: var(--danger); }
+    .toggle-btn { margin-top: 12px; padding: 8px 12px; border: 1px solid var(--border); background: var(--bg-primary); border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .schedule-details { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .schedule-day { margin-bottom: 12px; }
+    .day-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 8px; }
+    .slot-item { display: flex; gap: 16px; padding: 8px 12px; background: var(--bg-primary); border-radius: 6px; margin-bottom: 4px; font-size: 13px; }
+    .slot-time { color: var(--text-muted); min-width: 100px; }
+    .slot-subject { flex: 1; font-weight: 500; color: var(--text-primary); }
+    .slot-marks { color: var(--text-secondary); }
+
+    /* ===== Data Table ===== */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    .data-table th { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; background: var(--bg-secondary); }
+    .data-table td { font-size: 14px; color: var(--text-primary); }
+    .grade-badge { background: var(--success-light); color: #166534; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
     
-    /* Analytics Styles */
-    .analytics-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--space-8); text-align: center; color: var(--text-tertiary); }
-    .analytics-empty .empty-icon { font-size: 48px; margin-bottom: var(--space-3); opacity: 0.5; }
-    .analytics-empty p { margin-bottom: var(--space-4); }
-    
-    .analytics-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-4); }
-    .analytics-stat { display: flex; flex-direction: column; align-items: center; padding: var(--space-4); background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); text-align: center; }
-    .analytics-stat.success { border-color: #22c55e; background: #f0fdf4; }
-    .analytics-stat.danger { border-color: #ef4444; background: #fef2f2; }
-    .analytics-stat-value { font-size: var(--text-2xl); font-weight: 700; color: var(--text-primary); }
-    .analytics-stat.success .analytics-stat-value { color: #15803d; }
-    .analytics-stat.danger .analytics-stat-value { color: #dc2626; }
-    .analytics-stat-label { font-size: var(--text-sm); color: var(--text-tertiary); margin-top: 4px; }
-    
-    .subject-analytics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-3); }
-    .subject-analytics-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); }
-    .subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); }
-    .subject-name { font-weight: 600; color: var(--text-primary); }
-    .trend-icon { font-size: var(--text-sm); padding: 2px 6px; border-radius: 4px; }
-    .trend-icon.trend-up { color: #15803d; background: #dcfce7; }
-    .trend-icon.trend-down { color: #dc2626; background: #fee2e2; }
-    .trend-icon.trend-same { color: #6b7280; background: #f3f4f6; }
-    .subject-avg { font-size: var(--text-lg); font-weight: 700; color: var(--primary); margin-bottom: var(--space-2); }
-    .subject-range { display: flex; gap: var(--space-3); font-size: var(--text-sm); margin-bottom: var(--space-2); }
-    .subject-range .high { color: #15803d; }
-    .subject-range .low { color: #dc2626; }
-    .subject-pass-rate { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--text-tertiary); }
-    .progress-mini { flex: 1; height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; min-width: 60px; }
-    .progress-mini .progress-fill { height: 100%; background: #22c55e; border-radius: 3px; transition: width 0.3s; }
-    
-    .comparison-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-3); }
-    .comparison-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border); font-weight: 600; }
-    .comparison-diff { padding: 2px 8px; border-radius: 4px; font-size: var(--text-sm); }
-    .comparison-diff.positive { color: #15803d; background: #dcfce7; }
-    .comparison-diff.negative { color: #dc2626; background: #fee2e2; }
-    .comparison-subjects { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-    .comparison-subject { display: flex; align-items: center; gap: var(--space-2); padding: 4px 8px; background: var(--bg-secondary); border-radius: 4px; font-size: var(--text-sm); }
-    .cs-name { color: var(--text-secondary); }
-    .cs-current { font-weight: 600; color: var(--text-primary); }
-    .cs-diff { font-weight: 500; }
-    .cs-diff.positive { color: #15803d; }
-    .cs-diff.negative { color: #dc2626; }
-    .cs-diff.new { color: #3b82f6; }
-    
-    @media (max-width: 768px) {
+    /* ===== Results Tab ===== */
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .form-select-sm { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--bg-primary); min-width: 180px; }
+    .results-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+    .summary-stat { text-align: center; padding: 16px; background: var(--bg-secondary); border-radius: 10px; }
+    .summary-stat.success { background: var(--success-light); }
+    .summary-stat.danger { background: var(--danger-light); }
+    .summary-stat .stat-val { display: block; font-size: 20px; font-weight: 700; color: var(--text-primary); }
+    .summary-stat.success .stat-val { color: #166534; }
+    .summary-stat.danger .stat-val { color: #991b1b; }
+    .summary-stat .stat-lbl { display: block; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .status-chip { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .status-chip.pass { background: var(--success-light); color: #166534; }
+    .status-chip.fail { background: var(--danger-light); color: #991b1b; }
+    .empty-state-sm { text-align: center; padding: 32px; color: var(--text-muted); }
+
+    /* ===== Analytics ===== */
+    .analytics-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .analytics-stat { text-align: center; padding: 16px; background: var(--bg-secondary); border-radius: 10px; }
+    .analytics-stat.success { background: var(--success-light); }
+    .analytics-stat.danger { background: var(--danger-light); }
+    .stat-val { display: block; font-size: 24px; font-weight: 700; color: var(--text-primary); }
+    .analytics-stat.success .stat-val { color: #166534; }
+    .analytics-stat.danger .stat-val { color: #991b1b; }
+    .stat-lbl { display: block; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .subject-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .subject-card { padding: 16px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border); }
+    .subj-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .subj-name { font-weight: 600; color: var(--text-primary); }
+    .subj-trend { font-size: 14px; }
+    .subj-trend.trend-up { color: var(--success); }
+    .subj-trend.trend-down { color: var(--danger); }
+    .subj-avg { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+    .subj-range { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
+
+    /* ===== Fees ===== */
+    .fee-summary { display: flex; gap: 24px; margin-bottom: 24px; }
+    .fee-stat { flex: 1; text-align: center; padding: 20px; background: var(--success-light); border-radius: 10px; }
+    .fee-stat.danger { background: var(--danger-light); }
+    .fee-val { display: block; font-size: 24px; font-weight: 700; color: #166534; }
+    .fee-stat.danger .fee-val { color: #991b1b; }
+    .fee-lbl { display: block; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .fee-list { display: flex; flex-direction: column; gap: 12px; }
+    .fee-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--bg-secondary); border-radius: 10px; }
+    .fee-info { display: flex; align-items: center; gap: 12px; }
+    .fee-type { font-weight: 600; color: var(--text-primary); }
+    .fee-status { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .fee-status.status-paid { background: var(--success-light); color: #166534; }
+    .fee-status.status-pending { background: var(--warning-light); color: #92400e; }
+    .fee-status.status-overdue { background: var(--danger-light); color: #991b1b; }
+    .fee-status.status-partial { background: var(--warning-light); color: #92400e; }
+    .fee-amounts { display: flex; align-items: center; gap: 16px; }
+    .fee-amount { font-weight: 600; color: var(--text-primary); }
+    .pay-btn { padding: 8px 16px; border-radius: 6px; background: var(--accent); color: white; border: none; font-size: 13px; font-weight: 500; cursor: pointer; }
+    .pay-btn:hover { background: #1d4ed8; }
+
+    /* ===== Parents ===== */
+    .parents-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .parent-card { display: flex; gap: 16px; padding: 16px; background: var(--bg-secondary); border-radius: 10px; }
+    .parent-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; }
+    .parent-info { display: flex; flex-direction: column; gap: 4px; }
+    .parent-name { font-weight: 600; color: var(--text-primary); }
+    .parent-relation { font-size: 12px; color: var(--accent); font-weight: 500; }
+    .parent-contact { font-size: 13px; color: var(--text-secondary); }
+
+    /* ===== Modal ===== */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s ease; }
+    .modal-content { background: var(--bg-primary); border-radius: var(--radius); width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); animation: slideUp 0.3s ease; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+    .modal-header h3 { margin: 0; font-size: 18px; }
+    .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+    .modal-body { padding: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; }
+    .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    .quick-amounts { display: flex; gap: 8px; margin-top: 8px; }
+    .quick-amounts button { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--bg-secondary); border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .quick-amounts button:hover { border-color: var(--accent); }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--border); }
+    .btn-cancel { padding: 10px 20px; border: 1px solid var(--border); background: var(--bg-primary); border-radius: 8px; cursor: pointer; }
+    .btn-confirm { padding: 10px 20px; border: none; background: var(--accent); color: white; border-radius: 8px; cursor: pointer; }
+    .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px) {
+      .content-grid { grid-template-columns: 1fr; }
       .analytics-summary { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .profile-main { flex-direction: column; text-align: center; }
+      .meta-row { justify-content: center; }
+      .profile-stats { flex-wrap: wrap; gap: 16px; }
+      .stat-divider { display: none; }
+      .stat-item { padding: 16px; flex: 1; min-width: 80px; }
+      .profile-header { flex-direction: column; gap: 16px; align-items: flex-start; }
+      .header-right { width: 100%; }
+      .tab-btn { padding: 12px 16px; }
+      .fee-summary { flex-direction: column; }
     }
   `]
 })
@@ -879,6 +714,11 @@ export class StudentDetailComponent implements OnInit {
   resultsData = signal<any[]>([]);
   feeData = signal<any[]>([]);
   activeTab = signal('attendance');
+  
+  // Results tab state
+  selectedExamForResults = signal<string>('');
+  loadingResults = signal(false);
+  examsForResults = signal<any[]>([]);
 
   tabs = [
     { key: 'attendance', icon: '📋', label: 'Attendance' },
@@ -888,7 +728,7 @@ export class StudentDetailComponent implements OnInit {
     { key: 'fees', icon: '💰', label: 'Fees' },
     { key: 'parents', icon: '👨‍👩‍👧', label: 'Parents' },
   ];
-  loadingExams = signal(false);
+  loadingExams = signal(true);
   loadingAnalytics = signal(false);
   studentExams = signal<{ upcoming: any[]; ongoing: any[]; completed: any[] }>({ upcoming: [], ongoing: [], completed: [] });
   studentAnalytics = signal<any>(null);
@@ -912,19 +752,16 @@ export class StudentDetailComponent implements OnInit {
     const id = this.route.snapshot.params['id'];
     this.loadStudent(id);
     this.loadEnrollmentHistory(id);
-    this.loadStudentExams(id);
     this.loadSubjects();
     this.loadStudentFees(id);
   }
 
   loadStudentFees(studentId: string): void {
     this.loadingFees.set(true);
-    // Get fees for the student - trying without academicYearId first to get all fees
     this.api.get<any>(`/fees`, { studentId, limit: 50 }).subscribe({
       next: (res) => {
         const data = res.data?.items || res.data?.data || res.data || [];
         const fees = Array.isArray(data) ? data : [];
-        // Transform fee data for display
         const transformedFees = fees.map((fee: any) => ({
           _id: fee._id,
           type: fee.periodLabel || `${this.getMonthName(fee.month)} ${fee.year}` || 'Monthly Fee',
@@ -938,9 +775,7 @@ export class StudentDetailComponent implements OnInit {
         this.feeData.set(transformedFees);
         this.loadingFees.set(false);
       },
-      error: () => {
-        this.loadingFees.set(false);
-      }
+      error: () => this.loadingFees.set(false)
     });
   }
 
@@ -967,13 +802,18 @@ export class StudentDetailComponent implements OnInit {
       next: (res) => {
         const data = res.data?.data || res.data || {};
         this.student.set(data);
-        // Extract parents from populated data
         if (data.parents && Array.isArray(data.parents)) {
           this.parents.set(data.parents.filter((p: any) => typeof p === 'object'));
         }
         this.loading.set(false);
+        // Load exams after student data is available (need currentClass info)
+        this.loadStudentExams(id);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.loading.set(false);
+        // Still try to load exams even on error
+        this.loadStudentExams(id);
+      },
     });
   }
 
@@ -984,7 +824,7 @@ export class StudentDetailComponent implements OnInit {
         const enrollments = data.enrollments || data || [];
         this.enrollmentHistory.set(Array.isArray(enrollments) ? enrollments : []);
       },
-      error: () => {} // Silently fail - enrollment history may not exist yet
+      error: () => {}
     });
   }
 
@@ -997,16 +837,13 @@ export class StudentDetailComponent implements OnInit {
   }
 
   getPassCount(): number {
-    return this.enrollmentHistory().filter(e =>
-      e.result === 'pass' || e.result === 'promoted'
-    ).length;
+    return this.enrollmentHistory().filter(e => e.result === 'pass' || e.result === 'promoted').length;
   }
 
   getCurrentAcademicYear(): string {
     const s = this.student();
     if (!s?.currentAcademicYear) return '-';
     if (typeof s.currentAcademicYear === 'object') return (s.currentAcademicYear as any).name || '-';
-    // Try from enrollment history
     const active = this.enrollmentHistory().find(e => e.status === 'active');
     if (active) return this.getAcademicYearName(active.academicYear);
     return '-';
@@ -1014,14 +851,14 @@ export class StudentDetailComponent implements OnInit {
 
   getClassName(c: any): string {
     if (!c) return '-';
-    if (typeof c === 'string') return c;
-    return c.name || '-';
+    if (typeof c === 'object') return c.name || '-';
+    return 'Class';
   }
 
   getAcademicYearName(ay: any): string {
     if (!ay) return '-';
-    if (typeof ay === 'string') return ay;
-    return ay.name || '-';
+    if (typeof ay === 'object') return ay.name || '-';
+    return 'Academic Year';
   }
 
   getInitials(p: any): string {
@@ -1031,64 +868,138 @@ export class StudentDetailComponent implements OnInit {
 
   loadStudentExams(studentId: string): void {
     this.loadingExams.set(true);
-    this.api.get<any>(`/exams/student/${studentId}`).subscribe({
-      next: (res) => {
-        const data = res.data || res || {};
-        this.studentExams.set({
-          upcoming: data.upcoming || [],
-          ongoing: data.ongoing || [],
-          completed: data.completed || []
-        });
+    console.log('[StudentDetail] Loading exams for student:', studentId);
+    
+    // Simply load all exams - more reliable
+    this.api.get<any>('/exams', { limit: 100 }).pipe(
+      finalize(() => {
+        console.log('[StudentDetail] finalize: setting loadingExams to false');
         this.loadingExams.set(false);
+      })
+    ).subscribe({
+      next: (res) => {
+        console.log('[StudentDetail] Exams API response:', res);
+        // Handle various response structures
+        let exams: any[] = [];
+        if (Array.isArray(res)) {
+          exams = res;
+        } else if (Array.isArray(res.data)) {
+          exams = res.data;
+        } else if (res.data?.data && Array.isArray(res.data.data)) {
+          exams = res.data.data;
+        } else if (res.data?.items && Array.isArray(res.data.items)) {
+          exams = res.data.items;
+        }
+        console.log('[StudentDetail] Parsed exams:', exams.length, 'exams');
+        
+        // Filter by student's class if available
+        const student = this.student();
+        let filteredExams = exams;
+        if (student?.currentClass && exams.length > 0) {
+          const classId = typeof student.currentClass === 'object' ? (student.currentClass as any)._id : student.currentClass;
+          const classFiltered = exams.filter((e: any) => {
+            const examClasses = (e.classes || []).map((c: any) => c._id || c);
+            return examClasses.includes(classId) || examClasses.length === 0;
+          });
+          // Only use filtered list if it has results
+          if (classFiltered.length > 0) {
+            filteredExams = classFiltered;
+          }
+        }
+        
+        this.categorizeExams(filteredExams);
+      },
+      error: (err) => {
+        console.error('[StudentDetail] Error loading exams:', err);
+        this.studentExams.set({ upcoming: [], ongoing: [], completed: [] });
+        this.examsForResults.set([]);
+      }
+    });
+  }
+  
+  private categorizeExams(exams: any[]): void {
+    console.log('[StudentDetail] categorizeExams called with', exams.length, 'exams');
+    const now = new Date();
+    const upcoming: any[] = [], ongoing: any[] = [], completed: any[] = [];
+    exams.forEach((exam: any) => {
+      const start = new Date(exam.startDate), end = new Date(exam.endDate);
+      if (end < now) completed.push(exam);
+      else if (start <= now && end >= now) ongoing.push(exam);
+      else upcoming.push(exam);
+    });
+    upcoming.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    completed.sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+    this.studentExams.set({ upcoming, ongoing, completed });
+    // Set ALL exams for results tab (completed, ongoing, and upcoming)
+    const allExams = [...completed, ...ongoing, ...upcoming];
+    console.log('[StudentDetail] Setting examsForResults:', allExams.length);
+    this.examsForResults.set(allExams);
+  }
+
+  // Results tab functions
+  onExamSelectForResults(examId: string): void {
+    this.selectedExamForResults.set(examId);
+    if (examId) {
+      this.loadResultsForExam(examId);
+    } else {
+      this.resultsData.set([]);
+    }
+  }
+
+  loadResultsForExam(examId: string): void {
+    const studentId = this.student()?._id;
+    if (!studentId) return;
+    
+    this.loadingResults.set(true);
+    this.api.get<any>(`/results`, { studentId, examId }).subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data?.items || res.data || [];
+        const results = Array.isArray(data) ? data : [];
+        
+        // Transform results to display format
+        const transformed = results.flatMap((result: any) => {
+          // If result has subjectWiseResults array, flatten them
+          if (result.subjectWiseResults?.length) {
+            return result.subjectWiseResults.map((sr: any) => ({
+              subjectName: sr.subject?.name || this.subjectMap().get(sr.subject) || 'Subject',
+              obtained: sr.marksObtained || sr.obtainedMarks || 0,
+              max: sr.maxMarks || sr.totalMarks || 100,
+              percentage: sr.percentage || ((sr.marksObtained || 0) / (sr.maxMarks || 100)) * 100,
+              grade: sr.grade || '-',
+              isPassed: sr.isPassed ?? (sr.marksObtained >= (sr.passingMarks || 40)),
+            }));
+          }
+          // Single result format
+          return [{
+            subjectName: result.subject?.name || this.subjectMap().get(result.subject) || 'Subject',
+            obtained: result.obtainedMarks || result.marksObtained || 0,
+            max: result.totalMarks || result.maxMarks || 100,
+            percentage: result.percentage || 0,
+            grade: result.grade || '-',
+            isPassed: result.isPassed ?? (result.obtainedMarks >= (result.passingMarks || 40)),
+          }];
+        });
+        
+        this.resultsData.set(transformed);
+        this.loadingResults.set(false);
       },
       error: () => {
-        // Fallback: load exams by class if student endpoint fails
-        const student = this.student();
-        if (student?.currentClass) {
-          const classId = typeof student.currentClass === 'object' 
-            ? (student.currentClass as any)._id 
-            : student.currentClass;
-          const section = student.currentSection || '';
-          this.loadExamsByClass(classId, section);
-        } else {
-          this.loadingExams.set(false);
-        }
+        this.resultsData.set([]);
+        this.loadingResults.set(false);
       }
     });
   }
 
-  private loadExamsByClass(classId: string, section: string): void {
-    const params: any = { limit: 50 };
-    if (section) params.section = section;
+  getResultsSummary(): { obtained: number; max: number; percentage: number; passed: boolean } {
+    const results = this.resultsData();
+    if (!results.length) return { obtained: 0, max: 0, percentage: 0, passed: false };
     
-    this.api.get<any>(`/exams/class/${classId}/section/${section || 'A'}`).subscribe({
-      next: (res) => {
-        const exams = res.data || [];
-        const now = new Date();
-        const upcoming: any[] = [];
-        const ongoing: any[] = [];
-        const completed: any[] = [];
-
-        exams.forEach((exam: any) => {
-          const start = new Date(exam.startDate);
-          const end = new Date(exam.endDate);
-          if (end < now) {
-            completed.push(exam);
-          } else if (start <= now && end >= now) {
-            ongoing.push(exam);
-          } else {
-            upcoming.push(exam);
-          }
-        });
-
-        upcoming.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-        completed.sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
-
-        this.studentExams.set({ upcoming, ongoing, completed });
-        this.loadingExams.set(false);
-      },
-      error: () => this.loadingExams.set(false)
-    });
+    const obtained = results.reduce((sum, r) => sum + (r.obtained || 0), 0);
+    const max = results.reduce((sum, r) => sum + (r.max || 100), 0);
+    const percentage = max > 0 ? (obtained / max) * 100 : 0;
+    const passed = results.every(r => r.isPassed);
+    
+    return { obtained, max, percentage, passed };
   }
 
   formatExamType(type: string): string {
@@ -1098,10 +1009,8 @@ export class StudentDetailComponent implements OnInit {
 
   getDaysUntil(date: string): number {
     if (!date) return 0;
-    const target = new Date(date);
-    const now = new Date();
-    const diff = target.getTime() - now.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    const target = new Date(date), now = new Date();
+    return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   }
 
   toggleExamSchedule(examId: string): void {
@@ -1110,44 +1019,29 @@ export class StudentDetailComponent implements OnInit {
 
   getGroupedSchedule(exam: any): { date: Date; slots: any[] }[] {
     if (!exam?.schedule?.length) return [];
-    
     const grouped: { [date: string]: any[] } = {};
     exam.schedule.forEach((item: any) => {
       const dateKey = new Date(item.date).toISOString().split('T')[0];
       if (!grouped[dateKey]) grouped[dateKey] = [];
       grouped[dateKey].push(item);
     });
-
     return Object.entries(grouped)
       .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
-      .map(([date, slots]) => ({
-        date: new Date(date),
-        slots: slots.sort((a: any, b: any) => (a.startTime || '').localeCompare(b.startTime || ''))
-      }));
+      .map(([date, slots]) => ({ date: new Date(date), slots: slots.sort((a: any, b: any) => (a.startTime || '').localeCompare(b.startTime || '')) }));
   }
 
   getSubjectName(subject: any): string {
     if (!subject) return 'Unknown Subject';
-    if (typeof subject === 'string') return subject;
-    return subject.name || subject.code || 'Subject';
+    if (typeof subject === 'object') return subject.name || subject.code || 'Subject';
+    if (this.subjectMap().has(subject)) return this.subjectMap().get(subject) || 'Subject';
+    return 'Subject';
   }
 
   getScheduleSubjectName(slot: any): string {
-    // 1. Try the denormalized subjectName field (best - no lookup needed)
     if (slot.subjectName) return slot.subjectName;
-    
-    // 2. Try populated subject object
-    if (slot.subject && typeof slot.subject === 'object' && slot.subject.name) {
-      return slot.subject.name;
-    }
-    
-    // 3. Try lookup from subjects map by ID
+    if (slot.subject && typeof slot.subject === 'object' && slot.subject.name) return slot.subject.name;
     const subjectId = typeof slot.subject === 'string' ? slot.subject : slot.subject?._id;
-    if (subjectId && this.subjectMap().has(subjectId)) {
-      return this.subjectMap().get(subjectId) || 'Subject';
-    }
-    
-    // 4. Fallback
+    if (subjectId && this.subjectMap().has(subjectId)) return this.subjectMap().get(subjectId) || 'Subject';
     return 'Subject TBD';
   }
 
@@ -1158,43 +1052,26 @@ export class StudentDetailComponent implements OnInit {
 
   getExamDays(exam: any): number {
     if (!exam?.startDate || !exam?.endDate) return 0;
-    const start = new Date(exam.startDate);
-    const end = new Date(exam.endDate);
+    const start = new Date(exam.startDate), end = new Date(exam.endDate);
     return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   }
 
   loadStudentAnalytics(): void {
     const studentId = this.student()?._id;
     if (!studentId) return;
-    
     this.loadingAnalytics.set(true);
     this.api.get<any>(`/results/analytics/student/${studentId}`).subscribe({
-      next: (res) => {
-        const data = res.data || res;
-        this.studentAnalytics.set(data);
-        this.loadingAnalytics.set(false);
-      },
-      error: () => {
-        this.studentAnalytics.set(null);
-        this.loadingAnalytics.set(false);
-      }
+      next: (res) => { this.studentAnalytics.set(res.data || res); this.loadingAnalytics.set(false); },
+      error: () => { this.studentAnalytics.set(null); this.loadingAnalytics.set(false); }
     });
   }
 
   getAnalyticsTrendIcon(trend: string): string {
-    switch (trend) {
-      case 'improving': return '📈';
-      case 'declining': return '📉';
-      default: return '➡️';
-    }
+    switch (trend) { case 'improving': return '📈'; case 'declining': return '📉'; default: return '➡️'; }
   }
 
   getAnalyticsTrendClass(trend: string): string {
-    switch (trend) {
-      case 'improving': return 'trend-up';
-      case 'declining': return 'trend-down';
-      default: return 'trend-stable';
-    }
+    switch (trend) { case 'improving': return 'trend-up'; case 'declining': return 'trend-down'; default: return 'trend-stable'; }
   }
 
   getAnalyticsGradeBadge(grade: string): string {
@@ -1204,41 +1081,20 @@ export class StudentDetailComponent implements OnInit {
     return 'badge-danger';
   }
 
-  // Fee helper methods
-  getTotalFeeDue(): number {
-    return this.feeData().reduce((sum, f) => sum + (f.dueAmount || 0), 0);
-  }
-
-  getTotalFeePaid(): number {
-    return this.feeData().reduce((sum, f) => sum + (f.paidAmount || 0), 0);
-  }
+  getTotalFeeDue(): number { return this.feeData().reduce((sum, f) => sum + (f.dueAmount || 0), 0); }
+  getTotalFeePaid(): number { return this.feeData().reduce((sum, f) => sum + (f.paidAmount || 0), 0); }
 
   getFeeBadgeClass(status: string): string {
-    switch (status) {
-      case 'paid': return 'badge-success';
-      case 'partial': return 'badge-warning';
-      case 'overdue': return 'badge-danger';
-      case 'waived': return 'badge-info';
-      default: return 'badge-secondary';
-    }
+    switch (status) { case 'paid': return 'badge-success'; case 'partial': return 'badge-warning'; case 'overdue': return 'badge-danger'; case 'waived': return 'badge-info'; default: return 'badge-secondary'; }
   }
 
-  // Payment modal methods
   openPaymentModal(fee: any): void {
     this.selectedFee.set(fee);
-    this.paymentForm = {
-      amount: fee.dueAmount || 0,
-      method: 'cash',
-      transactionId: '',
-      remarks: '',
-    };
+    this.paymentForm = { amount: fee.dueAmount || 0, method: 'cash', transactionId: '', remarks: '' };
     this.showPaymentModal.set(true);
   }
 
-  closePaymentModal(): void {
-    this.showPaymentModal.set(false);
-    this.selectedFee.set(null);
-  }
+  closePaymentModal(): void { this.showPaymentModal.set(false); this.selectedFee.set(null); }
 
   setPaymentAmount(type: 'full' | 'half'): void {
     const fee = this.selectedFee();
@@ -1249,7 +1105,6 @@ export class StudentDetailComponent implements OnInit {
   recordPayment(): void {
     const fee = this.selectedFee();
     if (!fee || !this.paymentForm.amount) return;
-
     this.processingPayment.set(true);
     this.api.post(`/fees/${fee._id}/payment`, {
       amount: this.paymentForm.amount,
@@ -1257,21 +1112,14 @@ export class StudentDetailComponent implements OnInit {
       transactionId: this.paymentForm.transactionId || undefined,
       remarks: this.paymentForm.remarks || undefined,
     }).subscribe({
-      next: (res: any) => {
+      next: () => {
         this.processingPayment.set(false);
         this.toast.success(`Payment of ₹${this.paymentForm.amount} recorded successfully`);
         this.closePaymentModal();
-        // Refresh fee data
         const studentId = this.student()?._id;
-        if (studentId) {
-          this.loadStudentFees(studentId);
-        }
+        if (studentId) this.loadStudentFees(studentId);
       },
-      error: (err) => {
-        this.processingPayment.set(false);
-        this.toast.error(err?.error?.message || 'Failed to record payment');
-      },
+      error: (err) => { this.processingPayment.set(false); this.toast.error(err?.error?.message || 'Failed to record payment'); },
     });
   }
 }
-

@@ -124,7 +124,10 @@ export class TransferListComponent implements OnInit {
     if (typeof t.student === 'object' && t.student) {
       return `${(t.student as any).firstName || ''} ${(t.student as any).lastName || ''}`.trim();
     }
-    return t.student as string || 'N/A';
+    // If string ID, look up from loaded students
+    const found = this.students().find(s => (s as any)._id === t.student);
+    if (found) return `${found.firstName || ''} ${found.lastName || ''}`.trim();
+    return 'Student';
   }
 
   getStatusClass(status?: string): string {

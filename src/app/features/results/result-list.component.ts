@@ -173,8 +173,12 @@ export class ResultListComponent implements OnInit {
   
   getStudentName(student: any): string {
     if (!student) return '-';
-    if (typeof student === 'string') return student;
-    return `${student.firstName || ''} ${student.lastName || ''}`.trim() || '-';
+    // If already populated object with name info
+    if (typeof student === 'object') {
+      return `${student.firstName || ''} ${student.lastName || ''}`.trim() || '-';
+    }
+    // If string ID, return generic label (data should come populated from backend)
+    return 'Student';
   }
   
   getStudentId(student: any): string {
@@ -190,8 +194,12 @@ export class ResultListComponent implements OnInit {
   
   getExamName(exam: any): string {
     if (!exam) return '-';
-    if (typeof exam === 'string') return exam;
-    return exam.name || '-';
+    // If already populated object with name
+    if (typeof exam === 'object') {
+      return exam.name || '-';
+    }
+    // If string ID, return generic label
+    return 'Exam';
   }
   
   getExamId(exam: any): string {
@@ -202,8 +210,13 @@ export class ResultListComponent implements OnInit {
   
   getClassName(cls: any): string {
     if (!cls) return '-';
-    if (typeof cls === 'string') return cls;
-    return cls.name || '-';
+    // If already populated object with name
+    if (typeof cls === 'object') {
+      return cls.name || '-';
+    }
+    // If string ID, look up from loaded classes
+    const found = this.classes().find(c => c._id === cls);
+    return found?.name || 'Class';
   }
   
   getGradeBadge(grade: string): string {

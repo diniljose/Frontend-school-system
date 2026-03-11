@@ -1,24 +1,60 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
 
+// Event Type options
+const EVENT_TYPES = [
+  { value: 'academic', label: '📚 Academic', color: '#3b82f6' },
+  { value: 'cultural', label: '🎭 Cultural', color: '#8b5cf6' },
+  { value: 'sports', label: '🏃 Sports', color: '#ef4444' },
+  { value: 'holiday', label: '🎉 Holiday', color: '#10b981' },
+  { value: 'exam', label: '📝 Exam', color: '#f59e0b' },
+  { value: 'meeting', label: '👥 Meeting', color: '#6366f1' },
+  { value: 'celebration', label: '🎊 Celebration', color: '#ec4899' },
+  { value: 'other', label: '📌 Other', color: '#6b7280' },
+];
+
+// Visibility options
+const VISIBILITY_OPTIONS = [
+  { value: 'all', label: 'Everyone' },
+  { value: 'teachers', label: 'Teachers Only' },
+  { value: 'students', label: 'Students Only' },
+  { value: 'parents', label: 'Parents Only' },
+  { value: 'staff', label: 'Staff Only' },
+];
+
 interface Event {
   _id?: string;
-  name: string;
-  description: string;
+  title: string;
+  name?: string;               // Legacy compatibility
+  description?: string;
   type: string;
   startDate: string;
   endDate: string;
-  venue: string;
-  responsibleTeachers: any[];
-  assignedStudents: any[];
-  leaders: any[];
-  status: string;
+  startTime?: string;
+  endTime?: string;
+  venue?: string;
+  organizer?: string;
+  visibility?: string[];
+  targetClasses?: string[];
+  isHoliday?: boolean;
+  isRecurring?: boolean;
+  recurringPattern?: string;
+  color?: string;
+  attachments?: string[];
+  academicYearId?: string;
+  status?: string;
   budget?: number;
   notes?: string;
+  isActive?: boolean;
+  // Legacy fields for display
+  responsibleTeachers?: any[];
+  assignedStudents?: any[];
+  leaders?: any[];
 }
 
 @Component({
@@ -85,7 +121,7 @@ interface Event {
               <span class="event-type-badge" [class]="'type-' + event.type">{{ getTypeLabel(event.type) }}</span>
               <span class="event-status-badge" [class]="'status-' + event.status">{{ event.status }}</span>
             </div>
-            <h3>{{ event.name }}</h3>
+            <h3>{{ event.title || event.name }}</h3>
             <p class="event-desc">{{ event.description }}</p>
             <div class="event-meta">
               <div class="meta-item">📅 {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}</div>
@@ -98,19 +134,19 @@ interface Event {
               @if (event.responsibleTeachers?.length) {
                 <div class="participant-group">
                   <span class="label">👨‍🏫 Teachers:</span>
-                  <span class="count">{{ event.responsibleTeachers.length }}</span>
+                  <span class="count">{{ event.responsibleTeachers?.length || 0 }}</span>
                 </div>
               }
               @if (event.assignedStudents?.length) {
                 <div class="participant-group">
                   <span class="label">🎓 Students:</span>
-                  <span class="count">{{ event.assignedStudents.length }}</span>
+                  <span class="count">{{ event.assignedStudents?.length || 0 }}</span>
                 </div>
               }
               @if (event.leaders?.length) {
                 <div class="participant-group">
                   <span class="label">⭐ Leaders:</span>
-                  <span class="count">{{ event.leaders.length }}</span>
+                  <span class="count">{{ event.leaders?.length || 0 }}</span>
                 </div>
               }
             </div>
@@ -142,8 +178,8 @@ interface Event {
           <div class="modal-body">
             <div class="form-grid">
               <div class="form-group full-width">
-                <label>Event Name *</label>
-                <input type="text" class="form-input" [(ngModel)]="form.name" placeholder="Enter event name" />
+                <label>Event Title *</label>
+                <input type="text" class="form-input" [(ngModel)]="form.title" placeholder="Enter event title" />
               </div>
               <div class="form-group full-width">
                 <label>Description</label>
@@ -159,30 +195,97 @@ interface Event {
                 </select>
               </div>
               <div class="form-group">
+                <label>Organizer</label>
+                <input type="text" class="form-input" [(ngModel)]="form.organizer" placeholder="Event organizer name" />
+              </div>
+              <div class="form-group">
+                <label>Start Date *</label>
+                <input type="date" class="form-input" [(ngModel)]="form.startDate" />
+              </div>
+              <div class="form-group">
+                <label>Start Time</label>
+                <input type="time" class="form-input" [(ngModel)]="form.startTime" />
+              </div>
+              <div class="form-group">
+                <label>End Date *</label>
+                <input type="date" class="form-input" [(ngModel)]="form.endDate" />
+              </div>
+              <div class="form-group">
+                <label>End Time</label>
+                <input type="time" class="form-input" [(ngModel)]="form.endTime" />
+              </div>
+              <div class="form-group">
                 <label>Venue</label>
                 <input type="text" class="form-input" [(ngModel)]="form.venue" placeholder="Event location" />
               </div>
               <div class="form-group">
-                <label>Start Date *</label>
-                <input type="datetime-local" class="form-input" [(ngModel)]="form.startDate" />
+                <label>Event Color</label>
+                <input type="color" class="form-input" [(ngModel)]="form.color" style="height: 42px;" />
               </div>
               <div class="form-group">
-                <label>End Date *</label>
-                <input type="datetime-local" class="form-input" [(ngModel)]="form.endDate" />
+                <label>Visibility</label>
+                <select class="form-select" [(ngModel)]="form.visibility" multiple style="min-height: 80px;">
+                  @for (opt of visibilityOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+                <small style="color: var(--text-secondary); font-size: 0.75rem;">Hold Ctrl/Cmd to select multiple</small>
+              </div>
+              <div class="form-group">
+                <label>Target Classes</label>
+                <select class="form-select" [(ngModel)]="form.targetClasses" multiple style="min-height: 80px;">
+                  @for (cls of classes(); track cls._id) {
+                    <option [value]="cls._id">{{ cls.name }}</option>
+                  }
+                </select>
+                <small style="color: var(--text-secondary); font-size: 0.75rem;">Hold Ctrl/Cmd to select multiple</small>
               </div>
               <div class="form-group">
                 <label>Budget (Optional)</label>
                 <input type="number" class="form-input" [(ngModel)]="form.budget" placeholder="0.00" />
               </div>
               <div class="form-group">
-                <label>Status</label>
-                <select class="form-select" [(ngModel)]="form.status">
-                  <option value="upcoming">Upcoming</option>
-                  <option value="ongoing">Ongoing</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                <label>Academic Year</label>
+                <select class="form-select" [(ngModel)]="form.academicYearId">
+                  <option value="">Current Academic Year</option>
+                  @for (ay of academicYears(); track ay._id) {
+                    <option [value]="ay._id">{{ ay.name }}</option>
+                  }
                 </select>
               </div>
+              <div class="form-group full-width" style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" [(ngModel)]="form.isHoliday" style="width: 18px; height: 18px;" />
+                  <span>🏖️ Mark as Holiday</span>
+                </label>
+                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <input type="checkbox" [(ngModel)]="form.isRecurring" style="width: 18px; height: 18px;" />
+                  <span>🔄 Recurring Event</span>
+                </label>
+              </div>
+              @if (form.isRecurring) {
+                <div class="form-group">
+                  <label>Recurring Pattern</label>
+                  <select class="form-select" [(ngModel)]="form.recurringPattern">
+                    <option value="">Select pattern</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+              }
+              @if (editingEvent) {
+                <div class="form-group">
+                  <label>Status</label>
+                  <select class="form-select" [(ngModel)]="form.status">
+                    <option value="upcoming">Upcoming</option>
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              }
               <div class="form-group full-width">
                 <label>Notes</label>
                 <textarea class="form-textarea" [(ngModel)]="form.notes" placeholder="Additional notes" rows="2"></textarea>
@@ -205,7 +308,7 @@ interface Event {
       <div class="modal-overlay" (click)="closeParticipantsModal()">
         <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>Manage Participants - {{ selectedEvent?.name }}</h2>
+            <h2>Manage Participants - {{ selectedEvent?.title || selectedEvent?.name }}</h2>
             <button class="close-btn" (click)="closeParticipantsModal()">✕</button>
           </div>
           <div class="modal-body">
@@ -321,7 +424,7 @@ interface Event {
       <div class="modal-overlay" (click)="closeViewModal()">
         <div class="modal-content" (click)="$event.stopPropagation()">
           <div class="modal-header">
-            <h2>{{ selectedEvent?.name }}</h2>
+            <h2>{{ selectedEvent?.title || selectedEvent?.name }}</h2>
             <button class="close-btn" (click)="closeViewModal()">✕</button>
           </div>
           <div class="modal-body">
@@ -495,6 +598,7 @@ interface Event {
 export class EventListComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  private route = inject(ActivatedRoute);
 
   loading = signal(true);
   saving = signal(false);
@@ -502,6 +606,7 @@ export class EventListComponent implements OnInit {
   events = signal<Event[]>([]);
   teachers = signal<any[]>([]);
   classes = signal<any[]>([]);
+  academicYears = signal<any[]>([]);
   availableTeachers = signal<any[]>([]);
   availableStudents = signal<any[]>([]);
   
@@ -522,37 +627,73 @@ export class EventListComponent implements OnInit {
   selectedStudentToAdd = '';
 
   eventTypes = [
-    { value: 'sports', label: '🏃 Sports Day' },
-    { value: 'cultural', label: '🎭 Cultural Event' },
-    { value: 'academic', label: '📚 Academic Event' },
+    { value: 'academic', label: '📚 Academic' },
+    { value: 'cultural', label: '🎭 Cultural' },
+    { value: 'sports', label: '🏃 Sports' },
+    { value: 'holiday', label: '🏖️ Holiday' },
+    { value: 'exam', label: '📝 Exam' },
+    { value: 'meeting', label: '🤝 Meeting' },
     { value: 'celebration', label: '🎉 Celebration' },
     { value: 'competition', label: '🏆 Competition' },
     { value: 'other', label: '📌 Other' },
   ];
 
+  visibilityOptions = [
+    { value: 'all', label: 'All' },
+    { value: 'teachers', label: 'Teachers' },
+    { value: 'students', label: 'Students' },
+    { value: 'parents', label: 'Parents' },
+    { value: 'staff', label: 'Staff' },
+  ];
+
   form: Event = this.getEmptyForm();
+  
+  private pendingEventId: string | null = null;
 
   ngOnInit(): void {
+    // Check for eventId query parameter from dashboard navigation
+    this.route.queryParams.subscribe(params => {
+      if (params['eventId']) {
+        this.pendingEventId = params['eventId'];
+      }
+    });
+    
     this.loadEvents();
     this.loadTeachers();
     this.loadClasses();
+    this.loadAcademicYears();
   }
 
   private getEmptyForm(): Event {
     return {
-      name: '',
+      title: '',
       description: '',
       type: '',
       startDate: '',
       endDate: '',
+      startTime: '',
+      endTime: '',
       venue: '',
-      responsibleTeachers: [],
-      assignedStudents: [],
-      leaders: [],
-      status: 'upcoming',
+      organizer: '',
+      visibility: [],
+      targetClasses: [],
+      isHoliday: false,
+      isRecurring: false,
+      recurringPattern: '',
+      color: '#6366f1',
+      academicYearId: '',
       budget: undefined,
       notes: ''
     };
+  }
+
+  loadAcademicYears(): void {
+    this.api.get<any>('/academic-years').subscribe({
+      next: (res) => {
+        const data = res.data?.data || res.data || [];
+        this.academicYears.set(Array.isArray(data) ? data : []);
+      }
+    });
   }
 
   loadEvents(): void {
@@ -568,13 +709,16 @@ export class EventListComponent implements OnInit {
         const data = res.data?.data || res.data || [];
         this.events.set(Array.isArray(data) ? data : []);
         this.loading.set(false);
+        
+        // Auto-open event details if eventId was passed via query params
+        this.checkAndOpenEventFromParams();
       },
       error: () => {
         // Mock data for demo if API doesn't exist
         this.events.set([
           {
             _id: '1',
-            name: 'Annual Sports Day',
+            title: 'Annual Sports Day',
             description: 'Annual sports competition featuring track and field events',
             type: 'sports',
             startDate: '2026-03-15T09:00',
@@ -588,7 +732,7 @@ export class EventListComponent implements OnInit {
           },
           {
             _id: '2',
-            name: 'Science Exhibition',
+            title: 'Science Exhibition',
             description: 'Students showcase their science projects',
             type: 'academic',
             startDate: '2026-02-28T10:00',
@@ -601,8 +745,21 @@ export class EventListComponent implements OnInit {
           }
         ]);
         this.loading.set(false);
+        
+        // Auto-open event details if eventId was passed via query params
+        this.checkAndOpenEventFromParams();
       }
     });
+  }
+  
+  private checkAndOpenEventFromParams(): void {
+    if (this.pendingEventId) {
+      const eventToOpen = this.events().find(e => e._id === this.pendingEventId);
+      if (eventToOpen) {
+        this.viewEvent(eventToOpen);
+      }
+      this.pendingEventId = null; // Clear after opening
+    }
   }
 
   loadTeachers(): void {
@@ -678,7 +835,11 @@ export class EventListComponent implements OnInit {
 
   editEvent(event: Event): void {
     this.editingEvent = event;
-    this.form = { ...event };
+    // Map event to form, handling both 'title' and legacy 'name' fields
+    this.form = { 
+      ...event,
+      title: event.title || event.name || ''  // Ensure title is populated
+    };
     this.showModal.set(true);
   }
 
@@ -693,14 +854,69 @@ export class EventListComponent implements OnInit {
   }
 
   saveEvent(): void {
-    if (!this.form.name || !this.form.type || !this.form.startDate || !this.form.endDate) {
+    if (!this.form.title || !this.form.type || !this.form.startDate || !this.form.endDate) {
       this.toast.error('Please fill in all required fields');
       return;
     }
 
     this.saving.set(true);
 
-    const payload = { ...this.form };
+    // Build payload with all event fields
+    const payload: any = {
+      title: this.form.title,
+      description: this.form.description || '',
+      type: this.form.type,
+      startDate: this.form.startDate,
+      endDate: this.form.endDate,
+      venue: this.form.venue || '',
+      organizer: this.form.organizer || '',
+      isHoliday: this.form.isHoliday || false,
+      isRecurring: this.form.isRecurring || false,
+      color: this.form.color || '#6366f1'
+    };
+    
+    // Add optional time fields
+    if (this.form.startTime) {
+      payload.startTime = this.form.startTime;
+    }
+    if (this.form.endTime) {
+      payload.endTime = this.form.endTime;
+    }
+    
+    // Add visibility array if selected
+    if (this.form.visibility && this.form.visibility.length > 0) {
+      payload.visibility = this.form.visibility;
+    }
+    
+    // Add target classes if selected
+    if (this.form.targetClasses && this.form.targetClasses.length > 0) {
+      payload.targetClasses = this.form.targetClasses;
+    }
+    
+    // Add recurring pattern if event is recurring
+    if (this.form.isRecurring && this.form.recurringPattern) {
+      payload.recurringPattern = this.form.recurringPattern;
+    }
+    
+    // Add academic year if selected
+    if (this.form.academicYearId) {
+      payload.academicYearId = this.form.academicYearId;
+    }
+    
+    // Add budget if provided
+    if (this.form.budget) {
+      payload.budget = this.form.budget;
+    }
+    
+    // Add notes if provided
+    if (this.form.notes) {
+      payload.notes = this.form.notes;
+    }
+    
+    // Add status when editing
+    if (this.editingEvent?._id && this.form.status) {
+      payload.status = this.form.status;
+    }
 
     if (this.editingEvent?._id) {
       this.api.patch(`/events/${this.editingEvent._id}`, payload).subscribe({
@@ -760,7 +976,7 @@ export class EventListComponent implements OnInit {
 
   removeTeacher(teacher: any): void {
     if (!this.selectedEvent) return;
-    this.selectedEvent.responsibleTeachers = this.selectedEvent.responsibleTeachers.filter(
+    this.selectedEvent.responsibleTeachers = (this.selectedEvent.responsibleTeachers || []).filter(
       (t: any) => (t._id || t) !== (teacher._id || teacher)
     );
     this.updateAvailableTeachers();
@@ -778,10 +994,10 @@ export class EventListComponent implements OnInit {
   removeStudent(student: any): void {
     if (!this.selectedEvent) return;
     const studentId = student._id || student;
-    this.selectedEvent.assignedStudents = this.selectedEvent.assignedStudents.filter(
+    this.selectedEvent.assignedStudents = (this.selectedEvent.assignedStudents || []).filter(
       (s: any) => (s._id || s) !== studentId
     );
-    this.selectedEvent.leaders = this.selectedEvent.leaders.filter(
+    this.selectedEvent.leaders = (this.selectedEvent.leaders || []).filter(
       (l: any) => (l._id || l) !== studentId
     );
   }
@@ -796,7 +1012,7 @@ export class EventListComponent implements OnInit {
     const studentId = student._id || student;
     
     if (this.isLeader(student)) {
-      this.selectedEvent.leaders = this.selectedEvent.leaders.filter(
+      this.selectedEvent.leaders = (this.selectedEvent.leaders || []).filter(
         (l: any) => (l._id || l) !== studentId
       );
     } else {
@@ -807,7 +1023,7 @@ export class EventListComponent implements OnInit {
   removeLeader(leader: any): void {
     if (!this.selectedEvent) return;
     const leaderId = leader._id || leader;
-    this.selectedEvent.leaders = this.selectedEvent.leaders.filter(
+    this.selectedEvent.leaders = (this.selectedEvent.leaders || []).filter(
       (l: any) => (l._id || l) !== leaderId
     );
   }
@@ -821,9 +1037,9 @@ export class EventListComponent implements OnInit {
     this.savingParticipants.set(true);
 
     const payload = {
-      responsibleTeachers: this.selectedEvent.responsibleTeachers.map((t: any) => t._id || t),
-      assignedStudents: this.selectedEvent.assignedStudents.map((s: any) => s._id || s),
-      leaders: this.selectedEvent.leaders.map((l: any) => l._id || l)
+      responsibleTeachers: (this.selectedEvent.responsibleTeachers || []).map((t: any) => t._id || t),
+      assignedStudents: (this.selectedEvent.assignedStudents || []).map((s: any) => s._id || s),
+      leaders: (this.selectedEvent.leaders || []).map((l: any) => l._id || l)
     };
 
     this.api.patch(`/events/${this.selectedEvent._id}`, payload).subscribe({

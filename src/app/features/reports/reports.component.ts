@@ -85,9 +85,9 @@ interface ReportConfig {
               @if (report.key === 'attendance') {
                 <div class="filter-row">
                   <div class="filter-item">
-                    <label>Class</label>
+                    <label>Class *</label>
                     <select class="form-select" [(ngModel)]="report.filters.classId">
-                      <option value="">All Classes</option>
+                      <option value="">Select Class</option>
                       @for (c of classes(); track c._id) {
                         <option [value]="c._id">{{ c.name }}</option>
                       }

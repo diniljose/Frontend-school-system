@@ -805,8 +805,12 @@ export class EnrollmentListComponent implements OnInit {
   // Helpers
   getStudentName(s: any): string {
     if (!s) return '-';
-    if (typeof s === 'string') return s;
-    return `${s.firstName || ''} ${s.lastName || ''}`.trim() || '-';
+    // If already populated object with name info
+    if (typeof s === 'object') {
+      return `${s.firstName || ''} ${s.lastName || ''}`.trim() || '-';
+    }
+    // If string ID, return generic label
+    return 'Student';
   }
   getStudentInitials(s: any): string {
     if (!s || typeof s === 'string') return '?';
@@ -818,13 +822,23 @@ export class EnrollmentListComponent implements OnInit {
   }
   getClassName(c: any): string {
     if (!c) return '-';
-    if (typeof c === 'string') return c;
-    return c.name || '-';
+    // If already populated object with name
+    if (typeof c === 'object') {
+      return c.name || '-';
+    }
+    // If string ID, look up from loaded classes
+    const found = this.classes().find(cls => cls._id === c);
+    return found?.name || 'Class';
   }
   getAcademicYearName(ay: any): string {
     if (!ay) return '-';
-    if (typeof ay === 'string') return ay;
-    return ay.name || '-';
+    // If already populated object with name
+    if (typeof ay === 'object') {
+      return ay.name || '-';
+    }
+    // If string ID, look up from loaded academic years
+    const found = this.academicYears().find(year => year._id === ay);
+    return found?.name || 'Academic Year';
   }
   isCurrentYear(ay: any): boolean {
     if (!ay || typeof ay === 'string') return false;

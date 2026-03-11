@@ -411,15 +411,15 @@ export class FeeListComponent implements OnInit {
     if (this.isStudentView()) {
       this.api.get<any>('/fees/my-fees', params).subscribe({
         next: (res) => {
-          const data = res.data || [];
-          this.fees.set(data);
-          this.totalPages.set(res.totalPages || 1);
+          const data = res.data?.data || res.data || [];
+          this.fees.set(Array.isArray(data) ? data : []);
+          this.totalPages.set(res.data?.totalPages || 1);
           this.loading.set(false);
           // Use summary from response if available
-          if (res.summary) {
-            this.summary.set(res.summary);
+          if (res.data?.summary) {
+            this.summary.set(res.data.summary);
           } else {
-            this.calculateSummary(data);
+            this.calculateSummary(Array.isArray(data) ? data : []);
           }
           this.selectedFeeIds.set(new Set());
         },
@@ -524,7 +524,8 @@ export class FeeListComponent implements OnInit {
     if (typeof fee.student === 'object' && fee.student) {
       return `${(fee.student as any).firstName || ''} ${(fee.student as any).lastName || ''}`.trim();
     }
-    return fee.student as string || 'N/A';
+    // If string ID, return generic label instead of raw ID
+    return 'Student';
   }
 
   getStudentAdmissionNo(fee: Fee): string {
@@ -537,7 +538,10 @@ export class FeeListComponent implements OnInit {
   getClassName(fee: Fee): string {
     if ((fee as any).class) {
       const cls = (fee as any).class;
-      return typeof cls === 'object' ? cls.name : cls;
+      if (typeof cls === 'object') return cls.name || '';
+      // If string ID, look up from loaded classes
+      const found = this.classes().find(c => c._id === cls);
+      return found?.name || 'Class';
     }
     return '';
   }

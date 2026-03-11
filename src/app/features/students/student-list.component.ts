@@ -164,9 +164,9 @@ interface StudentStatusOption {
                       <a [routerLink]="['/students', student._id]" class="btn btn-ghost btn-sm" title="View Details">👁️</a>
                       <a [routerLink]="['/students', student._id, 'edit']" class="btn btn-ghost btn-sm" title="Edit">✏️</a>
                       <div class="dropdown action-dropdown">
-                        <button class="btn btn-ghost btn-sm" (click)="toggleActionMenu(student._id)" title="Actions">⋯</button>
+                        <button class="btn btn-ghost btn-sm" (click)="toggleActionMenu(student._id, $event)" title="Actions">⋯</button>
                         @if (openActionMenuId === student._id) {
-                          <div class="dropdown-menu dropdown-right">
+                          <div class="dropdown-menu" [style.top.px]="dropdownPosition.top" [style.left.px]="dropdownPosition.left">
                             @for (opt of getApplicableActions(student.status || ''); track opt.action) {
                               <div class="dropdown-item" (click)="openActionModal(student, opt)" [style.color]="opt.color">
                                 {{ opt.icon }} {{ opt.label }}
@@ -490,7 +490,7 @@ interface StudentStatusOption {
 
     .th-check, .td-check { width: 40px; text-align: center; }
     .selected-row { background: #ecfdf5 !important; }
-    .table-responsive { overflow-x: auto; }
+    .table-responsive { overflow-x: auto; overflow-y: visible; position: relative; }
     .student-link { display: flex; align-items: center; gap: var(--space-3); text-decoration: none; color: inherit; }
     .student-link:hover .student-name { color: var(--primary); }
     .avatar-sm { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; font-size: var(--text-xs); font-weight: 600; flex-shrink: 0; }
@@ -506,17 +506,28 @@ interface StudentStatusOption {
     .status-suspended { background: #fed7aa; color: #c2410c; }
     .status-dropped { background: #fecaca; color: #991b1b; }
     .status-transferred_out { background: #e9d5ff; color: #7c3aed; }
-    .action-btns { display: flex; gap: var(--space-1); align-items: center; }
+    .action-btns { display: flex; gap: var(--space-1); align-items: center; position: relative; }
     
-    /* Dropdown */
-    .dropdown { position: relative; }
-    .dropdown-menu { position: absolute; top: 100%; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); min-width: 180px; z-index: 100; padding: var(--space-1) 0; animation: fadeIn 0.15s; }
+    /* Dropdown - Fixed positioning */
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-menu { 
+      position: fixed; 
+      background: var(--surface); 
+      border: 1px solid var(--border); 
+      border-radius: var(--radius-md); 
+      box-shadow: var(--shadow-lg); 
+      min-width: 180px; 
+      z-index: 1050; 
+      padding: var(--space-1) 0; 
+      animation: fadeIn 0.15s;
+      max-height: 300px;
+      overflow-y: auto;
+    }
     .dropdown-item { padding: var(--space-2) var(--space-3); cursor: pointer; font-size: var(--text-sm); display: flex; align-items: center; gap: var(--space-2); }
     .dropdown-item:hover { background: var(--bg-secondary); }
     .dropdown-item.disabled { color: var(--text-tertiary); cursor: not-allowed; }
     .dropdown-item.text-danger { color: #dc2626; }
     .dropdown-divider { height: 1px; background: var(--border); margin: var(--space-1) 0; }
-    .dropdown-right { right: 0; left: auto; }
     .action-dropdown { display: inline-block; }
     
     .empty-state { text-align: center; padding: var(--space-8) !important; color: var(--text-tertiary); }
@@ -655,6 +666,7 @@ export class StudentListComponent implements OnInit {
   currentAction: StudentActionOption | null = null;
   isBulkAction = false;
   openActionMenuId: string | null = null;
+  dropdownPosition: { top: number; left: number } = { top: 0, left: 0 };
   actionSections = signal<string[]>([]);
   actionSaving = signal(false);
   actionData: any = {};
@@ -773,8 +785,13 @@ export class StudentListComponent implements OnInit {
 
   getClassName(currentClass: any): string {
     if (!currentClass) return '—';
-    if (typeof currentClass === 'string') return currentClass;
-    return currentClass.name || '—';
+    // If already populated object
+    if (typeof currentClass === 'object') {
+      return currentClass.name || '—';
+    }
+    // If string ID, look up from loaded classes
+    const found = this.classes().find(c => c._id === currentClass);
+    return found?.name || 'Class';
   }
 
   // ═══ Selection ═══
@@ -806,9 +823,31 @@ export class StudentListComponent implements OnInit {
   clearSelection(): void { this.selectedIds = []; }
 
   // ═══ Action Dropdown ═══
-  toggleActionMenu(studentId: string): void {
+  toggleActionMenu(studentId: string, event?: MouseEvent): void {
     event?.stopPropagation();
-    this.openActionMenuId = this.openActionMenuId === studentId ? null : studentId;
+    if (this.openActionMenuId === studentId) {
+      this.openActionMenuId = null;
+    } else {
+      this.openActionMenuId = studentId;
+      // Calculate fixed position for dropdown
+      if (event) {
+        const target = event.target as HTMLElement;
+        const rect = target.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const dropdownHeight = 200; // estimated height
+        
+        // Position dropdown above if near bottom of viewport
+        let top = rect.bottom + 4;
+        if (top + dropdownHeight > viewportHeight) {
+          top = rect.top - dropdownHeight - 4;
+        }
+        
+        this.dropdownPosition = {
+          top: top,
+          left: Math.max(10, rect.right - 180) // 180px is dropdown width
+        };
+      }
+    }
   }
 
   getApplicableActions(status: string): StudentActionOption[] {
