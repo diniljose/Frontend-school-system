@@ -71,6 +71,7 @@ export const routes: Routes = [
       { path: 'notifications', loadComponent: () => import('./features/notifications/notification-list.component').then(m => m.NotificationListComponent) },
       { path: 'events', loadComponent: () => import('./features/events/event-list.component').then(m => m.EventListComponent) },
       { path: 'reports', loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent) },
+      { path: 'activity-logs', loadComponent: () => import('./features/activity-logs/activity-logs.component').then(m => m.ActivityLogsComponent) },
       { path: 'subscriptions', loadComponent: () => import('./features/subscriptions/subscription-list.component').then(m => m.SubscriptionListComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN)] },
       { path: 'roles', loadComponent: () => import('./features/settings/roles.component').then(m => m.RolesComponent), canActivate: [roleGuard(UserRole.PLATFORM_ADMIN, UserRole.PRINCIPAL)] },
       { path: 'pending-students', loadComponent: () => import('./features/students/pending-students.component').then(m => m.PendingStudentsComponent) },

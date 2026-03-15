@@ -7,7 +7,9 @@
     "promotions": "Promotions", "timetable": "Timetable", "notifications": "Notifications",
     "reports": "Reports", "settings": "Settings", "schools": "Schools", "users": "Users",
     "subscriptions": "Subscriptions", "academic_years": "Academic Years", "logout": "Logout",
-    "pending_students": "Pending Students", "pending_approvals": "Pending Approvals", "roles": "Roles"
+    "pending_students": "Pending Students", "pending_approvals": "Pending Approvals", "roles": "Roles",
+    "events": "Events", "activity_logs": "Activity Logs", "enrollments": "Enrollments",
+    "pending_teachers": "Pending Teachers"
   },
   "auth": {
     "login": "Sign In", "register": "Create Account", "forgot_password": "Forgot Password",

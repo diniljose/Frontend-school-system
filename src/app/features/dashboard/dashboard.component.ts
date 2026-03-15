@@ -608,10 +608,11 @@ Chart.register(...registerables);
                   <span class="title-icon">🕒</span>
                   <h3>Recent Activities</h3>
                 </div>
+                <a routerLink="/activity-logs" class="view-all-link">View All →</a>
               </div>
               <div class="activities-list">
                 @for (activity of recentActivities(); track activity.id) {
-                  <div class="activity-item" [class]="'activity-type-' + activity.type">
+                  <a routerLink="/activity-logs" class="activity-item clickable" [class]="'activity-type-' + activity.type">
                     <div class="activity-icon-wrapper">
                       <span>{{ activity.icon }}</span>
                     </div>
@@ -620,7 +621,8 @@ Chart.register(...registerables);
                       <p class="activity-message">{{ activity.message }}</p>
                       <span class="activity-time">{{ activity.time }}</span>
                     </div>
-                  </div>
+                    <span class="activity-arrow">→</span>
+                  </a>
                 } @empty {
                   <div class="empty-state small">No recent activities</div>
                 }
@@ -1780,13 +1782,36 @@ Chart.register(...registerables);
     }
     .activity-item {
       display: flex;
+      align-items: center;
       gap: var(--space-3);
       padding: var(--space-3);
       border-radius: var(--radius-md);
-      transition: background 0.2s ease;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid transparent;
     }
-    .activity-item:hover {
+    .activity-item.clickable {
+      cursor: pointer;
+    }
+    .activity-item.clickable:hover {
       background: var(--bg-muted);
+      transform: translateX(4px);
+      border-color: var(--border-color);
+    }
+    .activity-item.clickable:hover .activity-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .activity-arrow {
+      display: flex;
+      align-items: center;
+      font-size: var(--text-lg);
+      color: var(--color-primary);
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: all 0.2s ease;
+      flex-shrink: 0;
     }
     .activity-icon-wrapper {
       width: 40px;
@@ -1799,9 +1824,22 @@ Chart.register(...registerables);
       flex-shrink: 0;
       font-size: 1.25rem;
     }
-    .activity-type-student_registered .activity-icon-wrapper { background: rgba(99, 102, 241, 0.1); }
-    .activity-type-enrollment .activity-icon-wrapper { background: rgba(16, 185, 129, 0.1); }
-    .activity-type-event_created .activity-icon-wrapper { background: rgba(245, 158, 11, 0.1); }
+    /* Activity type colors */
+    .activity-type-student_registered .activity-icon-wrapper,
+    .activity-type-STUDENT .activity-icon-wrapper { background: rgba(99, 102, 241, 0.15); }
+    .activity-type-enrollment .activity-icon-wrapper,
+    .activity-type-ENROLLMENT .activity-icon-wrapper { background: rgba(16, 185, 129, 0.15); }
+    .activity-type-event_created .activity-icon-wrapper,
+    .activity-type-EVENT .activity-icon-wrapper { background: rgba(245, 158, 11, 0.15); }
+    .activity-type-SUBJECT .activity-icon-wrapper { background: rgba(139, 92, 246, 0.15); }
+    .activity-type-CLASS .activity-icon-wrapper { background: rgba(59, 130, 246, 0.15); }
+    .activity-type-TEACHER .activity-icon-wrapper { background: rgba(236, 72, 153, 0.15); }
+    .activity-type-EXAM .activity-icon-wrapper { background: rgba(239, 68, 68, 0.15); }
+    .activity-type-FEE .activity-icon-wrapper { background: rgba(34, 197, 94, 0.15); }
+    .activity-type-RESULT .activity-icon-wrapper { background: rgba(14, 165, 233, 0.15); }
+    .activity-type-ATTENDANCE .activity-icon-wrapper { background: rgba(168, 85, 247, 0.15); }
+    .activity-type-USER .activity-icon-wrapper { background: rgba(251, 146, 60, 0.15); }
+    .activity-type-SYSTEM .activity-icon-wrapper { background: rgba(107, 114, 128, 0.15); }
     .activity-content {
       flex: 1;
       min-width: 0;
@@ -2407,15 +2445,42 @@ export class DashboardComponent implements OnInit {
             'grade': '📊',
             'assignment': '📝',
             'notification': '🔔',
+            'edit': '✏️',
+            'delete': '🗑️',
+            'add': '➕',
+            'check': '✅',
+            'book': '📚',
+            'class': '🏛️',
+            'user': '👤',
+            'settings': '⚙️',
           };
+
+          // Map entity types to icons
+          const entityIconMap: Record<string, string> = {
+            'STUDENT': '🎓',
+            'TEACHER': '👨‍🏫',
+            'SUBJECT': '📚',
+            'CLASS': '🏛️',
+            'EXAM': '📝',
+            'FEE': '💰',
+            'RESULT': '📊',
+            'ATTENDANCE': '📋',
+            'EVENT': '📅',
+            'ENROLLMENT': '✅',
+            'USER': '👤',
+            'SYSTEM': '⚙️',
+          };
+          
+          const entityType = a.entityType || a.type || '';
+          const icon = entityIconMap[entityType.toUpperCase()] || iconMap[a.icon] || a.icon || '📌';
           
           return {
             id: a._id || `activity-${index}`,
-            icon: iconMap[a.icon] || a.icon || '📌',
-            title: a.title || 'Activity',
+            icon: icon,
+            title: a.title || a.action || 'Activity',
             message: a.description || a.message || a.title || 'Recent activity',
             time: timeAgo,
-            type: a.type || 'general',
+            type: entityType.toUpperCase() || 'general',
             timestamp: timestamp
           };
         });
