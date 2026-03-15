@@ -512,10 +512,11 @@ export class ClassTeacherAssignmentComponent implements OnChanges {
   }
 
   loadCurrentAssignment(): void {
-    if (!this.form.classId || !this.form.academicYearId) return;
+    const classId = this.preSelectedClass()?._id || this.form.classId;
+    if (!classId || !this.form.academicYearId) return;
 
     const params: any = {
-      class: this.form.classId,
+      class: classId,
       academicYear: this.form.academicYearId,
       isClassTeacher: true,
       isActive: true,
@@ -555,7 +556,12 @@ export class ClassTeacherAssignmentComponent implements OnChanges {
   }
 
   canAssign(): boolean {
-    if (!this.form.teacherId || !this.form.classId || !this.form.academicYearId) {
+    if (!this.form.teacherId || !this.form.academicYearId) {
+      return false;
+    }
+    // If preSelectedClass is provided, use it; otherwise require classId
+    const hasClass = this.preSelectedClass()?._id || this.form.classId;
+    if (!hasClass) {
       return false;
     }
     // If class has sections, section is required
@@ -600,9 +606,12 @@ export class ClassTeacherAssignmentComponent implements OnChanges {
       : Promise.resolve();
 
     removePromise.then(() => {
+      // Use preSelectedClass if available, otherwise form.classId
+      const classId = this.preSelectedClass()?._id || this.form.classId;
+      
       const payload: any = {
         teacher: this.form.teacherId,
-        class: this.form.classId,
+        class: classId,
         academicYear: this.form.academicYearId,
         isClassTeacher: true,
       };

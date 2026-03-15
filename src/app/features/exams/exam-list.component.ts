@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
@@ -36,6 +36,12 @@ import { Exam } from '../../core/models';
           <option value="">All Classes</option>
           @for (c of classes(); track c._id) {
             <option [value]="c._id">{{ c.name }}</option>
+          }
+        </select>
+        <select class="form-select" [ngModel]="selectedSection()" (ngModelChange)="onSectionChange($event)">
+          <option value="">All Sections</option>
+          @for (sec of availableSections(); track sec) {
+            <option [value]="sec">Section {{ sec }}</option>
           }
         </select>
         <select class="form-select" [ngModel]="selectedType()" (ngModelChange)="onTypeChange($event)">
@@ -259,6 +265,7 @@ import { Exam } from '../../core/models';
 export class ExamListComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  private route = inject(ActivatedRoute);
   
   loading = signal(true);
   exams = signal<any[]>([]);
@@ -269,6 +276,7 @@ export class ExamListComponent implements OnInit {
   expandedExam = signal<string>('');
   
   selectedClass = signal('');
+  selectedSection = signal('');
   selectedType = signal('');
 
   // Computed counts
@@ -300,6 +308,18 @@ export class ExamListComponent implements OnInit {
       });
     }
 
+    // Section filter
+    const sectionFilter = this.selectedSection();
+    if (sectionFilter) {
+      result = result.filter(e => {
+        // Check if section is in the sections array
+        const inSectionsArray = e.sections?.includes(sectionFilter);
+        // Also check if section is in any schedule item
+        const inSchedule = e.schedule?.some((s: any) => s.section === sectionFilter);
+        return inSectionsArray || inSchedule;
+      });
+    }
+
     // Type filter
     const typeFilter = this.selectedType();
     if (typeFilter) {
@@ -310,6 +330,15 @@ export class ExamListComponent implements OnInit {
   });
 
   ngOnInit(): void { 
+    // Read query parameters to pre-set filters
+    const params = this.route.snapshot.queryParams;
+    if (params['classId']) {
+      this.selectedClass.set(params['classId']);
+    }
+    if (params['section']) {
+      this.selectedSection.set(params['section']);
+    }
+    
     this.load(); 
     this.loadClasses();
     this.loadSubjects();
@@ -353,11 +382,26 @@ export class ExamListComponent implements OnInit {
 
   onClassChange(value: string): void {
     this.selectedClass.set(value);
+    // Reset section when class changes
+    this.selectedSection.set('');
+  }
+
+  onSectionChange(value: string): void {
+    this.selectedSection.set(value);
   }
 
   onTypeChange(value: string): void {
     this.selectedType.set(value);
   }
+
+  // Get sections from selected class
+  availableSections = computed(() => {
+    const classId = this.selectedClass();
+    if (!classId) return [];
+    const cls = this.classes().find(c => c._id === classId);
+    if (!cls?.sections?.length) return [];
+    return cls.sections.map((s: any) => typeof s === 'string' ? s : s.name).filter(Boolean);
+  });
 
   toggleSchedule(examId: string): void {
     this.expandedExam.set(this.expandedExam() === examId ? '' : examId);

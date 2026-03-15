@@ -174,7 +174,7 @@ import { ApiService } from '../../core/services/api.service';
         <section class="content-card full-width slide-up" style="--delay: 0.45s">
           <h2 class="section-title">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Class Teacher History
+            Class Teacher Assignments
           </h2>
           <div class="timeline">
             @for (ct of classTeacherAssignments(); track ct._id; let i = $index; let last = $last) {
@@ -186,17 +186,13 @@ import { ApiService } from '../../core/services/api.service';
                 <div class="timeline-content">
                   <div class="timeline-header">
                     <h4>{{ ct.class?.name || ct.class || 'Class' }}</h4>
-                    @if (ct.class?.sections && ct.class.sections.length > 0) {
-                      <div class="timeline-sections">
-                        @for (sec of ct.class.sections; track sec.name) {
-                          <span class="section-chip">{{ sec.name }}</span>
-                        }
-                      </div>
+                    @if (ct.section) {
+                      <span class="section-chip">Section {{ ct.section }}</span>
                     }
                   </div>
                   <p class="timeline-year">{{ ct.academicYear?.name || ct.academicYear || 'N/A' }}</p>
-                  @if (ct.assignedAt) {
-                    <p class="timeline-date">Assigned {{ ct.assignedAt | date:'mediumDate' }}</p>
+                  @if (ct.assignedAt || ct.createdAt) {
+                    <p class="timeline-date">Assigned {{ (ct.assignedAt || ct.createdAt) | date:'mediumDate' }}</p>
                   }
                 </div>
               </div>
@@ -480,7 +476,7 @@ export class TeacherDetailComponent implements OnInit {
   }
 
   loadClassTeacherAssignments(teacherId: string): void {
-    this.api.get<any>('/class-teacher-assignments', { teacherId }).subscribe({
+    this.api.get<any>('/class-teacher-assignments', { teacher: teacherId }).subscribe({
       next: (res) => {
         const data = res.data?.data || res.data?.items || res.data || [];
         this.classTeacherAssignments.set(Array.isArray(data) ? data : []);
