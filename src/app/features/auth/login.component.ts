@@ -563,8 +563,8 @@ export class LoginComponent {
       localStorage.setItem('school', JSON.stringify(school));
     }
     
-    // Force auth service to reload (use base href for sub-path deployments)
-    const baseHref = document.querySelector('base')?.getAttribute('href') || '/';
-    window.location.href = `${baseHref}dashboard`;
+    // Reload auth state and navigate via Angular router (avoids full page reload)
+    this.auth.loadUser();
+    this.router.navigate(['/dashboard']);
   }
 }

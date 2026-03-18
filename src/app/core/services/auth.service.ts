@@ -91,6 +91,11 @@ export class AuthService {
     } catch { /* ignore parse errors */ }
   }
 
+  /** Re-read auth state from localStorage (used after manual token writes) */
+  loadUser(): void {
+    this.loadFromStorage();
+  }
+
   /**
    * Login and fetch fresh user profile with latest permissions from database
    */
