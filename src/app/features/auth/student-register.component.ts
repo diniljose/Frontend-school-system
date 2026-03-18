@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
+import { environment } from '../../../environments/environment';
 
 interface School {
   code: string;
@@ -447,6 +448,7 @@ export class StudentRegisterComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+  private readonly apiUrl = environment.apiUrl.replace(/\/+$/, '');
 
   step = signal(1);
   loadingSchools = signal(true);
@@ -486,7 +488,7 @@ export class StudentRegisterComponent implements OnInit {
 
   loadSchools(): void {
     this.loadingSchools.set(true);
-    this.http.get<any>('/api/v1/auth/public/schools').subscribe({
+    this.http.get<any>(`${this.apiUrl}/auth/public/schools`).subscribe({
       next: (res) => {
         this.schools.set(res.data || []);
         this.loadingSchools.set(false);
@@ -509,7 +511,7 @@ export class StudentRegisterComponent implements OnInit {
     const code = this.selectedSchool()?.code;
     
     // Load both classes and academic years in parallel
-    this.http.get<any>(`/api/v1/auth/public/schools/${code}/classes`).subscribe({
+    this.http.get<any>(`${this.apiUrl}/auth/public/schools/${code}/classes`).subscribe({
       next: (res) => {
         this.classes.set(res.data || []);
         // Check if academic years are already loaded
@@ -523,7 +525,7 @@ export class StudentRegisterComponent implements OnInit {
       }
     });
 
-    this.http.get<any>(`/api/v1/auth/public/schools/${code}/academic-years`).subscribe({
+    this.http.get<any>(`${this.apiUrl}/auth/public/schools/${code}/academic-years`).subscribe({
       next: (res) => {
         const years = res.data || [];
         this.academicYears.set(years);
@@ -646,7 +648,7 @@ export class StudentRegisterComponent implements OnInit {
     if (formVal.parentPhone) payload.parentPhone = formVal.parentPhone;
     if (formVal.parentRelation) payload.parentRelation = formVal.parentRelation;
 
-    this.http.post<any>('/api/v1/auth/register-student', payload).subscribe({
+    this.http.post<any>(`${this.apiUrl}/auth/register-student`, payload).subscribe({
       next: (res) => {
         this.submittedData.set(res.data);
         this.registrationComplete.set(true);

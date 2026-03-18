@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
+import { environment } from '../../../environments/environment';
 
 interface School {
   code: string;
@@ -370,6 +371,7 @@ export class TeacherRegisterComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+  private readonly apiUrl = environment.apiUrl.replace(/\/+$/, '');
 
   step = signal(1);
   loadingSchools = signal(true);
@@ -401,7 +403,7 @@ export class TeacherRegisterComponent implements OnInit {
 
   loadSchools(): void {
     this.loadingSchools.set(true);
-    this.http.get<any>('/api/v1/auth/public/schools').subscribe({
+    this.http.get<any>(`${this.apiUrl}/auth/public/schools`).subscribe({
       next: (res) => {
         this.schools.set(res.data || []);
         this.loadingSchools.set(false);
@@ -470,7 +472,7 @@ export class TeacherRegisterComponent implements OnInit {
       message: this.form.get('message')?.value,
     };
 
-    this.http.post<any>('/api/v1/auth/register-teacher', payload).subscribe({
+    this.http.post<any>(`${this.apiUrl}/auth/register-teacher`, payload).subscribe({
       next: (res) => {
         this.submittedData.set(res.data);
         this.registrationComplete.set(true);

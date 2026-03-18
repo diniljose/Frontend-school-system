@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
+import { environment } from '../../../environments/environment';
 
 interface PendingTeacher {
   _id: string;
@@ -338,6 +339,7 @@ interface PendingTeacher {
 })
 export class PendingTeachersComponent implements OnInit {
   private http = inject(HttpClient);
+  private readonly apiUrl = environment.apiUrl.replace(/\/+$/, '');
 
   loading = signal(true);
   teachers = signal<PendingTeacher[]>([]);
@@ -363,7 +365,7 @@ export class PendingTeachersComponent implements OnInit {
 
   loadPendingTeachers(): void {
     this.loading.set(true);
-    this.http.get<any>('/api/v1/auth/teachers/pending').subscribe({
+    this.http.get<any>(`${this.apiUrl}/auth/teachers/pending`).subscribe({
       next: (res) => {
         // Handle both normalized (items array) and raw response formats
         const data = res.data?.items || res.data || [];
@@ -404,7 +406,7 @@ export class PendingTeachersComponent implements OnInit {
     if (this.approveForm.department) payload.department = this.approveForm.department;
     if (this.approveForm.employeeId) payload.employeeId = this.approveForm.employeeId;
 
-    this.http.post<any>(`/api/v1/auth/teachers/${teacher._id}/approve`, payload).subscribe({
+    this.http.post<any>(`${this.apiUrl}/auth/teachers/${teacher._id}/approve`, payload).subscribe({
       next: (res) => {
         this.teachers.update(list => list.filter(t => t._id !== teacher._id));
         this.showSuccess(`${teacher.firstName} ${teacher.lastName} has been approved!`);
@@ -439,7 +441,7 @@ export class PendingTeachersComponent implements OnInit {
     this.processingId.set(teacher._id);
     this.processingAction.set('reject');
 
-    this.http.post<any>(`/api/v1/auth/teachers/${teacher._id}/reject`, {
+    this.http.post<any>(`${this.apiUrl}/auth/teachers/${teacher._id}/reject`, {
       reason: this.rejectReason.trim()
     }).subscribe({
       next: (res) => {
