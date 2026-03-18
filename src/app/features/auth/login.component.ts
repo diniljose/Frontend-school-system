@@ -308,7 +308,8 @@ export class LoginComponent {
       localStorage.setItem('school', JSON.stringify(school));
     }
     
-    // Force auth service to reload
-    window.location.href = '/dashboard';
+    // Force auth service to reload (use base href for sub-path deployments)
+    const baseHref = document.querySelector('base')?.getAttribute('href') || '/';
+    window.location.href = `${baseHref}dashboard`;
   }
 }
