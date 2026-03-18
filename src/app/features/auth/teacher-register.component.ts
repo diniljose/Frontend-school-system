@@ -230,7 +230,7 @@ interface School {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, var(--primary-light, #818cf8) 0%, var(--primary, #6366f1) 100%);
       padding: var(--space-4);
     }
     .register-card {
@@ -268,18 +268,18 @@ interface School {
       border: 2px solid var(--border); cursor: pointer;
       transition: var(--transition-fast);
     }
-    .school-card:hover { border-color: #10b981; background: rgba(16,185,129,0.1); }
-    .school-card.selected { border-color: #10b981; background: rgba(16,185,129,0.1); }
+    .school-card:hover { border-color: var(--primary, #6366f1); background: var(--primary-light, rgba(99,102,241,0.1)); }
+    .school-card.selected { border-color: var(--primary, #6366f1); background: var(--primary-light, rgba(99,102,241,0.1)); }
     .school-logo {
       width: 48px; height: 48px; border-radius: var(--radius-md);
-      background: #10b981; color: white;
+      background: var(--primary, #6366f1); color: white;
       display: flex; align-items: center; justify-content: center;
       font-size: var(--text-xl); font-weight: 700;
     }
     .school-info { flex: 1; }
     .school-name { font-weight: 600; color: var(--text-primary); }
     .school-code { font-size: var(--text-sm); color: var(--text-tertiary); }
-    .check-mark { color: #10b981; font-size: var(--text-xl); font-weight: 700; }
+    .check-mark { color: var(--primary, #6366f1); font-size: var(--text-xl); font-weight: 700; }
     
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
     @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
@@ -297,21 +297,12 @@ interface School {
     }
     .form-textarea:focus {
       outline: none;
-      border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+      border-color: var(--primary, #6366f1);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
     }
     
     .step-actions { display: flex; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-6); }
     .btn-full { width: 100%; }
-    
-    .btn-primary {
-      background: #10b981;
-      border-color: #10b981;
-    }
-    .btn-primary:hover {
-      background: #059669;
-      border-color: #059669;
-    }
     
     .progress-steps {
       display: flex; align-items: center; justify-content: center;
@@ -326,17 +317,17 @@ interface School {
       font-size: var(--text-sm); font-weight: 600;
       transition: var(--transition-fast);
     }
-    .step.active .step-number { background: #10b981; color: white; }
+    .step.active .step-number { background: var(--primary, #6366f1); color: white; }
     .step.completed .step-number { background: var(--success); color: white; }
     .step span { font-size: var(--text-xs); color: var(--text-tertiary); }
-    .step.active span { color: #10b981; font-weight: 500; }
+    .step.active span { color: var(--primary, #6366f1); font-weight: 500; }
     .step-line { flex: 1; height: 2px; background: var(--border); max-width: 60px; margin: 0 var(--space-2); }
     .step-line.completed { background: var(--success); }
     
     .loading-state { text-align: center; padding: var(--space-8); }
     .spinner {
       width: 40px; height: 40px; border: 3px solid var(--border);
-      border-top-color: #10b981; border-radius: 50%;
+      border-top-color: var(--primary, #6366f1); border-radius: 50%;
       animation: spin 0.8s linear infinite; margin: 0 auto var(--space-3);
     }
     .spinner-sm {
@@ -361,10 +352,20 @@ interface School {
     .info-text { color: var(--text-secondary); font-size: var(--text-sm); margin-bottom: var(--space-4); }
     
     .register-footer { text-align: center; margin-top: var(--space-6); color: var(--text-secondary); }
-    .register-footer a { color: #10b981; font-weight: 500; text-decoration: none; }
+    .register-footer a { color: var(--primary, #6366f1); font-weight: 500; text-decoration: none; }
     .register-footer p { margin-bottom: var(--space-2); }
     
     .empty-state { text-align: center; padding: var(--space-8); color: var(--text-tertiary); }
+
+    @media (max-width: 640px) {
+      .register-container { padding: var(--space-3); }
+      .register-card { padding: var(--space-5); border-radius: var(--radius-lg); }
+      .register-header h1 { font-size: var(--text-xl); }
+      .school-grid { max-height: 200px; }
+      .step-actions { flex-direction: column-reverse; }
+      .step-actions .btn { width: 100%; }
+      .progress-steps .step span { font-size: 0.6rem; }
+    }
   `]
 })
 export class TeacherRegisterComponent implements OnInit {

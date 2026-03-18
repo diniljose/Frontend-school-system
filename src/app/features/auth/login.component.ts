@@ -22,203 +22,458 @@ interface RoleOption {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
   template: `
-    <div class="auth-card animate-in">
+    <div class="auth-card" [class.slide-out]="showRoleSelection()">
       <!-- Role Selection Step -->
       @if (showRoleSelection()) {
-        <div class="auth-header">
-          <button class="back-btn" (click)="backToLogin()">← Back</button>
-          <h1>Choose Your Account</h1>
-          <p>You have multiple accounts with this email. Select one to continue:</p>
-        </div>
+        <div class="auth-section animate-in">
+          <button class="back-btn" (click)="backToLogin()">
+            <span class="back-icon">←</span> {{ 'auth.back_to_login' | translate }}
+          </button>
+          <div class="auth-header">
+            <div class="header-icon role-icon">👤</div>
+            <h1>{{ 'auth.choose_account' | translate }}</h1>
+            <p>{{ 'auth.multiple_accounts_msg' | translate }}</p>
+          </div>
 
-        <div class="role-options">
-          @for (option of roleOptions(); track option.userId) {
-            <button class="role-card" 
-                    [class.selected]="selectedOption()?.userId === option.userId"
-                    (click)="selectOption(option)">
-              <div class="role-avatar">{{ option.firstName.charAt(0) }}{{ option.lastName.charAt(0) }}</div>
-              <div class="role-info">
-                <strong>{{ option.firstName }} {{ option.lastName }}</strong>
-                <span class="role-badge">{{ option.displayRole }}</span>
-                <span class="school-name">{{ option.schoolName }}</span>
-              </div>
-              <span class="role-check" [class.visible]="selectedOption()?.userId === option.userId">✓</span>
-            </button>
-          }
-        </div>
+          <div class="role-options">
+            @for (option of roleOptions(); track option.userId) {
+              <button class="role-card" 
+                      [class.selected]="selectedOption()?.userId === option.userId"
+                      (click)="selectOption(option)">
+                <div class="role-avatar">{{ option.firstName.charAt(0) }}{{ option.lastName.charAt(0) }}</div>
+                <div class="role-info">
+                  <strong>{{ option.firstName }} {{ option.lastName }}</strong>
+                  <span class="role-badge">{{ option.displayRole }}</span>
+                  <span class="school-name">{{ option.schoolName }}</span>
+                </div>
+                <span class="role-check" [class.visible]="selectedOption()?.userId === option.userId">✓</span>
+              </button>
+            }
+          </div>
 
-        <button class="btn btn-primary btn-lg" style="width:100%"
-                [disabled]="!selectedOption() || loading()"
-                (click)="loginWithSelectedRole()">
-          @if (loading()) { <span class="spinner"></span> }
-          Continue as {{ selectedOption()?.displayRole || 'Selected Role' }}
-        </button>
+          <button class="btn-submit" 
+                  [disabled]="!selectedOption() || loading()"
+                  (click)="loginWithSelectedRole()">
+            @if (loading()) { <span class="spinner"></span> }
+            {{ 'auth.continue_as' | translate }} {{ selectedOption()?.displayRole || '' }}
+          </button>
+        </div>
       } @else {
         <!-- Normal Login Step -->
-        <div class="auth-header">
-          <h1>{{ 'auth.login' | translate }}</h1>
-          <p>Enter your credentials to access your account</p>
-        </div>
-
-        <form (ngSubmit)="onSubmit()" class="auth-form">
-          <div class="form-group">
-            <label>{{ 'auth.email' | translate }}</label>
-            <input type="email" class="form-input" [(ngModel)]="email" name="email"
-              placeholder="name@school.com" required autofocus />
-          </div>
-
-          <div class="form-group">
-            <label>{{ 'auth.password' | translate }}</label>
-            <div class="password-field">
-              <input [type]="showPassword() ? 'text' : 'password'" class="form-input" [(ngModel)]="password"
-                name="password" placeholder="••••••••" required />
-              <button type="button" class="toggle-pw" (click)="showPassword.set(!showPassword())">
-                {{ showPassword() ? '🙈' : '👁️' }}
-              </button>
+        <div class="auth-section animate-in">
+          <div class="auth-header">
+            <div class="header-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <path d="M8 20V12l6-4 6 4v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M11 20v-4h6v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
+            <h1>{{ 'auth.welcome_back' | translate }}</h1>
+            <p>{{ 'auth.login_subtitle' | translate }}</p>
           </div>
 
-          <div class="form-options">
-            <label class="checkbox-label">
-              <input type="checkbox" [(ngModel)]="rememberMe" name="remember" />
-              {{ 'auth.remember_me' | translate }}
-            </label>
-            <a routerLink="/auth/forgot-password">{{ 'auth.forgot_password' | translate }}</a>
+          <form (ngSubmit)="onSubmit()" class="auth-form">
+            <div class="form-group">
+              <label>{{ 'auth.email' | translate }}</label>
+              <div class="input-wrapper">
+                <span class="input-icon">✉</span>
+                <input type="email" class="form-input has-icon" [(ngModel)]="email" name="email"
+                  [placeholder]="'auth.email_placeholder' | translate" required autofocus />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>{{ 'auth.password' | translate }}</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input [type]="showPassword() ? 'text' : 'password'" class="form-input has-icon" [(ngModel)]="password"
+                  name="password" placeholder="••••••••" required />
+                <button type="button" class="toggle-pw" (click)="showPassword.set(!showPassword())">
+                  {{ showPassword() ? '🙈' : '👁️' }}
+                </button>
+              </div>
+            </div>
+
+            <div class="form-options">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="rememberMe" name="remember" />
+                <span class="checkmark"></span>
+                {{ 'auth.remember_me' | translate }}
+              </label>
+              <a routerLink="/auth/forgot-password" class="forgot-link">{{ 'auth.forgot_password' | translate }}</a>
+            </div>
+
+            <button type="submit" class="btn-submit" [disabled]="loading()">
+              @if (loading()) { <span class="spinner"></span> }
+              {{ 'auth.sign_in' | translate }}
+            </button>
+          </form>
+
+          <div class="divider">
+            <span>{{ 'auth.or' | translate }}</span>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-lg" style="width:100%" [disabled]="loading()">
-            @if (loading()) { <span class="spinner"></span> }
-            {{ 'auth.login' | translate }}
-          </button>
-        </form>
+          <div class="register-cta-group">
+            <a routerLink="/auth/register-student" class="cta-card student-cta">
+              <div class="cta-icon">🎓</div>
+              <div class="cta-text">
+                <strong>{{ 'auth.student_register_title' | translate }}</strong>
+                <span>{{ 'auth.student_register_desc' | translate }}</span>
+              </div>
+              <span class="cta-arrow">→</span>
+            </a>
 
-        <p class="auth-footer">
-          {{ 'auth.no_account' | translate }}
-          <a routerLink="/auth/register">{{ 'auth.sign_up' | translate }}</a>
-        </p>
-
-        <div class="student-register-cta">
-          <span>🎓</span>
-          <div>
-            <strong>Student?</strong>
-            <a routerLink="/auth/register-student">Register for your school →</a>
+            <a routerLink="/auth/register-teacher" class="cta-card teacher-cta">
+              <div class="cta-icon">👨‍🏫</div>
+              <div class="cta-text">
+                <strong>{{ 'auth.teacher_register_title' | translate }}</strong>
+                <span>{{ 'auth.teacher_register_desc' | translate }}</span>
+              </div>
+              <span class="cta-arrow">→</span>
+            </a>
           </div>
-        </div>
 
-        <div class="teacher-register-cta">
-          <span>👨‍🏫</span>
-          <div>
-            <strong>Teacher?</strong>
-            <a routerLink="/auth/register-teacher">Apply to teach at a school →</a>
-          </div>
-        </div>
-
-        <div class="guide-cta">
-          <a routerLink="/guide" class="guide-link">
-            📖 New here? View the interactive setup guide →
-          </a>
+          <p class="auth-footer">
+            {{ 'auth.admin_register_prompt' | translate }}
+            <a routerLink="/auth/register">{{ 'auth.register_school' | translate }}</a>
+          </p>
         </div>
       }
     </div>
   `,
   styles: [`
-    .auth-card { width: 100%; max-width: 420px; }
-    .auth-header { margin-bottom: var(--space-8); }
-    .auth-header h1 { font-size: var(--text-3xl); font-weight: 700; margin-bottom: var(--space-2); }
-    .auth-header p { color: var(--text-secondary); }
-    .auth-form { display: flex; flex-direction: column; gap: var(--space-5); }
-    .password-field { position: relative; }
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .auth-section {
+      animation: fadeSlideUp 0.4s ease-out both;
+    }
+
+    .auth-header {
+      margin-bottom: var(--space-6);
+    }
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12));
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: var(--space-4);
+    }
+    .header-icon.role-icon {
+      background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(6,182,212,0.12));
+      color: #10b981;
+    }
+    .auth-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: var(--space-2);
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .auth-header p {
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      line-height: 1.5;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      opacity: 0.5;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .form-input.has-icon {
+      padding-left: 2.5rem;
+    }
     .toggle-pw {
-      position: absolute; right: var(--space-3); top: 50%; transform: translateY(-50%);
-      background: none; border: none; cursor: pointer; font-size: 16px;
+      position: absolute;
+      right: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 4px;
+      z-index: 1;
     }
-    .form-options { display: flex; justify-content: space-between; align-items: center; font-size: var(--text-sm); }
-    .checkbox-label { display: flex; align-items: center; gap: var(--space-2); color: var(--text-secondary); cursor: pointer; }
-    .auth-footer { text-align: center; margin-top: var(--space-6); font-size: var(--text-sm); color: var(--text-secondary); }
-    .auth-footer a { font-weight: 600; }
-    .guide-cta {
-      text-align: center; margin-top: var(--space-4);
-      padding: var(--space-4); border-radius: var(--radius-lg);
-      background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15);
+
+    .form-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: var(--text-sm);
     }
-    .guide-link {
-      font-size: var(--text-sm); font-weight: 600; text-decoration: none;
-      color: var(--primary, #6366f1); transition: opacity 0.2s;
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: var(--text-sm);
     }
-    .guide-link:hover { opacity: 0.8; }
-    .student-register-cta {
-      display: flex; align-items: center; gap: var(--space-3);
-      padding: var(--space-4); border-radius: var(--radius-lg);
-      background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(6,182,212,0.08));
-      border: 1px solid rgba(16,185,129,0.2);
-      margin-top: var(--space-4);
+    .forgot-link {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-primary);
+      text-decoration: none;
     }
-    .student-register-cta span { font-size: 1.5rem; }
-    .student-register-cta div { display: flex; flex-direction: column; gap: 2px; }
-    .student-register-cta strong { font-size: var(--text-sm); color: var(--text-primary); }
-    .student-register-cta a {
-      font-size: var(--text-sm); font-weight: 600; text-decoration: none;
-      color: #10b981; transition: opacity 0.2s;
-    }
-    .student-register-cta a:hover { opacity: 0.8; }
-    .teacher-register-cta {
-      display: flex; align-items: center; gap: var(--space-3);
-      padding: var(--space-4); border-radius: var(--radius-lg);
-      background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(52,211,153,0.08));
-      border: 1px solid rgba(16,185,129,0.2);
+    .forgot-link:hover { text-decoration: underline; }
+
+    .btn-submit {
+      width: 100%;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-lg);
+      font-size: var(--text-base);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 14px rgba(79,70,229,0.25);
       margin-top: var(--space-2);
     }
-    .teacher-register-cta span { font-size: 1.5rem; }
-    .teacher-register-cta div { display: flex; flex-direction: column; gap: 2px; }
-    .teacher-register-cta strong { font-size: var(--text-sm); color: var(--text-primary); }
-    .teacher-register-cta a {
-      font-size: var(--text-sm); font-weight: 600; text-decoration: none;
-      color: #10b981; transition: opacity 0.2s;
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79,70,229,0.35);
     }
-    .teacher-register-cta a:hover { opacity: 0.8; }
+    .btn-submit:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin: var(--space-5) 0;
+      color: var(--text-muted);
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    .register-cta-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .cta-card {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .cta-card:hover {
+      border-color: var(--color-primary);
+      background: var(--bg-surface-hover);
+      transform: translateX(4px);
+    }
+    .cta-icon {
+      font-size: 1.3rem;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+    }
+    .student-cta .cta-icon { background: rgba(16,185,129,0.1); }
+    .teacher-cta .cta-icon { background: rgba(59,130,246,0.1); }
+    .cta-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .cta-text strong {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .cta-text span {
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+    }
+    .cta-arrow {
+      color: var(--text-muted);
+      font-size: var(--text-lg);
+      transition: transform 0.2s;
+    }
+    .cta-card:hover .cta-arrow {
+      transform: translateX(3px);
+      color: var(--color-primary);
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: var(--space-5);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+    .auth-footer a {
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
     .spinner {
-      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff; border-radius: 50%;
-      animation: spin 0.6s linear infinite; display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    
-    /* Role Selection Styles */
+
+    /* Role Selection */
     .back-btn {
-      background: none; border: none; color: var(--text-secondary);
-      font-size: var(--text-sm); cursor: pointer; padding: 0; margin-bottom: var(--space-3);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: var(--space-4);
+      transition: color 0.2s;
     }
     .back-btn:hover { color: var(--text-primary); }
-    .role-options { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6); }
+    .back-icon { font-size: 1.1em; }
+
+    .role-options {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin-bottom: var(--space-5);
+    }
     .role-card {
-      display: flex; align-items: center; gap: var(--space-4);
-      padding: var(--space-4); border-radius: var(--radius-lg);
-      border: 2px solid var(--border-color); background: var(--bg-surface);
-      cursor: pointer; transition: all 0.2s; text-align: left;
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-color);
+      background: var(--bg-surface);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: left;
     }
-    .role-card:hover { border-color: var(--color-primary); background: var(--bg-surface-hover); }
-    .role-card.selected { border-color: var(--color-primary); background: rgba(59,130,246,0.08); }
+    .role-card:hover {
+      border-color: var(--color-primary);
+      background: var(--bg-surface-hover);
+    }
+    .role-card.selected {
+      border-color: var(--color-primary);
+      background: rgba(79,70,229,0.06);
+    }
     .role-avatar {
-      width: 48px; height: 48px; border-radius: var(--radius-full);
-      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-      color: #fff; display: flex; align-items: center; justify-content: center;
-      font-weight: 600; font-size: var(--text-lg); flex-shrink: 0;
+      width: 44px; height: 44px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: var(--text-sm);
+      flex-shrink: 0;
     }
-    .role-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-    .role-info strong { font-size: var(--text-base); color: var(--text-primary); }
+    .role-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .role-info strong { font-size: var(--text-sm); color: var(--text-primary); }
     .role-badge {
-      font-size: var(--text-xs); color: var(--color-primary); font-weight: 600;
-      background: rgba(59,130,246,0.1); padding: 2px 8px; border-radius: 12px;
+      font-size: var(--text-xs);
+      color: var(--color-primary);
+      font-weight: 600;
+      background: rgba(79,70,229,0.08);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
       width: fit-content;
     }
-    .school-name { font-size: var(--text-sm); color: var(--text-muted); }
+    .school-name { font-size: var(--text-xs); color: var(--text-muted); }
     .role-check {
-      width: 24px; height: 24px; border-radius: 50%;
-      background: var(--color-primary); color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; opacity: 0; transition: opacity 0.2s;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      opacity: 0;
+      transition: all 0.2s ease;
+      transform: scale(0.8);
     }
-    .role-check.visible { opacity: 1; }
+    .role-check.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Animations */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeSlideUp 0.4s ease-out both;
+    }
+
+    /* Mobile */
+    @media (max-width: 480px) {
+      .auth-card { max-width: 100%; }
+      .auth-header h1 { font-size: 1.5rem; }
+      .header-icon { width: 48px; height: 48px; font-size: 1.25rem; }
+      .btn-submit { height: 52px; }
+      .form-options { flex-direction: column; gap: var(--space-2); align-items: flex-start; }
+    }
   `]
 })
 export class LoginComponent {

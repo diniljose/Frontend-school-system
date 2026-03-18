@@ -15,11 +15,11 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideAnimations(),
     provideCharts(withDefaultRegisterables()),
-    provideTranslateHttpLoader({ prefix: './assets/i18n/', suffix: '.json' }),
     importProvidersFrom(
       TranslateModule.forRoot({
         defaultLanguage: 'en',
       })
     ),
+    provideTranslateHttpLoader({ prefix: './assets/i18n/', suffix: '.json' }),
   ],
 };

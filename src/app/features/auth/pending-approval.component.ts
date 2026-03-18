@@ -224,6 +224,16 @@ import { TranslateModule } from '@ngx-translate/core';
       color: var(--primary, #6366f1);
       font-weight: 500;
     }
+
+    @media (max-width: 640px) {
+      .pending-card { padding: 0 var(--space-1); }
+      .pending-icon svg { width: 56px; height: 56px; }
+      .pending-content h1 { font-size: var(--text-xl); }
+      .info-box { padding: var(--space-3); }
+      .info-row { flex-direction: column; gap: var(--space-1); }
+      .steps li { font-size: var(--text-sm); }
+      .btn-outline { width: 100%; text-align: center; }
+    }
   `]
 })
 export class PendingApprovalComponent implements OnInit {

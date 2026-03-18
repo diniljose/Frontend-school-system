@@ -442,6 +442,18 @@ interface AcademicYearInfo {
     .register-footer a { color: var(--primary); font-weight: 500; text-decoration: none; }
     
     .empty-state { text-align: center; padding: var(--space-8); color: var(--text-tertiary); }
+
+    @media (max-width: 640px) {
+      .register-container { padding: var(--space-3); }
+      .register-card { padding: var(--space-5); border-radius: var(--radius-lg); }
+      .register-header h1 { font-size: var(--text-xl); }
+      .school-grid { max-height: 200px; }
+      .section-grid { gap: var(--space-2); }
+      .section-btn { padding: var(--space-2) var(--space-3); font-size: var(--text-sm); }
+      .step-actions { flex-direction: column-reverse; }
+      .step-actions .btn { width: 100%; }
+      .progress-steps .step span { font-size: 0.6rem; }
+    }
   `]
 })
 export class StudentRegisterComponent implements OnInit {

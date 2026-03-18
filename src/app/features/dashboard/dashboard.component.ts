@@ -1964,45 +1964,163 @@ Chart.register(...registerables);
       .children-grid {
         grid-template-columns: 1fr;
       }
+      .chart-card canvas {
+        max-height: 250px;
+      }
     }
 
     @media (max-width: 768px) {
+      :host {
+        padding: var(--space-3);
+        gap: var(--space-3);
+      }
+      .dashboard-header {
+        padding: var(--space-4);
+        margin-bottom: var(--space-3);
+        border-radius: var(--radius-lg);
+      }
       .header-content {
         flex-direction: column;
         align-items: stretch;
+        gap: var(--space-3);
       }
       .header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+      .action-btn {
+        flex: 1 1 calc(50% - var(--space-2));
         justify-content: center;
+        min-height: 44px;
       }
-      .stats-4, .stats-3 {
-        grid-template-columns: 1fr;
-      }
-      .quick-actions-grid, .quick-actions-grid.wide, .quick-actions-grid.small {
+      .stats-4, .stats-3     {
         grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-3);
+      }
+      .stat-card {
+        padding: var(--space-4);
       }
       .stat-value {
-        font-size: var(--text-2xl);
+        font-size: var(--text-xl);
+      }
+      .stat-label {
+        font-size: var(--text-xs);
+      }
+      .stat-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+      .stat-progress {
+        height: 3px;
+      }
+      .quick-actions-grid, .quick-actions-grid.wide, .quick-actions-grid.small {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-2);
+      }
+      .quick-action {
+        padding: var(--space-3);
+        min-height: 44px;
+      }
+      .quick-action .action-icon {
+        font-size: 1.2rem;
+      }
+      .quick-action .action-label {
+        font-size: 0.65rem;
+      }
+      .dashboard-card {
+        padding: var(--space-4);
+        border-radius: var(--radius-lg);
+      }
+      .card-header {
+        margin-bottom: var(--space-3);
+      }
+      .card-header h3 {
+        font-size: var(--text-base);
       }
       .child-header {
         flex-direction: column;
         text-align: center;
+        gap: var(--space-3);
       }
       .child-stats {
         flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--space-3);
+      }
+      .child-actions {
+        flex-wrap: wrap;
+      }
+      .child-actions .child-action-btn {
+        flex: 1 1 calc(50% - var(--space-2));
+        min-height: 44px;
+        justify-content: center;
+      }
+      .chart-card {
+        min-height: auto;
+      }
+      .chart-card canvas {
+        max-height: 200px;
+      }
+      .exam-card {
+        padding: var(--space-3);
+      }
+      .exam-date-badge {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+      }
+      .timeline-item {
+        padding: var(--space-2) 0;
+      }
+      .schedule-time {
+        font-size: var(--text-xs);
+      }
+      .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
       }
     }
 
     @media (max-width: 480px) {
+      :host {
+        padding: var(--space-2);
+      }
       .dashboard-header {
         padding: var(--space-3);
         border-radius: var(--radius-lg);
       }
       .greeting-title {
-        font-size: var(--text-xl);
+        font-size: var(--text-lg);
+      }
+      .greeting-subtitle {
+        font-size: var(--text-xs);
       }
       .action-btn {
         padding: var(--space-2) var(--space-3);
         font-size: var(--text-xs);
+        flex: 1 1 100%;
+      }
+      .stats-4, .stats-3 {
+        grid-template-columns: 1fr;
+        gap: var(--space-2);
+      }
+      .stat-card {
+        padding: var(--space-3);
+      }
+      .stat-header {
+        margin-bottom: var(--space-1);
+      }
+      .stat-value {
+        font-size: var(--text-lg);
+      }
+      .dashboard-card {
+        padding: var(--space-3);
+      }
+      .quick-actions-grid, .quick-actions-grid.wide, .quick-actions-grid.small {
+        grid-template-columns: repeat(2, 1fr);
       }
       .timeline-content {
         flex-direction: column;
@@ -2011,11 +2129,18 @@ Chart.register(...registerables);
       }
       .exam-card {
         flex-wrap: wrap;
+        gap: var(--space-2);
       }
       .exam-countdown {
         width: 100%;
         text-align: center;
         margin-top: var(--space-2);
+      }
+      .children-grid {
+        gap: var(--space-2);
+      }
+      .child-card {
+        padding: var(--space-3);
       }
     }
   `]

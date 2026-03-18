@@ -14,17 +14,17 @@ import { ToastService } from '../../core/services/toast.service';
     <div class="auth-card animate-in">
       <div class="auth-header">
         <h1>{{ 'auth.register' | translate }}</h1>
-        <p>Create your school management account</p>
+        <p>{{ 'auth.register_subtitle' | translate }}</p>
       </div>
 
       <form (ngSubmit)="onSubmit()" class="auth-form">
         <div class="name-row">
           <div class="form-group">
-            <label>First Name</label>
+            <label>{{ 'auth.first_name' | translate }}</label>
             <input type="text" class="form-input" [(ngModel)]="firstName" name="firstName" placeholder="John" required />
           </div>
           <div class="form-group">
-            <label>Last Name</label>
+            <label>{{ 'auth.last_name' | translate }}</label>
             <input type="text" class="form-input" [(ngModel)]="lastName" name="lastName" placeholder="Doe" required />
           </div>
         </div>
@@ -51,16 +51,16 @@ import { ToastService } from '../../core/services/toast.service';
           }
         </div>
         <div class="form-group">
-          <label>Confirm Password</label>
+            <label>{{ 'auth.confirm_password' | translate }}</label>
           <input type="password" class="form-input" [(ngModel)]="confirmPassword" name="confirmPassword"
             placeholder="Confirm your password" required />
           @if (confirmPassword && confirmPassword !== password) {
-            <span class="form-error">Passwords do not match</span>
+            <span class="form-error">{{ 'auth.passwords_no_match' | translate }}</span>
           }
         </div>
 
         <div class="form-group">
-          <label>School Name</label>
+          <label>{{ 'auth.school_name' | translate }}</label>
           <input type="text" class="form-input" [(ngModel)]="schoolName" name="schoolName" placeholder="ABC International School" required />
         </div>
 
@@ -77,7 +77,7 @@ import { ToastService } from '../../core/services/toast.service';
 
       <div class="guide-cta">
         <a routerLink="/guide" class="guide-link">
-          📖 See the complete setup guide before signing up →
+          📖 {{ 'auth.setup_guide_cta' | translate }} →
         </a>
       </div>
     </div>
@@ -121,6 +121,11 @@ import { ToastService } from '../../core/services/toast.service';
       animation: spin 0.6s linear infinite; display: inline-block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 640px) {
+      .auth-card { padding: 0 var(--space-1); }
+      .auth-header h1 { font-size: var(--text-xl); }
+      .name-row { grid-template-columns: 1fr; gap: var(--space-3); }
+    }
   `]
 })
 export class RegisterComponent {

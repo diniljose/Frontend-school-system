@@ -1,41 +1,127 @@
 {
-  "app": { "title": "EduCore", "tagline": "Plataforma de Gestión Escolar" },
+  "app": { "title": "Gestión Escolar", "tagline": "Tu Plataforma Escolar Completa" },
   "nav": {
-    "dashboard": "Panel", "students": "Estudiantes", "teachers": "Profesores", "parents": "Padres",
+    "dashboard": "Panel Principal", "students": "Estudiantes", "teachers": "Profesores", "parents": "Padres de Familia",
     "classes": "Clases", "subjects": "Materias", "attendance": "Asistencia", "exams": "Exámenes",
     "results": "Resultados", "fees": "Cuotas", "transport": "Transporte", "transfers": "Traslados",
     "promotions": "Promociones", "timetable": "Horario", "notifications": "Notificaciones",
     "reports": "Reportes", "settings": "Configuración", "schools": "Escuelas", "users": "Usuarios",
     "subscriptions": "Suscripciones", "academic_years": "Años Académicos", "logout": "Cerrar Sesión",
-    "pending_students": "Estudiantes Pendientes", "pending_approvals": "Aprobaciones Pendientes", "roles": "Roles"
+    "pending_students": "Estudiantes Pendientes", "pending_approvals": "Aprobaciones Pendientes", "roles": "Roles",
+    "events": "Eventos", "activity_logs": "Registro de Actividad", "enrollments": "Inscripciones",
+    "pending_teachers": "Profesores Pendientes"
   },
   "auth": {
-    "login": "Iniciar Sesión", "register": "Crear Cuenta", "forgot_password": "Olvidé mi Contraseña",
+    "login": "Iniciar Sesión", "register": "Crear Cuenta", "forgot_password": "¿Olvidaste tu contraseña?",
     "reset_password": "Restablecer Contraseña", "email": "Correo Electrónico", "password": "Contraseña",
     "confirm_password": "Confirmar Contraseña", "remember_me": "Recordarme",
     "no_account": "¿No tienes cuenta?", "has_account": "¿Ya tienes cuenta?",
-    "sign_up": "Registrarse", "back_to_login": "Volver al inicio", "send_reset": "Enviar Enlace"
+    "have_account": "¿Ya tienes cuenta?",
+    "sign_up": "Registrarse", "sign_in": "Iniciar Sesión", "back_to_login": "Volver a Iniciar Sesión",
+    "send_reset": "Enviar Enlace de Recuperación",
+    "welcome_back": "Bienvenido de Nuevo",
+    "login_subtitle": "Inicia sesión para acceder a tu plataforma escolar",
+    "email_placeholder": "tu@ejemplo.com",
+    "or": "o",
+    "choose_account": "Elige Tu Cuenta",
+    "multiple_accounts_msg": "Tienes varias cuentas vinculadas a este correo. Selecciona una para continuar.",
+    "continue_as": "Continuar como",
+    "student_register_title": "Registro de Estudiante",
+    "student_register_desc": "Inscríbete en la plataforma de tu escuela",
+    "teacher_register_title": "Registro de Profesor",
+    "teacher_register_desc": "Solicita unirte a una escuela como profesor",
+    "admin_register_prompt": "¿Quieres registrar una nueva escuela?",
+    "register_school": "Registra Tu Escuela",
+    "register_subtitle": "Crea tu cuenta de gestión escolar",
+    "first_name": "Nombre",
+    "last_name": "Apellido",
+    "passwords_no_match": "Las contraseñas no coinciden",
+    "school_name": "Nombre de la Escuela",
+    "setup_guide_cta": "Consulta la guía completa antes de registrarte",
+    "forgot_subtitle": "Ingresa tu correo y te enviaremos un enlace de recuperación",
+    "send_reset_link": "Enviar Enlace de Recuperación",
+    "check_email": "Revisa tu correo",
+    "reset_link_sent": "Enviamos un enlace de recuperación a",
+    "try_again": "¿No lo recibiste? Intenta de nuevo"
   },
   "common": {
     "search": "Buscar...", "create": "Crear", "edit": "Editar", "delete": "Eliminar", "save": "Guardar",
     "cancel": "Cancelar", "confirm": "Confirmar", "back": "Atrás", "next": "Siguiente", "loading": "Cargando...",
-    "no_data": "Sin datos", "actions": "Acciones", "status": "Estado", "view": "Ver",
+    "no_data": "No se encontraron datos", "actions": "Acciones", "status": "Estado", "view": "Ver",
     "export": "Exportar", "import": "Importar", "print": "Imprimir", "filter": "Filtrar",
     "total": "Total", "showing": "Mostrando", "of": "de", "entries": "registros",
     "success": "Éxito", "error": "Error", "warning": "Advertencia", "info": "Información"
   },
   "dashboard": {
-    "welcome": "Bienvenido de nuevo", "overview": "Resumen", "total_students": "Total Estudiantes",
-    "total_teachers": "Total Profesores", "total_classes": "Total Clases",
-    "fee_collection": "Recaudación", "attendance_rate": "Tasa de Asistencia",
+    "welcome": "Bienvenido de nuevo", "overview": "Resumen General", "total_students": "Total de Estudiantes",
+    "total_teachers": "Total de Profesores", "total_classes": "Total de Clases",
+    "fee_collection": "Recaudación de Cuotas", "revenue": "Ingresos",
+    "attendance_rate": "Tasa de Asistencia",
     "upcoming_exams": "Próximos Exámenes", "recent_activities": "Actividades Recientes",
     "quick_actions": "Acciones Rápidas"
   },
   "student": {
-    "title": "Estudiantes", "add": "Agregar Estudiante", "admission_no": "No. Admisión",
+    "title": "Estudiantes", "add": "Agregar Estudiante", "admission_no": "No. de Admisión",
     "first_name": "Nombre", "last_name": "Apellido", "class": "Clase",
     "section": "Sección", "roll_no": "Número de Lista", "gender": "Género",
     "dob": "Fecha de Nacimiento", "contact": "Contacto", "address": "Dirección",
-    "guardian": "Tutor", "performance": "Rendimiento", "report_card": "Boleta"
+    "guardian": "Tutor", "performance": "Rendimiento", "report_card": "Boleta de Calificaciones"
+  },
+  "teacher": {
+    "title": "Profesores", "add": "Agregar Profesor", "employee_id": "ID de Empleado",
+    "first_name": "Nombre", "last_name": "Apellido",
+    "designation": "Designación", "department": "Departamento",
+    "subjects": "Materias", "classes": "Clases Asignadas",
+    "qualification": "Calificación", "experience": "Experiencia",
+    "contact": "Número de Contacto", "email": "Correo Electrónico"
+  },
+  "fees": {
+    "title": "Gestión de Cuotas", "pay": "Pagar Ahora", "due": "Monto Pendiente",
+    "paid": "Pagado", "pending": "Pendiente", "overdue": "Vencido",
+    "structure": "Estructura de Cuotas", "analytics": "Análisis de Cuotas",
+    "collection_rate": "Tasa de Recaudación"
+  },
+  "attendance": {
+    "title": "Asistencia", "mark": "Tomar Asistencia", "present": "Presente",
+    "absent": "Ausente", "late": "Tardanza", "report": "Reporte de Asistencia",
+    "rate": "Tasa de Asistencia"
+  },
+  "exam": {
+    "title": "Exámenes", "create": "Crear Examen", "schedule": "Calendario de Exámenes",
+    "type": "Tipo de Examen", "subjects": "Materias", "date": "Fecha",
+    "results": "Ver Resultados"
+  },
+  "result": {
+    "title": "Resultados", "entry": "Ingresar Resultados", "report_card": "Boleta de Calificaciones",
+    "analytics": "Análisis de Resultados", "grade": "Calificación", "rank": "Posición",
+    "percentage": "Porcentaje", "pass": "Aprobado", "fail": "Reprobado"
+  },
+  "timetable": {
+    "title": "Horario", "today": "Horario de Hoy",
+    "day": "Día", "period": "Período", "subject": "Materia",
+    "teacher": "Profesor", "room": "Aula"
+  },
+  "transport": {
+    "title": "Transporte", "vehicles": "Vehículos", "routes": "Rutas",
+    "tracking": "Rastreo en Vivo", "driver": "Conductor", "capacity": "Capacidad"
+  },
+  "notification": {
+    "title": "Notificaciones", "send": "Enviar Notificación",
+    "all": "Todas las Notificaciones", "unread": "Sin Leer",
+    "mark_read": "Marcar como Leída"
+  },
+  "event": {
+    "title": "Eventos", "create": "Crear Evento", "upcoming": "Próximos Eventos",
+    "type": "Tipo de Evento", "date": "Fecha", "description": "Descripción"
+  },
+  "report": {
+    "title": "Reportes", "generate": "Generar Reporte",
+    "academic": "Reportes Académicos", "financial": "Reportes Financieros",
+    "attendance": "Reportes de Asistencia"
+  },
+  "settings": {
+    "title": "Configuración", "general": "General", "profile": "Perfil",
+    "security": "Seguridad", "notifications": "Preferencias de Notificación",
+    "appearance": "Apariencia"
   }
 }

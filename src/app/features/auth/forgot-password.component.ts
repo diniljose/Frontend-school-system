@@ -16,7 +16,7 @@ import { ToastService } from '../../core/services/toast.service';
         <div class="auth-header">
           <div class="icon-circle">🔑</div>
           <h1>{{ 'auth.forgot_password' | translate }}</h1>
-          <p>Enter your email and we'll send you a reset link</p>
+          <p>{{ 'auth.forgot_subtitle' | translate }}</p>
         </div>
 
         <form (ngSubmit)="onSubmit()" class="auth-form">
@@ -28,23 +28,23 @@ import { ToastService } from '../../core/services/toast.service';
 
           <button type="submit" class="btn btn-primary btn-lg" style="width:100%" [disabled]="loading()">
             @if (loading()) { <span class="spinner"></span> }
-            Send Reset Link
+            {{ 'auth.send_reset_link' | translate }}
           </button>
         </form>
       } @else {
         <div class="auth-header">
           <div class="icon-circle success">✅</div>
-          <h1>Check your email</h1>
-          <p>We sent a password reset link to <strong>{{ email }}</strong></p>
+          <h1>{{ 'auth.check_email' | translate }}</h1>
+          <p>{{ 'auth.reset_link_sent' | translate }} <strong>{{ email }}</strong></p>
         </div>
 
         <button class="btn btn-secondary btn-lg" style="width:100%" (click)="sent.set(false)">
-          Didn't receive? Try again
+          {{ 'auth.try_again' | translate }}
         </button>
       }
 
       <p class="auth-footer">
-        <a routerLink="/auth/login">← Back to Login</a>
+        <a routerLink="/auth/login">← {{ 'auth.back_to_login' | translate }}</a>
       </p>
     </div>
   `,

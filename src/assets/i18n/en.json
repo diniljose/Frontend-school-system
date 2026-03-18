@@ -1,22 +1,48 @@
 {
-  "app": { "title": "EduCore", "tagline": "School Management Platform" },
+  "app": { "title": "School Management", "tagline": "Your Complete School Platform" },
   "nav": {
     "dashboard": "Dashboard", "students": "Students", "teachers": "Teachers", "parents": "Parents",
-    "classes": "Classes", "subjects": "Subjects", "attendance": "Attendance", "exams": "Exams",
+    "classes": "Classes", "subjects": "Subjects", "attendance": "Attendance", "exams": "Examinations",
     "results": "Results", "fees": "Fees", "transport": "Transport", "transfers": "Transfers",
     "promotions": "Promotions", "timetable": "Timetable", "notifications": "Notifications",
     "reports": "Reports", "settings": "Settings", "schools": "Schools", "users": "Users",
-    "subscriptions": "Subscriptions", "academic_years": "Academic Years", "logout": "Logout",
+    "subscriptions": "Subscriptions", "academic_years": "Academic Years", "logout": "Sign Out",
     "pending_students": "Pending Students", "pending_approvals": "Pending Approvals", "roles": "Roles",
     "events": "Events", "activity_logs": "Activity Logs", "enrollments": "Enrollments",
     "pending_teachers": "Pending Teachers"
   },
   "auth": {
-    "login": "Sign In", "register": "Create Account", "forgot_password": "Forgot Password",
+    "login": "Sign In", "register": "Create Account", "forgot_password": "Forgot Password?",
     "reset_password": "Reset Password", "email": "Email Address", "password": "Password",
     "confirm_password": "Confirm Password", "remember_me": "Remember me",
     "no_account": "Don't have an account?", "has_account": "Already have an account?",
-    "sign_up": "Sign Up", "back_to_login": "Back to login", "send_reset": "Send Reset Link"
+    "have_account": "Already have an account?",
+    "sign_up": "Sign Up", "sign_in": "Sign In", "back_to_login": "Back to Sign In",
+    "send_reset": "Send Reset Link",
+    "welcome_back": "Welcome Back",
+    "login_subtitle": "Sign in to access your school platform",
+    "email_placeholder": "you@example.com",
+    "or": "or",
+    "choose_account": "Choose Your Account",
+    "multiple_accounts_msg": "You have multiple accounts linked to this email. Please select one to continue.",
+    "continue_as": "Continue as",
+    "student_register_title": "Student Registration",
+    "student_register_desc": "Enroll in your school's platform",
+    "teacher_register_title": "Teacher Registration",
+    "teacher_register_desc": "Apply to join a school as a teacher",
+    "admin_register_prompt": "Want to register a new school?",
+    "register_school": "Register Your School",
+    "register_subtitle": "Create your school management account",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "passwords_no_match": "Passwords do not match",
+    "school_name": "School Name",
+    "setup_guide_cta": "See the complete setup guide before signing up",
+    "forgot_subtitle": "Enter your email and we'll send you a reset link",
+    "send_reset_link": "Send Reset Link",
+    "check_email": "Check your email",
+    "reset_link_sent": "We sent a password reset link to",
+    "try_again": "Didn't receive? Try again"
   },
   "common": {
     "search": "Search...", "create": "Create", "edit": "Edit", "delete": "Delete", "save": "Save",
@@ -29,15 +55,73 @@
   "dashboard": {
     "welcome": "Welcome back", "overview": "Overview", "total_students": "Total Students",
     "total_teachers": "Total Teachers", "total_classes": "Total Classes",
-    "fee_collection": "Fee Collection", "attendance_rate": "Attendance Rate",
+    "fee_collection": "Fee Collection", "revenue": "Revenue",
+    "attendance_rate": "Attendance Rate",
     "upcoming_exams": "Upcoming Exams", "recent_activities": "Recent Activities",
     "quick_actions": "Quick Actions"
   },
   "student": {
-    "title": "Students", "add": "Add Student", "admission_no": "Admission No",
+    "title": "Students", "add": "Add Student", "admission_no": "Admission No.",
     "first_name": "First Name", "last_name": "Last Name", "class": "Class",
     "section": "Section", "roll_no": "Roll Number", "gender": "Gender",
     "dob": "Date of Birth", "contact": "Contact", "address": "Address",
     "guardian": "Guardian", "performance": "Performance", "report_card": "Report Card"
+  },
+  "teacher": {
+    "title": "Teachers", "add": "Add Teacher", "employee_id": "Employee ID",
+    "first_name": "First Name", "last_name": "Last Name",
+    "designation": "Designation", "department": "Department",
+    "subjects": "Subjects", "classes": "Classes Assigned",
+    "qualification": "Qualification", "experience": "Experience",
+    "contact": "Contact Number", "email": "Email Address"
+  },
+  "fees": {
+    "title": "Fee Management", "pay": "Pay Now", "due": "Amount Due",
+    "paid": "Paid", "pending": "Pending", "overdue": "Overdue",
+    "structure": "Fee Structure", "analytics": "Fee Analytics",
+    "collection_rate": "Collection Rate"
+  },
+  "attendance": {
+    "title": "Attendance", "mark": "Mark Attendance", "present": "Present",
+    "absent": "Absent", "late": "Late", "report": "Attendance Report",
+    "rate": "Attendance Rate"
+  },
+  "exam": {
+    "title": "Examinations", "create": "Create Exam", "schedule": "Exam Schedule",
+    "type": "Exam Type", "subjects": "Subjects", "date": "Date",
+    "results": "View Results"
+  },
+  "result": {
+    "title": "Results", "entry": "Enter Results", "report_card": "Report Card",
+    "analytics": "Result Analytics", "grade": "Grade", "rank": "Rank",
+    "percentage": "Percentage", "pass": "Pass", "fail": "Fail"
+  },
+  "timetable": {
+    "title": "Timetable", "today": "Today's Schedule",
+    "day": "Day", "period": "Period", "subject": "Subject",
+    "teacher": "Teacher", "room": "Room"
+  },
+  "transport": {
+    "title": "Transport", "vehicles": "Vehicles", "routes": "Routes",
+    "tracking": "Live Tracking", "driver": "Driver", "capacity": "Capacity"
+  },
+  "notification": {
+    "title": "Notifications", "send": "Send Notification",
+    "all": "All Notifications", "unread": "Unread",
+    "mark_read": "Mark as Read"
+  },
+  "event": {
+    "title": "Events", "create": "Create Event", "upcoming": "Upcoming Events",
+    "type": "Event Type", "date": "Date", "description": "Description"
+  },
+  "report": {
+    "title": "Reports", "generate": "Generate Report",
+    "academic": "Academic Reports", "financial": "Financial Reports",
+    "attendance": "Attendance Reports"
+  },
+  "settings": {
+    "title": "Settings", "general": "General", "profile": "Profile",
+    "security": "Security", "notifications": "Notification Preferences",
+    "appearance": "Appearance"
   }
 }
