@@ -140,7 +140,7 @@ interface StudentStatusOption {
                   <td class="td-check">
                     <input type="checkbox" [checked]="isSelected(student._id)" (change)="toggleSelect(student._id)" />
                   </td>
-                  <td>
+                  <td data-label="Student">
                     <a [routerLink]="['/students', student._id]" class="student-link">
                       <div class="avatar-sm">{{ student.firstName?.charAt(0) }}{{ student.lastName?.charAt(0) }}</div>
                       <div>
@@ -149,17 +149,17 @@ interface StudentStatusOption {
                       </div>
                     </a>
                   </td>
-                  <td><span class="adm-badge">{{ student.admissionNumber }}</span></td>
-                  <td>{{ getClassName(student.currentClass) }}</td>
-                  <td>
+                  <td data-label="Admission No."><span class="adm-badge">{{ student.admissionNumber }}</span></td>
+                  <td data-label="Class">{{ getClassName(student.currentClass) }}</td>
+                  <td data-label="Section">
                     @if (student.currentSection) {
                       <span class="section-badge">{{ student.currentSection }}</span>
                     } @else { — }
                   </td>
-                  <td>{{ student.rollNumber || '—' }}</td>
-                  <td>{{ student.gender || '—' }}</td>
-                  <td><span class="status-badge" [class]="'status-' + student.status">{{ getStatusLabel(student.status || '') }}</span></td>
-                  <td>
+                  <td data-label="Roll No">{{ student.rollNumber || '—' }}</td>
+                  <td data-label="Gender">{{ student.gender || '—' }}</td>
+                  <td data-label="Status"><span class="status-badge" [class]="'status-' + student.status">{{ getStatusLabel(student.status || '') }}</span></td>
+                  <td data-label="Actions">
                     <div class="action-btns">
                       <a [routerLink]="['/students', student._id]" class="btn btn-ghost btn-sm" title="View Details">👁️</a>
                       <a [routerLink]="['/students', student._id, 'edit']" class="btn btn-ghost btn-sm" title="Edit">✏️</a>
@@ -615,11 +615,6 @@ interface StudentStatusOption {
       .header-actions { gap: var(--space-2); }
       .action-btns { gap: 2px; }
       .action-btns .btn { padding: 2px 6px; }
-      .table-responsive { margin: 0 -16px; }
-      .data-table th:nth-child(4), .data-table td:nth-child(4),
-      .data-table th:nth-child(5), .data-table td:nth-child(5),
-      .data-table th:nth-child(6), .data-table td:nth-child(6),
-      .data-table th:nth-child(7), .data-table td:nth-child(7) { display: none; }
     }
   `]
 })

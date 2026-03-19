@@ -60,17 +60,17 @@ import { ClassModel, Student } from '../../core/models';
               <tbody>
                 @for (record of records(); track record.studentId; let i = $index) {
                   <tr>
-                    <td>{{ record.rollNumber || (i + 1) }}</td>
-                    <td><strong>{{ record.studentName }}</strong></td>
-                    <td><span class="section-badge">{{ record.section || '-' }}</span></td>
-                    <td>
+                    <td data-label="Roll">{{ record.rollNumber || (i + 1) }}</td>
+                    <td data-label="Student Name"><strong>{{ record.studentName }}</strong></td>
+                    <td data-label="Section"><span class="section-badge">{{ record.section || '-' }}</span></td>
+                    <td data-label="Status">
                       <div class="status-btns">
                         <button class="status-btn present" [class.active]="record.status === 'present'" (click)="record.status = 'present'; updateCounts()">Present</button>
                         <button class="status-btn absent" [class.active]="record.status === 'absent'" (click)="record.status = 'absent'; updateCounts()">Absent</button>
                         <button class="status-btn late" [class.active]="record.status === 'late'" (click)="record.status = 'late'; updateCounts()">Late</button>
                       </div>
                     </td>
-                    <td><input type="text" class="form-input note-input" [(ngModel)]="record.note" [ngModelOptions]="{standalone: true}" placeholder="Optional note" /></td>
+                    <td data-label="Note"><input type="text" class="form-input note-input" [(ngModel)]="record.note" [ngModelOptions]="{standalone: true}" placeholder="Optional note" /></td>
                   </tr>
                 } @empty { <tr><td colspan="5" class="empty-state">No students found. Select a class{{ availableSections().length > 0 ? ' and section' : '' }} to load students.</td></tr> }
               </tbody>

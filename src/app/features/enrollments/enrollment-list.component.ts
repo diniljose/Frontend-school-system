@@ -129,7 +129,7 @@ import { Enrollment, Student, ClassModel, AcademicYear } from '../../core/models
             <tbody>
               @for (e of enrollments(); track e._id) {
                 <tr class="table-row" [class.row-failed]="e.result === 'fail'" [class.row-passed]="e.result === 'pass'">
-                  <td>
+                  <td data-label="Student">
                     <div class="student-cell">
                       <div class="avatar-sm">{{ getStudentInitials(e.student) }}</div>
                       <div>
@@ -138,25 +138,25 @@ import { Enrollment, Student, ClassModel, AcademicYear } from '../../core/models
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Academic Year">
                     <span class="year-badge" [class.current]="isCurrentYear(e.academicYear)">
                       {{ getAcademicYearName(e.academicYear) }}
                     </span>
                   </td>
-                  <td>{{ getClassName(e.class) }}</td>
-                  <td><span class="section-badge">{{ e.section }}</span></td>
-                  <td>{{ e.rollNumber || '-' }}</td>
-                  <td>
+                  <td data-label="Class">{{ getClassName(e.class) }}</td>
+                  <td data-label="Section"><span class="section-badge">{{ e.section }}</span></td>
+                  <td data-label="Roll No">{{ e.rollNumber || '-' }}</td>
+                  <td data-label="Result">
                     @if (e.result) {
                       <span class="result-badge" [class]="'result-' + e.result">{{ e.result | titlecase }}</span>
                     } @else {
                       <span class="result-badge result-pending">Pending</span>
                     }
                   </td>
-                  <td>
+                  <td data-label="Status">
                     <span class="status-badge" [class]="'status-' + e.status">{{ e.status | titlecase }}</span>
                   </td>
-                  <td>
+                  <td data-label="Actions">
                     <div class="action-btns">
                       <button class="btn btn-ghost btn-sm" (click)="viewEnrollment(e)" title="View Details">👁</button>
                       <button class="btn btn-ghost btn-sm" (click)="editEnrollment(e)" title="Update Result">✏️</button>

@@ -43,11 +43,11 @@ import { Subscription } from '../../core/models';
           <tbody>
             @for (s of subscriptions(); track s._id) {
               <tr>
-                <td><strong>{{ s.school }}</strong></td>
-                <td>{{ s.plan }}</td>
-                <td>{{ s.startDate | date:'mediumDate' }}</td>
-                <td>{{ s.endDate | date:'mediumDate' }}</td>
-                <td><span class="badge" [class]="s.status === 'active' ? 'badge-success' : 'badge-warning'">{{ s.status }}</span></td>
+                <td data-label="School"><strong>{{ s.school }}</strong></td>
+                <td data-label="Plan">{{ s.plan }}</td>
+                <td data-label="Start Date">{{ s.startDate | date:'mediumDate' }}</td>
+                <td data-label="Expiry">{{ s.endDate | date:'mediumDate' }}</td>
+                <td data-label="Status"><span class="badge" [class]="s.status === 'active' ? 'badge-success' : 'badge-warning'">{{ s.status }}</span></td>
               </tr>
             } @empty { <tr><td colspan="5" class="empty-state">No subscriptions</td></tr> }
           </tbody>

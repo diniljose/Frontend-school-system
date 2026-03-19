@@ -28,11 +28,11 @@ import { ClassModel, Promotion } from '../../core/models';
           <tbody>
             @for (p of promotions(); track p._id) {
               <tr>
-                <td>{{ getStudentName(p) }}</td>
-                <td>{{ getClassName(p.fromClass) }}</td>
-                <td>{{ getClassName(p.toClass) }}</td>
-                <td><span class="badge" [class]="p.status === 'promoted' ? 'badge-success' : 'badge-warning'">{{ p.status }}</span></td>
-                <td>{{ p.createdAt | date:'mediumDate' }}</td>
+                <td data-label="Student">{{ getStudentName(p) }}</td>
+                <td data-label="From Class">{{ getClassName(p.fromClass) }}</td>
+                <td data-label="To Class">{{ getClassName(p.toClass) }}</td>
+                <td data-label="Status"><span class="badge" [class]="p.status === 'promoted' ? 'badge-success' : 'badge-warning'">{{ p.status }}</span></td>
+                <td data-label="Date">{{ p.createdAt | date:'mediumDate' }}</td>
               </tr>
             } @empty { <tr><td colspan="5" class="empty-state">No promotion records. Use Bulk Promote to start.</td></tr> }
           </tbody>

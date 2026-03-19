@@ -40,11 +40,11 @@ import { User, UserRole } from '../../core/models';
           <tbody>
             @for (u of users(); track u._id) {
               <tr>
-                <td><div class="user-cell"><div class="avatar-sm">{{ u.firstName?.charAt(0) }}{{ u.lastName?.charAt(0) }}</div><div><div class="user-name">{{ u.firstName }} {{ u.lastName }}</div></div></div></td>
-                <td>{{ u.email }}</td>
-                <td><span class="badge badge-primary">{{ u.role }}</span></td>
-                <td><span class="badge" [class]="u.isActive ? 'badge-success' : 'badge-warning'">{{ u.isActive ? 'Active' : 'Inactive' }}</span></td>
-                <td class="action-btns">
+                <td data-label="Name"><div class="user-cell"><div class="avatar-sm">{{ u.firstName?.charAt(0) }}{{ u.lastName?.charAt(0) }}</div><div><div class="user-name">{{ u.firstName }} {{ u.lastName }}</div></div></div></td>
+                <td data-label="Email">{{ u.email }}</td>
+                <td data-label="Role"><span class="badge badge-primary">{{ u.role }}</span></td>
+                <td data-label="Status"><span class="badge" [class]="u.isActive ? 'badge-success' : 'badge-warning'">{{ u.isActive ? 'Active' : 'Inactive' }}</span></td>
+                <td data-label="Actions" class="action-btns">
                   <a [routerLink]="['/users', u._id]" class="btn btn-ghost btn-sm">Edit</a>
                   <button class="btn btn-ghost btn-sm" style="color:var(--danger)" (click)="delete(u._id)">Delete</button>
                 </td>

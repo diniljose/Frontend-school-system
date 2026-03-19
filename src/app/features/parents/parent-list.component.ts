@@ -27,11 +27,11 @@ import { Parent } from '../../core/models';
           <tbody>
             @for (p of parents(); track p._id) {
               <tr>
-                <td><div class="user-cell"><div class="avatar-sm">{{ p.firstName?.charAt(0) }}{{ p.lastName?.charAt(0) }}</div><div><div class="user-name">{{ p.firstName }} {{ p.lastName }}</div></div></div></td>
-                <td>{{ p.email }}</td>
-                <td>{{ p.phone || '—' }}</td>
-                <td>{{ p.children?.length || 0 }}</td>
-                <td><button class="btn btn-ghost btn-sm" style="color:var(--danger)" (click)="delete(p._id)">Delete</button></td>
+                <td data-label="Name"><div class="user-cell"><div class="avatar-sm">{{ p.firstName?.charAt(0) }}{{ p.lastName?.charAt(0) }}</div><div><div class="user-name">{{ p.firstName }} {{ p.lastName }}</div></div></div></td>
+                <td data-label="Email">{{ p.email }}</td>
+                <td data-label="Phone">{{ p.phone || '—' }}</td>
+                <td data-label="Children">{{ p.children?.length || 0 }}</td>
+                <td data-label="Actions"><button class="btn btn-ghost btn-sm" style="color:var(--danger)" (click)="delete(p._id)">Delete</button></td>
               </tr>
             } @empty { <tr><td colspan="5" class="empty-state">No parents found</td></tr> }
           </tbody>

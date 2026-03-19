@@ -140,22 +140,22 @@ import { Fee, FeeStatus, ClassModel, UserRole } from '../../core/models';
                       <input type="checkbox" [checked]="isSelected(fee._id)" (change)="toggleSelect(fee._id)" />
                     }
                   </td>
-                  <td>
+                  <td data-label="Student">
                     <div class="student-info">
                       <span class="student-name">{{ getStudentName(fee) }}</span>
                       <span class="student-id">{{ getStudentAdmissionNo(fee) }}</span>
                     </div>
                   </td>
-                  <td>{{ getClassName(fee) }}{{ getSectionName(fee) ? ' - ' + getSectionName(fee) : '' }}</td>
+                  <td data-label="Class">{{ getClassName(fee) }}{{ getSectionName(fee) ? ' - ' + getSectionName(fee) : '' }}</td>
                 }
-                <td>{{ fee.periodLabel || (fee.month + '/' + fee.year) }}</td>
-                <td class="text-right">{{ fee.totalAmount | currency:'INR' }}</td>
-                <td class="text-right text-success">{{ fee.paidAmount | currency:'INR' }}</td>
-                <td class="text-right text-danger">{{ fee.dueAmount | currency:'INR' }}</td>
-                <td>
+                <td data-label="Period">{{ fee.periodLabel || (fee.month + '/' + fee.year) }}</td>
+                <td data-label="Total" class="text-right">{{ fee.totalAmount | currency:'INR' }}</td>
+                <td data-label="Paid" class="text-right text-success">{{ fee.paidAmount | currency:'INR' }}</td>
+                <td data-label="Due" class="text-right text-danger">{{ fee.dueAmount | currency:'INR' }}</td>
+                <td data-label="Status">
                   <span class="badge" [class]="getStatusClass(fee.status)">{{ fee.status }}</span>
                 </td>
-                <td class="action-btns">
+                <td data-label="Actions" class="action-btns">
                   @if (!isStudentView() && fee.status !== 'paid' && fee.status !== 'waived') {
                     <button class="btn btn-primary btn-sm" (click)="openPaymentModal(fee)">Pay</button>
                     <button class="btn btn-secondary btn-sm" (click)="markAsPaid(fee)" title="Mark as Paid">✓</button>

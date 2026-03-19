@@ -56,14 +56,14 @@ import { Result } from '../../core/models';
           <tbody>
             @for (r of results(); track r._id) {
               <tr>
-                <td><strong>{{ getStudentName(r.student) }}</strong><br><small class="text-muted">{{ getAdmissionNumber(r.student) }}</small></td>
-                <td>{{ getExamName(r.exam) }}</td>
-                <td>{{ getClassName(r.class) }}</td>
-                <td>{{ r.obtainedMarks }}/{{ r.totalMarks }}</td>
-                <td>{{ r.percentage?.toFixed(1) }}%</td>
-                <td><span class="badge" [class]="getGradeBadge(r.grade || '')">{{ r.grade }}</span></td>
-                <td>{{ r.rank || '-' }}</td>
-                <td>
+                <td data-label="Student"><strong>{{ getStudentName(r.student) }}</strong><br><small class="text-muted">{{ getAdmissionNumber(r.student) }}</small></td>
+                <td data-label="Exam">{{ getExamName(r.exam) }}</td>
+                <td data-label="Class">{{ getClassName(r.class) }}</td>
+                <td data-label="Total">{{ r.obtainedMarks }}/{{ r.totalMarks }}</td>
+                <td data-label="Percentage">{{ r.percentage?.toFixed(1) }}%</td>
+                <td data-label="Grade"><span class="badge" [class]="getGradeBadge(r.grade || '')">{{ r.grade }}</span></td>
+                <td data-label="Rank">{{ r.rank || '-' }}</td>
+                <td data-label="Actions">
                   <div class="action-btns">
                     <a [routerLink]="['/results/report-card', getStudentId(r.student)]" [queryParams]="{examId: getExamId(r.exam)}" class="btn btn-ghost btn-sm" title="View Report Card">📄</a>
                     <a [routerLink]="['/students', getStudentId(r.student)]" class="btn btn-ghost btn-sm" title="View Student">👁️</a>

@@ -215,8 +215,6 @@ table.data-table tbody tr:last-child td { border-bottom: none; }
   @media (max-width: 768px) {
     padding: var(--space-4);
     border-radius: var(--radius-lg);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
   }
   
   @media (max-width: 480px) {
@@ -225,14 +223,7 @@ table.data-table tbody tr:last-child td { border-bottom: none; }
   }
 }
 
-// Responsive Tables — horizontal scroll approach
-.table-container {
-  @media (max-width: 768px) {
-    border-radius: var(--radius-md);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
+// Responsive Tables — handled by card layout below
 
 // Responsive Modal
 .modal-overlay {
@@ -912,92 +903,231 @@ html, body {
   }
 }
 
-// ─── TABLES ─────────────────────────────────────────────────
-// All tables use horizontal scroll on mobile (parent .card has overflow-x:auto)
+// ─── TABLES → CARD LAYOUT ON MOBILE ────────────────────────
+// Modern card-based responsive tables: each row becomes a card
 @media (max-width: 768px) {
+  // The .card parent no longer needs horizontal scroll for tables
+  .card:has(> table.data-table),
+  .card:has(> .table-responsive) {
+    overflow-x: visible;
+  }
+
   .table-responsive,
   .table-container {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: visible !important;
   }
 
-  // Ensure table stays as a proper table (override any card-style layout)
   table.data-table {
-    display: table !important;
-    width: 100%;
-    min-width: 580px;
-    
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border: none !important;
+
     thead {
-      display: table-header-group !important;
+      // Visually hidden but accessible
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      clip: rect(0 0 0 0) !important;
+      overflow: hidden !important;
     }
+
     tbody {
-      display: table-row-group !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: var(--space-3) !important;
     }
+
     tr {
-      display: table-row !important;
-      flex-direction: unset !important;
-      padding: 0 !important;
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
       gap: 0 !important;
-    }
-    th, td {
-      display: table-cell !important;
-      padding: var(--space-2) var(--space-2) !important;
-      font-size: var(--text-xs) !important;
-      
-      &:before {
-        content: none !important;
+      padding: 0 !important;
+      background: var(--bg-surface) !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: var(--radius-lg) !important;
+      overflow: hidden;
+      transition: box-shadow 0.2s, border-color 0.2s;
+
+      &:hover {
+        border-color: color-mix(in srgb, var(--color-primary) 40%, var(--border-color));
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       }
     }
-    th {
-      font-size: 0.65rem !important;
-      white-space: nowrap;
+
+    td {
+      display: flex !important;
+      flex-direction: column !important;
+      padding: var(--space-3) var(--space-4) !important;
+      border-bottom: none !important;
+      font-size: var(--text-sm) !important;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      // Label from data-label attribute
+      &[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 4px;
+        line-height: 1;
+      }
+    }
+
+    // Primary cell (name/avatar) spans full width
+    td:first-child {
+      grid-column: 1 / -1 !important;
+      background: var(--bg-muted);
+      padding: var(--space-3) var(--space-4) !important;
+      border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    // Actions cell spans full width
+    td:last-child {
+      grid-column: 1 / -1 !important;
+      border-top: 1px solid var(--border-color) !important;
+      padding: var(--space-2) var(--space-4) !important;
+      background: var(--bg-muted);
+    }
+
+    // Checkbox cells
+    td.check-col, td.td-check {
+      position: absolute;
+      top: var(--space-3);
+      right: var(--space-3);
+      padding: 0 !important;
+      background: none !important;
+      border: none !important;
+      grid-column: unset !important;
+    }
+
+    // Selected row
+    tr.selected, tr.selected-row {
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 1px var(--color-primary), 0 2px 8px rgba(59,130,246,0.12) !important;
+    }
+
+    // Empty state
+    td.empty-state, td[colspan] {
+      grid-column: 1 / -1 !important;
+      text-align: center;
+      padding: var(--space-8) var(--space-4) !important;
+      background: none !important;
+      border: none !important;
+    }
+    tr:has(> td[colspan]) {
+      display: block !important;
+      background: none !important;
+      border: none !important;
+
+      &:hover {
+        box-shadow: none !important;
+        border-color: transparent !important;
+      }
     }
   }
 
-  // Compact elements inside tables
+  // ── Avatar & identity styling inside cards ──
   .avatar-sm {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 10px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 11px !important;
   }
-  .student-link, .user-cell {
-    gap: var(--space-2) !important;
+  .user-cell, .student-cell, .student-link {
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--space-3) !important;
   }
   .student-name, .user-name {
+    font-size: var(--text-sm) !important;
+    font-weight: 600 !important;
+  }
+  .student-sub, .user-email, .student-id, .student-adm {
     font-size: var(--text-xs) !important;
+    color: var(--text-tertiary) !important;
+  }
+
+  // ── Badges ──
+  .adm-badge, .section-badge, .status-badge, .badge, .result-badge, .year-badge {
+    font-size: var(--text-xs) !important;
+    padding: 2px 8px !important;
     white-space: nowrap;
   }
-  .student-sub, .user-email, .student-id {
-    font-size: 10px !important;
-    white-space: nowrap;
-  }
-  .adm-badge, .section-badge, .status-badge, .badge {
-    font-size: 10px !important;
-    padding: 1px 6px !important;
-    white-space: nowrap;
-  }
+
+  // ── Action buttons in card footer ──
   .action-btns {
-    gap: 2px !important;
-    flex-wrap: nowrap !important;
-    
-    .btn, button {
-      padding: var(--space-1) var(--space-2) !important;
-      font-size: 10px !important;
-      min-height: 28px !important;
-      height: 28px !important;
-      white-space: nowrap;
+    display: flex !important;
+    gap: var(--space-2) !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+
+    .btn, button, a {
+      padding: var(--space-2) var(--space-3) !important;
+      font-size: var(--text-xs) !important;
+      min-height: 36px !important;
+      border-radius: var(--radius-md) !important;
+    }
+  }
+
+  // ── Currency amounts ──
+  .text-right {
+    text-align: left !important;
+  }
+
+  // ── Attendance-specific: status buttons ──
+  .status-btns {
+    flex-wrap: wrap !important;
+    gap: var(--space-1) !important;
+
+    .status-btn {
+      padding: var(--space-2) var(--space-3) !important;
+      font-size: var(--text-xs) !important;
+      flex: 1 1 auto;
+    }
+  }
+  .note-input {
+    font-size: var(--text-sm) !important;
+  }
+
+  // ── Student-info in fee cards ──
+  .student-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+// Small phones — single column
+@media (max-width: 480px) {
+  table.data-table {
+    tr {
+      grid-template-columns: 1fr !important;
+    }
+
+    td {
+      padding: var(--space-2) var(--space-3) !important;
     }
   }
 }
 
-// Further compact at very small screens
-@media (max-width: 480px) {
+// Tablet — tables go back to proper table layout
+@media (min-width: 769px) and (max-width: 1024px) {
   table.data-table {
-    min-width: 480px;
-    
     th, td {
-      padding: var(--space-1) var(--space-2) !important;
-      font-size: 11px !important;
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-sm);
+    }
+    th {
+      font-size: var(--text-xs);
+    }
+    .action-btns .btn {
+      padding: var(--space-1) var(--space-2);
+      font-size: var(--text-xs);
     }
   }
 }

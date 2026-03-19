@@ -28,17 +28,17 @@ import { Teacher } from '../../core/models';
           <tbody>
             @for (t of teachers(); track t._id; let idx = $index) {
               <tr>
-                <td>
+                <td data-label="Name">
                   <div class="user-cell">
                     <div class="avatar-sm">{{ t.firstName?.charAt(0) }}{{ t.lastName?.charAt(0) }}</div>
                     <div><div class="user-name">{{ t.firstName }} {{ t.lastName }}</div><div class="user-email">{{ t.email }}</div></div>
                   </div>
                 </td>
-                <td>{{ t.employeeId || t.staffId || 'TCH-' + (idx + 1).toString().padStart(3, '0') }}</td>
-                <td>{{ t.subjects?.length || 0 }} subjects</td>
-                <td>{{ t.phone || '—' }}</td>
-                <td><span class="badge badge-success">Active</span></td>
-                <td class="action-btns">
+                <td data-label="Staff ID">{{ t.employeeId || t.staffId || 'TCH-' + (idx + 1).toString().padStart(3, '0') }}</td>
+                <td data-label="Subjects">{{ t.subjects?.length || 0 }} subjects</td>
+                <td data-label="Phone">{{ t.phone || '—' }}</td>
+                <td data-label="Status"><span class="badge badge-success">Active</span></td>
+                <td data-label="Actions" class="action-btns">
                   <a [routerLink]="['/teachers', t._id, 'profile']" class="btn btn-ghost btn-sm" title="View Profile">👤</a>
                   <a [routerLink]="['/teachers', t._id, 'assignments']" class="btn btn-ghost btn-sm" title="Teaching Assignments">📚</a>
                   <a [routerLink]="['/teachers', t._id]" class="btn btn-ghost btn-sm">Edit</a>

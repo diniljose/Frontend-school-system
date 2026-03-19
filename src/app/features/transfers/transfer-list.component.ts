@@ -28,14 +28,14 @@ import { Transfer, Student } from '../../core/models';
           <tbody>
             @for (t of transfers(); track t._id) {
               <tr>
-                <td>{{ getStudentName(t) }}</td>
-                <td><span class="badge badge-info">{{ t.type || 'out' }}</span></td>
-                <td>{{ t.externalSchoolName || 'N/A' }}</td>
-                <td>{{ t.transferDate | date:'mediumDate' }}</td>
-                <td>
+                <td data-label="Student">{{ getStudentName(t) }}</td>
+                <td data-label="Type"><span class="badge badge-info">{{ t.type || 'out' }}</span></td>
+                <td data-label="School">{{ t.externalSchoolName || 'N/A' }}</td>
+                <td data-label="Date">{{ t.transferDate | date:'mediumDate' }}</td>
+                <td data-label="Status">
                   <span class="badge" [class]="getStatusClass(t.status)">{{ t.status }}</span>
                 </td>
-                <td class="action-btns">
+                <td data-label="Actions" class="action-btns">
                   @if (t.status === 'initiated' || t.status === 'pending') {
                     <button class="btn btn-ghost btn-sm" style="color:var(--danger)" (click)="cancelTransfer(t._id)">Cancel</button>
                   }

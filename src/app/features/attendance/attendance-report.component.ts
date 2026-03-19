@@ -180,12 +180,12 @@ interface DateStats {
             <tbody>
               @for (d of dateStats(); track d.date) {
                 <tr>
-                  <td>{{ formatDate(d.date) }}</td>
-                  <td class="present-cell">{{ d.present }}</td>
-                  <td class="absent-cell">{{ d.absent }}</td>
-                  <td class="late-cell">{{ d.late }}</td>
-                  <td>{{ d.total }}</td>
-                  <td>
+                  <td data-label="Date">{{ formatDate(d.date) }}</td>
+                  <td data-label="Present" class="present-cell">{{ d.present }}</td>
+                  <td data-label="Absent" class="absent-cell">{{ d.absent }}</td>
+                  <td data-label="Late" class="late-cell">{{ d.late }}</td>
+                  <td data-label="Total">{{ d.total }}</td>
+                  <td data-label="Attendance %">
                     <span class="percent-badge" [class]="getPercentClass(d.percentage)">
                       {{ d.percentage }}%
                     </span>
@@ -220,15 +220,15 @@ interface DateStats {
               <tbody>
                 @for (record of filteredRecords(); track record.studentId + record.date; let i = $index) {
                   <tr>
-                    <td>{{ i + 1 }}</td>
-                    <td>{{ record.studentName }}</td>
-                    @if (reportType !== 'daily') { <td>{{ formatDate(record.date) }}</td> }
-                    <td>
+                    <td data-label="#">{{ i + 1 }}</td>
+                    <td data-label="Student Name">{{ record.studentName }}</td>
+                    @if (reportType !== 'daily') { <td data-label="Date">{{ formatDate(record.date) }}</td> }
+                    <td data-label="Status">
                       <span class="status-badge" [class]="'status-' + record.status">
                         {{ record.status }}
                       </span>
                     </td>
-                    <td>{{ record.note || '-' }}</td>
+                    <td data-label="Note">{{ record.note || '-' }}</td>
                   </tr>
                 }
               </tbody>
