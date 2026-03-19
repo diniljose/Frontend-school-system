@@ -215,6 +215,8 @@ table.data-table tbody tr:last-child td { border-bottom: none; }
   @media (max-width: 768px) {
     padding: var(--space-4);
     border-radius: var(--radius-lg);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   @media (max-width: 480px) {
@@ -223,61 +225,12 @@ table.data-table tbody tr:last-child td { border-bottom: none; }
   }
 }
 
-// Responsive Tables
+// Responsive Tables — horizontal scroll approach
 .table-container {
   @media (max-width: 768px) {
     border-radius: var(--radius-md);
-    
-    table.data-table {
-      display: block;
-      
-      thead {
-        display: none;
-      }
-      
-      tbody {
-        display: block;
-      }
-      
-      tr {
-        display: flex;
-        flex-direction: column;
-        padding: var(--space-4);
-        border-bottom: 1px solid var(--border-color);
-        gap: var(--space-2);
-        background: var(--bg-surface);
-        
-        &:last-child {
-          border-bottom: none;
-        }
-        
-        &:hover {
-          background: var(--bg-surface-hover);
-        }
-      }
-      
-      td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: var(--space-2) 0;
-        border-bottom: none;
-        
-        &:before {
-          content: attr(data-label);
-          font-weight: 600;
-          font-size: var(--text-xs);
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          flex: 1;
-        }
-        
-        &:last-child {
-          justify-content: flex-end;
-        }
-      }
-    }
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -960,24 +913,19 @@ html, body {
 }
 
 // ─── TABLES ─────────────────────────────────────────────────
-// Force horizontal scroll for data-tables on mobile (no data-label approach)
+// All tables use horizontal scroll on mobile (parent .card has overflow-x:auto)
 @media (max-width: 768px) {
   .table-responsive,
   .table-container {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
-    margin-left: calc(-1 * var(--space-3));
-    margin-right: calc(-1 * var(--space-3));
-    padding-left: var(--space-3);
-    padding-right: var(--space-3);
   }
 
-  // Reset the card-style table layout - use horizontal scroll instead
-  .table-container table.data-table,
-  .table-responsive table.data-table,
+  // Ensure table stays as a proper table (override any card-style layout)
   table.data-table {
     display: table !important;
-    min-width: 600px;
+    width: 100%;
+    min-width: 580px;
     
     thead {
       display: table-header-group !important;
@@ -993,9 +941,8 @@ html, body {
     }
     th, td {
       display: table-cell !important;
-      padding: var(--space-2) var(--space-3) !important;
+      padding: var(--space-2) var(--space-2) !important;
       font-size: var(--text-xs) !important;
-      white-space: nowrap;
       
       &:before {
         content: none !important;
@@ -1003,6 +950,7 @@ html, body {
     }
     th {
       font-size: 0.65rem !important;
+      white-space: nowrap;
     }
   }
 
@@ -1017,13 +965,16 @@ html, body {
   }
   .student-name, .user-name {
     font-size: var(--text-xs) !important;
+    white-space: nowrap;
   }
   .student-sub, .user-email, .student-id {
     font-size: 10px !important;
+    white-space: nowrap;
   }
   .adm-badge, .section-badge, .status-badge, .badge {
     font-size: 10px !important;
     padding: 1px 6px !important;
+    white-space: nowrap;
   }
   .action-btns {
     gap: 2px !important;
@@ -1034,6 +985,7 @@ html, body {
       font-size: 10px !important;
       min-height: 28px !important;
       height: 28px !important;
+      white-space: nowrap;
     }
   }
 }
@@ -1041,10 +993,11 @@ html, body {
 // Further compact at very small screens
 @media (max-width: 480px) {
   table.data-table {
-    min-width: 500px;
+    min-width: 480px;
     
     th, td {
       padding: var(--space-1) var(--space-2) !important;
+      font-size: 11px !important;
     }
   }
 }
@@ -1088,6 +1041,7 @@ html, body {
   }
   .modal-body {
     padding: var(--space-4) !important;
+    overflow-x: auto;
   }
   .modal-footer {
     padding: var(--space-3) var(--space-4) !important;
@@ -1516,29 +1470,6 @@ html, body {
     .action-link {
       flex: 1 1 auto;
       text-align: center;
-    }
-  }
-}
-
-// ─── SCROLLABLE TABLES ──────────────────────────────────────
-@media (max-width: 768px) {
-  .table-container {
-    -webkit-overflow-scrolling: touch;
-    
-    &.scrollable-table {
-      table.data-table {
-        display: table;
-        min-width: 600px;
-        
-        thead { display: table-header-group; }
-        tbody { display: table-row-group; }
-        tr { display: table-row; }
-        td, th {
-          display: table-cell;
-          padding: var(--space-2) var(--space-3);
-          font-size: var(--text-xs);
-        }
-      }
     }
   }
 }
