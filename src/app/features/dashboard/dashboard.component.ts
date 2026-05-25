@@ -1823,6 +1823,17 @@ Chart.register(...registerables);
       border-radius: var(--radius-md);
       flex-shrink: 0;
       font-size: 1.25rem;
+      line-height: 1;
+      font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+    }
+    .activity-icon-wrapper span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      font-size: 1.25rem;
+      font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
     }
     /* Activity type colors */
     .activity-type-student_registered .activity-icon-wrapper,
@@ -2563,21 +2574,40 @@ export class DashboardComponent implements OnInit {
           
           // Map backend icon names to emoji icons
           const iconMap: Record<string, string> = {
+            // Action names
+            'create': '➕',
+            'add_circle': '➕',
+            'update': '✏️',
+            'edit': '✏️',
+            'delete': '🗑️',
+            'login': '🔐',
+            'logout': '🚪',
+            'password_change': '🔑',
+            'password_reset': '🔑',
+            'role_change': '👥',
+            'permission_change': '🔒',
+            'fee_payment': '💰',
+            'payment': '💰',
+            'attendance_mark': '✔️',
+            'result_publish': '📊',
+            'grade': '📊',
+            'promotion': '⬆️',
+            'transfer': '↔️',
+            'notification_send': '🔔',
+            'notification': '🔔',
+            'settings_change': '⚙️',
+            'settings': '⚙️',
+            'export': '📥',
+            'bulk_operation': '📦',
             'person_add': '👤',
             'school': '🏫',
             'event': '📅',
-            'payment': '💰',
-            'grade': '📊',
             'assignment': '📝',
-            'notification': '🔔',
-            'edit': '✏️',
-            'delete': '🗑️',
             'add': '➕',
             'check': '✅',
             'book': '📚',
             'class': '🏛️',
             'user': '👤',
-            'settings': '⚙️',
           };
 
           // Map entity types to icons
@@ -2597,7 +2627,8 @@ export class DashboardComponent implements OnInit {
           };
           
           const entityType = a.entityType || a.type || '';
-          const icon = entityIconMap[entityType.toUpperCase()] || iconMap[a.icon] || a.icon || '📌';
+          const actionOrIcon = a.action || a.icon || '';
+          const icon = entityIconMap[entityType.toUpperCase()] || iconMap[actionOrIcon.toLowerCase()] || iconMap[a.icon] || '📌';
           
           return {
             id: a._id || `activity-${index}`,

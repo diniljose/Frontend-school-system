@@ -319,10 +319,10 @@ export class PendingSchoolsComponent implements OnInit {
 
   loadPendingSchools(): void {
     this.loading.set(true);
-    this.api.get<any>('/auth/schools/pending').subscribe({
+    this.api.get<any>('/schools/pending-approval').subscribe({
       next: (res) => {
         // Handle nested response structure
-        const data = res?.data?.items || res?.data || res || [];
+        const data = res?.data?.data || res?.data?.items || res?.data || res || [];
         this.pendingSchools.set(Array.isArray(data) ? data : []);
         this.loading.set(false);
       },
@@ -336,9 +336,9 @@ export class PendingSchoolsComponent implements OnInit {
 
   approveSchool(schoolId: string): void {
     this.processingId.set(schoolId);
-    this.api.post(`/auth/schools/${schoolId}/approve`, {}).subscribe({
+    this.api.post(`/schools/${schoolId}/approve`, {}).subscribe({
       next: (res: any) => {
-        this.toast.success(`School approved! Admin account created for ${res.admin?.email || 'the administrator'}`);
+        this.toast.success(`School approved! Admin account created for ${res.data?.adminCredentials?.email || 'the administrator'}`);
         this.loadPendingSchools();
         this.processingId.set(null);
       },
@@ -363,7 +363,7 @@ export class PendingSchoolsComponent implements OnInit {
     if (!this.rejectReason.trim()) return;
 
     this.processingId.set(schoolId);
-    this.api.post(`/auth/schools/${schoolId}/reject`, { reason: this.rejectReason }).subscribe({
+    this.api.post(`/schools/${schoolId}/reject`, { reason: this.rejectReason }).subscribe({
       next: () => {
         this.toast.success('School registration rejected');
         this.loadPendingSchools();

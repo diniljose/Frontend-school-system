@@ -9,7 +9,19 @@
     "subscriptions": "Subscriptions", "academic_years": "Academic Years", "logout": "Sign Out",
     "pending_students": "Pending Students", "pending_approvals": "Pending Approvals", "roles": "Roles",
     "events": "Events", "activity_logs": "Activity Logs", "enrollments": "Enrollments",
-    "pending_teachers": "Pending Teachers"
+    "pending_teachers": "Pending Teachers",
+    "group": {
+      "overview": "Overview",
+      "academic": "Academic",
+      "students": "Students",
+      "staff": "Staff",
+      "communication": "Communication",
+      "finance": "Finance",
+      "operations": "Operations",
+      "reports": "Reports",
+      "admin": "Administration",
+      "platform": "Platform"
+    }
   },
   "auth": {
     "login": "Sign In", "register": "Create Account", "forgot_password": "Forgot Password?",
