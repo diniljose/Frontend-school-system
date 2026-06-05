@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - develop
+      - users/dinil/new-design
 
 env:
   REMOTE_TMP_DIR: /home/ubuntu
