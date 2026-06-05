@@ -1,0 +1,751 @@
+// ═══════════════════════════════════════════════════════════════
+// MODULE IDENTITY SYSTEM
+// Premium module-specific colors, gradients, and visual identity
+// ═══════════════════════════════════════════════════════════════
+
+// ─── Module Color Definitions ───
+$module-colors: (
+  'overview': (
+    primary: #6366f1,
+    secondary: #8b5cf6,
+    gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    light: rgba(99, 102, 241, 0.08),
+    glow: rgba(99, 102, 241, 0.25)
+  ),
+  'academic': (
+    primary: #10b981,
+    secondary: #34d399,
+    gradient: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+    light: rgba(16, 185, 129, 0.08),
+    glow: rgba(16, 185, 129, 0.25)
+  ),
+  'students': (
+    primary: #3b82f6,
+    secondary: #60a5fa,
+    gradient: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+    light: rgba(59, 130, 246, 0.08),
+    glow: rgba(59, 130, 246, 0.25)
+  ),
+  'staff': (
+    primary: #f59e0b,
+    secondary: #fbbf24,
+    gradient: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+    light: rgba(245, 158, 11, 0.08),
+    glow: rgba(245, 158, 11, 0.25)
+  ),
+  'communication': (
+    primary: #ec4899,
+    secondary: #f472b6,
+    gradient: 'linear-gradient(135deg, #ec4899 0%, #f472b6 100%)',
+    light: rgba(236, 72, 153, 0.08),
+    glow: rgba(236, 72, 153, 0.25)
+  ),
+  'finance': (
+    primary: #22c55e,
+    secondary: #4ade80,
+    gradient: 'linear-gradient(135deg, #22c55e 0%, #4ade80 100%)',
+    light: rgba(34, 197, 94, 0.08),
+    glow: rgba(34, 197, 94, 0.25)
+  ),
+  'operations': (
+    primary: #06b6d4,
+    secondary: #22d3ee,
+    gradient: 'linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%)',
+    light: rgba(6, 182, 212, 0.08),
+    glow: rgba(6, 182, 212, 0.25)
+  ),
+  'reports': (
+    primary: #8b5cf6,
+    secondary: #a78bfa,
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)',
+    light: rgba(139, 92, 246, 0.08),
+    glow: rgba(139, 92, 246, 0.25)
+  ),
+  'admin': (
+    primary: #64748b,
+    secondary: #94a3b8,
+    gradient: 'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)',
+    light: rgba(100, 116, 139, 0.08),
+    glow: rgba(100, 116, 139, 0.25)
+  ),
+  'platform': (
+    primary: #ef4444,
+    secondary: #f87171,
+    gradient: 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)',
+    light: rgba(239, 68, 68, 0.08),
+    glow: rgba(239, 68, 68, 0.25)
+  )
+);
+
+// ─── CSS Custom Properties for Modules ───
+:root {
+  // Overview Module
+  --module-overview-primary: #6366f1;
+  --module-overview-secondary: #8b5cf6;
+  --module-overview-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --module-overview-light: rgba(99, 102, 241, 0.08);
+  --module-overview-glow: rgba(99, 102, 241, 0.25);
+  
+  // Academic Module
+  --module-academic-primary: #10b981;
+  --module-academic-secondary: #34d399;
+  --module-academic-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  --module-academic-light: rgba(16, 185, 129, 0.08);
+  --module-academic-glow: rgba(16, 185, 129, 0.25);
+  
+  // Students Module
+  --module-students-primary: #3b82f6;
+  --module-students-secondary: #60a5fa;
+  --module-students-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  --module-students-light: rgba(59, 130, 246, 0.08);
+  --module-students-glow: rgba(59, 130, 246, 0.25);
+  
+  // Staff Module
+  --module-staff-primary: #f59e0b;
+  --module-staff-secondary: #fbbf24;
+  --module-staff-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  --module-staff-light: rgba(245, 158, 11, 0.08);
+  --module-staff-glow: rgba(245, 158, 11, 0.25);
+  
+  // Communication Module
+  --module-communication-primary: #ec4899;
+  --module-communication-secondary: #f472b6;
+  --module-communication-gradient: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+  --module-communication-light: rgba(236, 72, 153, 0.08);
+  --module-communication-glow: rgba(236, 72, 153, 0.25);
+  
+  // Finance Module
+  --module-finance-primary: #22c55e;
+  --module-finance-secondary: #4ade80;
+  --module-finance-gradient: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
+  --module-finance-light: rgba(34, 197, 94, 0.08);
+  --module-finance-glow: rgba(34, 197, 94, 0.25);
+  
+  // Operations Module
+  --module-operations-primary: #06b6d4;
+  --module-operations-secondary: #22d3ee;
+  --module-operations-gradient: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);
+  --module-operations-light: rgba(6, 182, 212, 0.08);
+  --module-operations-glow: rgba(6, 182, 212, 0.25);
+  
+  // Reports Module
+  --module-reports-primary: #8b5cf6;
+  --module-reports-secondary: #a78bfa;
+  --module-reports-gradient: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  --module-reports-light: rgba(139, 92, 246, 0.08);
+  --module-reports-glow: rgba(139, 92, 246, 0.25);
+  
+  // Admin Module
+  --module-admin-primary: #64748b;
+  --module-admin-secondary: #94a3b8;
+  --module-admin-gradient: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
+  --module-admin-light: rgba(100, 116, 139, 0.08);
+  --module-admin-glow: rgba(100, 116, 139, 0.25);
+  
+  // Platform Module
+  --module-platform-primary: #ef4444;
+  --module-platform-secondary: #f87171;
+  --module-platform-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+  --module-platform-light: rgba(239, 68, 68, 0.08);
+  --module-platform-glow: rgba(239, 68, 68, 0.25);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAGE HEADER COMPONENTS
+// Premium page headers with contextual module identity
+// ═══════════════════════════════════════════════════════════════
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  
+  &__content {
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+    
+    h1, h2 {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      line-height: 1.3;
+    }
+  }
+  
+  &__icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-xl);
+    font-size: 24px;
+    flex-shrink: 0;
+    background: var(--module-gradient, var(--module-overview-gradient));
+    color: white;
+    box-shadow: 0 4px 12px var(--module-glow, var(--module-overview-glow));
+  }
+  
+  &__description {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    max-width: 600px;
+    line-height: 1.6;
+  }
+  
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+  }
+  
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-shrink: 0;
+  }
+}
+
+// ─── Module-specific Page Headers ───
+@each $module, $colors in $module-colors {
+  .page-header--#{$module} {
+    .page-header__icon {
+      background: #{map-get($colors, gradient)};
+      box-shadow: 0 4px 12px #{map-get($colors, glow)};
+    }
+    
+    .badge-module {
+      background: #{map-get($colors, light)};
+      color: #{map-get($colors, primary)};
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONTEXTUAL CARDS
+// Cards with module identity accents
+// ═══════════════════════════════════════════════════════════════
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: var(--border-color-hover);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+  
+  &__header {
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+  
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+  }
+  
+  &__icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    font-size: 18px;
+    background: var(--bg-muted);
+  }
+  
+  &__body {
+    padding: var(--space-5);
+  }
+  
+  &__footer {
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-muted);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+}
+
+// Module-accented cards
+@each $module, $colors in $module-colors {
+  .card--#{$module} {
+    border-color: transparent;
+    background: linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
+                linear-gradient(135deg, #{map-get($colors, primary)}20, transparent 50%) border-box;
+    
+    .card__icon {
+      background: #{map-get($colors, gradient)};
+      color: white;
+    }
+    
+    &:hover {
+      box-shadow: 0 4px 16px #{map-get($colors, glow)};
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STAT CARDS
+// Premium statistics display with visual hierarchy
+// ═══════════════════════════════════════════════════════════════
+
+.stat-card {
+  position: relative;
+  padding: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--stat-gradient, var(--module-overview-gradient));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    
+    &::before {
+      opacity: 1;
+    }
+  }
+  
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  
+  &__label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  &__icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    font-size: 20px;
+    background: var(--stat-light, var(--bg-muted));
+    color: var(--stat-color, var(--text-primary));
+    transition: transform 0.2s ease;
+  }
+  
+  &:hover &__icon {
+    transform: scale(1.1);
+  }
+  
+  &__value {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    
+    span {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-left: var(--space-1);
+    }
+  }
+  
+  &__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    
+    &--up {
+      color: var(--color-success);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    
+    &--down {
+      color: var(--color-danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+    
+    &--neutral {
+      color: var(--text-muted);
+      background: var(--bg-muted);
+    }
+  }
+  
+  &__chart {
+    height: 48px;
+    margin-top: var(--space-2);
+    opacity: 0.8;
+  }
+}
+
+// Module-specific stat cards
+@each $module, $colors in $module-colors {
+  .stat-card--#{$module} {
+    --stat-gradient: #{map-get($colors, gradient)};
+    --stat-light: #{map-get($colors, light)};
+    --stat-color: #{map-get($colors, primary)};
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA TABLE STYLES
+// Premium table styling with row states
+// ═══════════════════════════════════════════════════════════════
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  
+  th {
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--bg-muted);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+    
+    &:first-child {
+      border-radius: var(--radius-lg) 0 0 0;
+    }
+    
+    &:last-child {
+      border-radius: 0 var(--radius-lg) 0 0;
+    }
+  }
+  
+  td {
+    padding: var(--space-4);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+  }
+  
+  tbody tr {
+    transition: all 0.15s ease;
+    
+    &:hover {
+      background: var(--bg-surface-hover);
+    }
+    
+    &.selected {
+      background: rgba(59, 130, 246, 0.08);
+    }
+    
+    &:last-child td {
+      border-bottom: none;
+      
+      &:first-child {
+        border-radius: 0 0 0 var(--radius-lg);
+      }
+      
+      &:last-child {
+        border-radius: 0 0 var(--radius-lg) 0;
+      }
+    }
+  }
+  
+  // Row status indicators
+  &__status {
+    width: 4px;
+    padding: 0 !important;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 4px;
+      border-radius: 0 var(--radius-full) var(--radius-full) 0;
+    }
+  }
+  
+  // Status colors
+  tr.status-active &__status::after { background: var(--color-success); }
+  tr.status-pending &__status::after { background: var(--color-warning); }
+  tr.status-inactive &__status::after { background: var(--color-danger); }
+  tr.status-draft &__status::after { background: var(--text-muted); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EMPTY STATES
+// Contextual empty states with module identity
+// ═══════════════════════════════════════════════════════════════
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+  
+  &__illustration {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-muted);
+    border-radius: var(--radius-2xl);
+    font-size: 48px;
+    margin-bottom: var(--space-6);
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  
+  &__title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+  }
+  
+  &__description {
+    font-size: var(--text-base);
+    color: var(--text-muted);
+    max-width: 400px;
+    margin-bottom: var(--space-6);
+    line-height: 1.6;
+  }
+  
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+}
+
+// Module-specific empty states
+@each $module, $colors in $module-colors {
+  .empty-state--#{$module} {
+    .empty-state__illustration {
+      background: #{map-get($colors, light)};
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// QUICK ACTIONS
+// Floating action patterns
+// ═══════════════════════════════════════════════════════════════
+
+.quick-actions {
+  display: flex;
+  gap: var(--space-2);
+  
+  &__btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: var(--bg-surface-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    &--primary {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: white;
+      
+      &:hover {
+        background: color-mix(in srgb, var(--color-primary) 90%, black);
+        border-color: color-mix(in srgb, var(--color-primary) 90%, black);
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FILTER BAR
+// Premium filtering interface
+// ═══════════════════════════════════════════════════════════════
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-muted);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+  
+  &__search {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+    
+    input {
+      width: 100%;
+      padding: var(--space-2) var(--space-3) var(--space-2) var(--space-8);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+      
+      &::placeholder {
+        color: var(--text-muted);
+      }
+    }
+    
+    &-icon {
+      position: absolute;
+      left: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+  }
+  
+  &__filters {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      border-color: var(--color-primary);
+    }
+    
+    &.active {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESPONSIVE GRID LAYOUTS
+// ═══════════════════════════════════════════════════════════════
+
+.grid-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+.grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-5);
+}
+
+.grid-dashboard {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-5);
+  
+  .span-3 { grid-column: span 3; }
+  .span-4 { grid-column: span 4; }
+  .span-6 { grid-column: span 6; }
+  .span-8 { grid-column: span 8; }
+  .span-9 { grid-column: span 9; }
+  .span-12 { grid-column: span 12; }
+  
+  @media (max-width: 1024px) {
+    .span-3, .span-4 { grid-column: span 6; }
+    .span-8, .span-9 { grid-column: span 12; }
+  }
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    
+    .span-3, .span-4, .span-6, .span-8, .span-9, .span-12 {
+      grid-column: span 1;
+    }
+  }
+}

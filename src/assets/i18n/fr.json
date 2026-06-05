@@ -1,0 +1,127 @@
+{
+  "app": { "title": "Gestion Scolaire", "tagline": "Votre Plateforme Scolaire Complète" },
+  "nav": {
+    "dashboard": "Tableau de Bord", "students": "Étudiants", "teachers": "Enseignants", "parents": "Parents d'élèves",
+    "classes": "Classes", "subjects": "Matières", "attendance": "Présence", "exams": "Examens",
+    "results": "Résultats", "fees": "Frais de Scolarité", "transport": "Transport", "transfers": "Transferts",
+    "promotions": "Promotions", "timetable": "Emploi du Temps", "notifications": "Notifications",
+    "reports": "Rapports", "settings": "Paramètres", "schools": "Écoles", "users": "Utilisateurs",
+    "subscriptions": "Abonnements", "academic_years": "Années Scolaires", "logout": "Se Déconnecter",
+    "pending_students": "Étudiants en Attente", "pending_approvals": "Approbations en Attente", "roles": "Rôles",
+    "events": "Événements", "activity_logs": "Journal d'Activité", "enrollments": "Inscriptions",
+    "pending_teachers": "Enseignants en Attente"
+  },
+  "auth": {
+    "login": "Se Connecter", "register": "Créer un Compte", "forgot_password": "Mot de passe oublié ?",
+    "reset_password": "Réinitialiser le Mot de Passe", "email": "Adresse Email", "password": "Mot de Passe",
+    "confirm_password": "Confirmer le Mot de Passe", "remember_me": "Se souvenir de moi",
+    "no_account": "Pas encore de compte ?", "has_account": "Vous avez déjà un compte ?",
+    "have_account": "Vous avez déjà un compte ?",
+    "sign_up": "S'inscrire", "sign_in": "Se Connecter", "back_to_login": "Retour à la Connexion",
+    "send_reset": "Envoyer le Lien de Réinitialisation",
+    "welcome_back": "Content de Vous Revoir",
+    "login_subtitle": "Connectez-vous pour accéder à votre plateforme scolaire",
+    "email_placeholder": "vous@exemple.com",
+    "or": "ou",
+    "choose_account": "Choisissez Votre Compte",
+    "multiple_accounts_msg": "Vous avez plusieurs comptes liés à cet email. Sélectionnez-en un pour continuer.",
+    "continue_as": "Continuer en tant que",
+    "student_register_title": "Inscription Étudiant",
+    "student_register_desc": "Inscrivez-vous sur la plateforme de votre école",
+    "teacher_register_title": "Inscription Enseignant",
+    "teacher_register_desc": "Postulez pour rejoindre une école en tant qu'enseignant",
+    "admin_register_prompt": "Vous souhaitez enregistrer une nouvelle école ?",
+    "register_school": "Enregistrer Votre École",
+    "register_subtitle": "Créez votre compte de gestion scolaire",
+    "first_name": "Prénom",
+    "last_name": "Nom de famille",
+    "passwords_no_match": "Les mots de passe ne correspondent pas",
+    "school_name": "Nom de l'école",
+    "setup_guide_cta": "Consultez le guide complet avant de vous inscrire",
+    "forgot_subtitle": "Entrez votre email et nous vous enverrons un lien de réinitialisation",
+    "send_reset_link": "Envoyer le Lien de Réinitialisation",
+    "check_email": "Vérifiez votre email",
+    "reset_link_sent": "Nous avons envoyé un lien de réinitialisation à",
+    "try_again": "Pas reçu ? Réessayez"
+  },
+  "common": {
+    "search": "Rechercher...", "create": "Créer", "edit": "Modifier", "delete": "Supprimer", "save": "Sauvegarder",
+    "cancel": "Annuler", "confirm": "Confirmer", "back": "Retour", "next": "Suivant", "loading": "Chargement...",
+    "no_data": "Aucune donnée trouvée", "actions": "Actions", "status": "Statut", "view": "Voir",
+    "export": "Exporter", "import": "Importer", "print": "Imprimer", "filter": "Filtrer",
+    "total": "Total", "showing": "Affichage de", "of": "sur", "entries": "entrées",
+    "success": "Succès", "error": "Erreur", "warning": "Avertissement", "info": "Info"
+  },
+  "dashboard": {
+    "welcome": "Content de vous revoir", "overview": "Vue d'Ensemble", "total_students": "Total des Étudiants",
+    "total_teachers": "Total des Enseignants", "total_classes": "Total des Classes",
+    "fee_collection": "Collecte des Frais", "revenue": "Revenus",
+    "attendance_rate": "Taux de Présence",
+    "upcoming_exams": "Examens à Venir", "recent_activities": "Activités Récentes",
+    "quick_actions": "Actions Rapides"
+  },
+  "student": {
+    "title": "Étudiants", "add": "Ajouter un Étudiant", "admission_no": "No. d'Admission",
+    "first_name": "Prénom", "last_name": "Nom de Famille", "class": "Classe",
+    "section": "Section", "roll_no": "Numéro", "gender": "Genre",
+    "dob": "Date de Naissance", "contact": "Contact", "address": "Adresse",
+    "guardian": "Tuteur", "performance": "Performance", "report_card": "Bulletin Scolaire"
+  },
+  "teacher": {
+    "title": "Enseignants", "add": "Ajouter un Enseignant", "employee_id": "ID Employé",
+    "first_name": "Prénom", "last_name": "Nom de Famille",
+    "designation": "Désignation", "department": "Département",
+    "subjects": "Matières", "classes": "Classes Assignées",
+    "qualification": "Qualification", "experience": "Expérience",
+    "contact": "Numéro de Contact", "email": "Adresse Email"
+  },
+  "fees": {
+    "title": "Gestion des Frais", "pay": "Payer Maintenant", "due": "Montant Dû",
+    "paid": "Payé", "pending": "En Attente", "overdue": "En Retard",
+    "structure": "Structure des Frais", "analytics": "Analyse des Frais",
+    "collection_rate": "Taux de Collecte"
+  },
+  "attendance": {
+    "title": "Présence", "mark": "Prendre la Présence", "present": "Présent",
+    "absent": "Absent", "late": "En Retard", "report": "Rapport de Présence",
+    "rate": "Taux de Présence"
+  },
+  "exam": {
+    "title": "Examens", "create": "Créer un Examen", "schedule": "Calendrier des Examens",
+    "type": "Type d'Examen", "subjects": "Matières", "date": "Date",
+    "results": "Voir les Résultats"
+  },
+  "result": {
+    "title": "Résultats", "entry": "Saisir les Résultats", "report_card": "Bulletin Scolaire",
+    "analytics": "Analyse des Résultats", "grade": "Note", "rank": "Classement",
+    "percentage": "Pourcentage", "pass": "Admis", "fail": "Recalé"
+  },
+  "timetable": {
+    "title": "Emploi du Temps", "today": "Emploi du Temps du Jour",
+    "day": "Jour", "period": "Période", "subject": "Matière",
+    "teacher": "Enseignant", "room": "Salle"
+  },
+  "transport": {
+    "title": "Transport", "vehicles": "Véhicules", "routes": "Itinéraires",
+    "tracking": "Suivi en Direct", "driver": "Chauffeur", "capacity": "Capacité"
+  },
+  "notification": {
+    "title": "Notifications", "send": "Envoyer une Notification",
+    "all": "Toutes les Notifications", "unread": "Non Lues",
+    "mark_read": "Marquer comme Lu"
+  },
+  "event": {
+    "title": "Événements", "create": "Créer un Événement", "upcoming": "Événements à Venir",
+    "type": "Type d'Événement", "date": "Date", "description": "Description"
+  },
+  "report": {
+    "title": "Rapports", "generate": "Générer un Rapport",
+    "academic": "Rapports Académiques", "financial": "Rapports Financiers",
+    "attendance": "Rapports de Présence"
+  },
+  "settings": {
+    "title": "Paramètres", "general": "Général", "profile": "Profil",
+    "security": "Sécurité", "notifications": "Préférences de Notification",
+    "appearance": "Apparence"
+  }
+}

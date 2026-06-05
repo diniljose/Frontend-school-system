@@ -1,0 +1,73 @@
+name: Deploy Angular UI to EC2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+
+env:
+  REMOTE_TMP_DIR: /home/ubuntu
+  REMOTE_USER: ubuntu
+  WEB_DIR: /home/dinil-dev/system-storage/apps/dev.school-management-ui
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build production UI
+        run: |
+          npm run build -- --configuration=production --base-href /school/ --deploy-url /school/
+
+      - name: Locate dist output
+        id: dist
+        shell: bash
+        run: |
+          DIST_DIR="$(ls -d dist/*/browser 2>/dev/null || true)"
+          if [ -z "$DIST_DIR" ]; then DIST_DIR="$(ls -d dist/* 2>/dev/null || true)"; fi
+          if [ -z "$DIST_DIR" ]; then DIST_DIR="dist"; fi
+          echo "DIST_DIR=$DIST_DIR" >> $GITHUB_OUTPUT
+          echo "Using DIST_DIR=$DIST_DIR"
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Package static build
+        run: |
+          tar -czf ui.tar.gz -C "${{ steps.dist.outputs.DIST_DIR }}" .
+
+      - name: Upload to EC2
+        run: |
+          scp -o StrictHostKeyChecking=no ui.tar.gz "${REMOTE_USER}@${{ secrets.SERVER_HOST }}:${REMOTE_TMP_DIR}/ui.tar.gz"
+
+      - name: Deploy on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${{ secrets.SERVER_HOST }}" <<EOF
+            set -euo pipefail
+
+            sudo mkdir -p "${WEB_DIR}"
+            sudo chown -R ${REMOTE_USER}:${REMOTE_USER} "${WEB_DIR}"
+
+            find "${WEB_DIR}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+            tar -xzf "${REMOTE_TMP_DIR}/ui.tar.gz" -C "${WEB_DIR}"
+
+            chmod -R u=rwX,g=rX,o=rX "${WEB_DIR}"
+            sudo nginx -t && sudo systemctl reload nginx
+
+            rm -f "${REMOTE_TMP_DIR}/ui.tar.gz"
+            echo "UI deployed to ${WEB_DIR}"
+          EOF

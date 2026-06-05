@@ -1,0 +1,1269 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// PREMIUM AUTH DESIGN SYSTEM - 2026 SaaS Excellence
+// Inspired by: Linear, Notion, Stripe, Vercel, Arc Browser, Framer
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 1: AUTH-SPECIFIC DESIGN TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+:root {
+  // Premium Auth Gradients
+  --auth-gradient-mesh: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.4) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(139, 92, 246, 0.35) 0px, transparent 50%),
+    radial-gradient(at 100% 50%, rgba(59, 130, 246, 0.3) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(6, 182, 212, 0.25) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(168, 85, 247, 0.2) 0px, transparent 50%);
+  
+  --auth-gradient-primary: linear-gradient(135deg, 
+    #4f46e5 0%, 
+    #6366f1 25%, 
+    #8b5cf6 50%, 
+    #a78bfa 75%,
+    #7c3aed 100%);
+  
+  --auth-gradient-glow: linear-gradient(135deg, 
+    rgba(99, 102, 241, 0.6) 0%, 
+    rgba(139, 92, 246, 0.4) 50%, 
+    rgba(6, 182, 212, 0.3) 100%);
+  
+  // Glassmorphism for Auth
+  --auth-glass-bg: rgba(255, 255, 255, 0.85);
+  --auth-glass-border: rgba(255, 255, 255, 0.5);
+  --auth-glass-blur: blur(20px);
+  --auth-glass-shadow: 
+    0 8px 32px rgba(99, 102, 241, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  
+  // Card Elevations
+  --auth-card-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.03),
+    0 2px 4px rgba(0, 0, 0, 0.03),
+    0 12px 24px rgba(0, 0, 0, 0.06),
+    0 24px 48px rgba(99, 102, 241, 0.08);
+  
+  // Animated Border Gradient
+  --auth-border-gradient: linear-gradient(135deg, 
+    rgba(99, 102, 241, 0.5) 0%,
+    rgba(139, 92, 246, 0.3) 25%,
+    rgba(6, 182, 212, 0.3) 50%,
+    rgba(99, 102, 241, 0.3) 75%,
+    rgba(139, 92, 246, 0.5) 100%);
+  
+  // Premium Input States
+  --input-focus-ring: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  --input-focus-border: rgba(99, 102, 241, 0.6);
+  --input-success-ring: 0 0 0 4px rgba(16, 185, 129, 0.15);
+  --input-success-border: rgba(16, 185, 129, 0.6);
+  --input-error-ring: 0 0 0 4px rgba(239, 68, 68, 0.15);
+  --input-error-border: rgba(239, 68, 68, 0.6);
+  
+  // Module Colors for floating cards
+  --module-students: linear-gradient(135deg, #10b981, #059669);
+  --module-teachers: linear-gradient(135deg, #3b82f6, #2563eb);
+  --module-attendance: linear-gradient(135deg, #f59e0b, #d97706);
+  --module-exams: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  --module-fees: linear-gradient(135deg, #06b6d4, #0891b2);
+  --module-reports: linear-gradient(135deg, #ec4899, #db2777);
+  --module-parents: linear-gradient(135deg, #f43f5e, #e11d48);
+  --module-analytics: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+:root.dark {
+  --auth-glass-bg: rgba(15, 23, 42, 0.9);
+  --auth-glass-border: rgba(51, 65, 85, 0.6);
+  --auth-glass-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  
+  --auth-card-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 12px 24px rgba(0, 0, 0, 0.2),
+    0 24px 48px rgba(0, 0, 0, 0.3);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 2: PREMIUM AUTH KEYFRAME ANIMATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Mesh gradient animation
+@keyframes meshGradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+// Floating blob animation
+@keyframes floatBlob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  25% {
+    transform: translate(10px, -20px) scale(1.05) rotate(2deg);
+  }
+  50% {
+    transform: translate(-5px, -10px) scale(0.98) rotate(-1deg);
+  }
+  75% {
+    transform: translate(-10px, 5px) scale(1.02) rotate(1deg);
+  }
+}
+
+// Card float animation
+@keyframes floatCard {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--rotate, 0deg));
+  }
+  50% {
+    transform: translateY(-8px) rotate(calc(var(--rotate, 0deg) + 1deg));
+  }
+}
+
+// Parallax drift
+@keyframes parallaxDrift {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(5px, -5px);
+  }
+  50% {
+    transform: translate(-3px, 3px);
+  }
+  75% {
+    transform: translate(3px, 5px);
+  }
+}
+
+// Light beam animation
+@keyframes lightBeam {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+// Particle float
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translateY(-30px) translateX(10px) scale(1.1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-15px) translateX(-5px) scale(0.9);
+    opacity: 0.5;
+  }
+  75% {
+    transform: translateY(-40px) translateX(-10px) scale(1.05);
+    opacity: 0.7;
+  }
+}
+
+// Gradient border rotation
+@keyframes borderRotate {
+  0% {
+    --angle: 0deg;
+  }
+  100% {
+    --angle: 360deg;
+  }
+}
+
+// Pulse glow
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
+  }
+}
+
+// Spring entrance
+@keyframes springIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  60% {
+    transform: translateY(-5px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Staggered fade in
+@keyframes staggerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Input focus animation
+@keyframes inputFocusPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+// Button magnetic hover
+@keyframes magneticHover {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.02);
+  }
+}
+
+// Ecosystem node pulse
+@keyframes nodePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px currentColor;
+  }
+}
+
+// Connection line flow
+@keyframes lineFlow {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+// Mobile swipe hint
+@keyframes swipeHint {
+  0%, 100% {
+    transform: translateX(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateX(-10px);
+    opacity: 1;
+  }
+}
+
+// Dashboard preview pulse
+@keyframes dashboardPulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 3: UTILITY ANIMATION CLASSES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.auth-animate-in {
+  animation: springIn 0.6s var(--ease-spring) both;
+}
+
+.auth-stagger-1 { animation-delay: 0.05s; }
+.auth-stagger-2 { animation-delay: 0.1s; }
+.auth-stagger-3 { animation-delay: 0.15s; }
+.auth-stagger-4 { animation-delay: 0.2s; }
+.auth-stagger-5 { animation-delay: 0.25s; }
+.auth-stagger-6 { animation-delay: 0.3s; }
+
+.auth-float {
+  animation: floatCard 6s ease-in-out infinite;
+}
+
+.auth-parallax {
+  animation: parallaxDrift 15s ease-in-out infinite;
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .auth-animate-in,
+  .auth-float,
+  .auth-parallax {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 4: PREMIUM AUTH FORM COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Premium Input with Floating Label
+.premium-input-group {
+  position: relative;
+  margin-bottom: var(--space-4);
+  
+  .premium-input {
+    width: 100%;
+    height: 56px;
+    padding: 22px 16px 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--bg-surface);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    outline: none;
+    transition: all 0.3s var(--ease-spring);
+    
+    &::placeholder {
+      opacity: 0;
+    }
+    
+    &:focus {
+      border-color: var(--input-focus-border);
+      box-shadow: var(--input-focus-ring);
+      
+      ~ .floating-label {
+        transform: translateY(-22px) scale(0.75);
+        color: var(--color-primary);
+        font-weight: 600;
+      }
+    }
+    
+    &:not(:placeholder-shown) ~ .floating-label {
+      transform: translateY(-22px) scale(0.75);
+    }
+    
+    &.has-icon {
+      padding-left: 48px;
+    }
+    
+    &.is-valid {
+      border-color: var(--input-success-border);
+      box-shadow: var(--input-success-ring);
+    }
+    
+    &.is-invalid {
+      border-color: var(--input-error-border);
+      box-shadow: var(--input-error-ring);
+    }
+  }
+  
+  .floating-label {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: all 0.25s var(--ease-spring);
+    transform-origin: left center;
+    background: var(--bg-surface);
+    padding: 0 4px;
+  }
+  
+  .input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--text-muted);
+    transition: color 0.2s;
+    z-index: 1;
+  }
+  
+  &:focus-within .input-icon {
+    color: var(--color-primary);
+  }
+  
+  .input-suffix {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  .toggle-password {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    
+    &:hover {
+      color: var(--text-primary);
+      transform: scale(1.1);
+    }
+  }
+  
+  .validation-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 12px;
+    animation: scaleIn 0.3s var(--ease-spring);
+    
+    &.valid {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--color-success);
+    }
+    
+    &.invalid {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--color-danger);
+    }
+  }
+}
+
+// Premium Submit Button
+.premium-submit-btn {
+  position: relative;
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--auth-gradient-primary);
+  background-size: 200% 200%;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s var(--ease-spring);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 8px 20px rgba(79, 70, 229, 0.35),
+      0 4px 8px rgba(79, 70, 229, 0.2);
+    animation: magneticHover 0.6s ease-in-out;
+    
+    &::before {
+      transform: translateX(100%);
+    }
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .btn-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  
+  .btn-icon {
+    transition: transform 0.3s;
+  }
+  
+  &:hover .btn-icon {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// Premium Checkbox
+.premium-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  
+  input[type="checkbox"] {
+    display: none;
+    
+    &:checked + .checkbox-indicator {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      
+      &::after {
+        opacity: 1;
+        transform: scale(1) rotate(45deg);
+      }
+    }
+    
+    &:focus + .checkbox-indicator {
+      box-shadow: var(--input-focus-ring);
+    }
+  }
+  
+  .checkbox-indicator {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    position: relative;
+    transition: all 0.2s var(--ease-spring);
+    flex-shrink: 0;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      width: 6px;
+      height: 12px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      opacity: 0;
+      transform: scale(0) rotate(45deg);
+      transition: all 0.2s var(--ease-spring);
+    }
+    
+    &:hover {
+      border-color: var(--color-primary);
+    }
+  }
+  
+  .checkbox-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 5: FLOATING EDUCATION MODULE CARDS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.floating-modules {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  
+  .floating-card {
+    position: absolute;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 
+      0 4px 20px rgba(0, 0, 0, 0.08),
+      0 1px 3px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: floatCard var(--duration, 8s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+    transform-origin: center;
+    --rotate: var(--initial-rotate, 0deg);
+    
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.2));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+    
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      
+      &.students { background: var(--module-students); }
+      &.teachers { background: var(--module-teachers); }
+      &.attendance { background: var(--module-attendance); }
+      &.exams { background: var(--module-exams); }
+      &.fees { background: var(--module-fees); }
+      &.reports { background: var(--module-reports); }
+      &.parents { background: var(--module-parents); }
+      &.analytics { background: var(--module-analytics); }
+    }
+    
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      
+      .card-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        white-space: nowrap;
+      }
+      
+      .card-value {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+    }
+    
+    .card-trend {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      
+      &.up {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      
+      &.neutral {
+        background: var(--bg-muted);
+        color: var(--text-muted);
+      }
+    }
+  }
+}
+
+// Dark mode floating cards
+:root.dark .floating-modules .floating-card {
+  background: rgba(30, 41, 59, 0.95);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+    
+  &::before {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 6: ANIMATED SCHOOL ECOSYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.school-ecosystem {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 1;
+  
+  .ecosystem-node {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    animation: nodePulse 3s ease-in-out infinite;
+    
+    .node-circle {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 20px currentColor;
+      background: rgba(255, 255, 255, 0.95);
+      position: relative;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px dashed currentColor;
+        opacity: 0.3;
+        animation: spin 20s linear infinite;
+      }
+    }
+    
+    .node-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 4px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(4px);
+    }
+    
+    &.school { color: #6366f1; top: 10%; left: 50%; transform: translateX(-50%); animation-delay: 0s; }
+    &.teachers { color: #3b82f6; top: 30%; left: 15%; animation-delay: 0.3s; }
+    &.students { color: #10b981; top: 30%; right: 15%; animation-delay: 0.6s; }
+    &.parents { color: #f43f5e; top: 55%; left: 10%; animation-delay: 0.9s; }
+    &.reports { color: #f59e0b; top: 55%; right: 10%; animation-delay: 1.2s; }
+    &.success { color: #8b5cf6; top: 80%; left: 50%; transform: translateX(-50%); animation-delay: 1.5s; }
+  }
+  
+  .ecosystem-connections {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    
+    svg {
+      width: 100%;
+      height: 100%;
+      
+      line {
+        stroke: rgba(255, 255, 255, 0.3);
+        stroke-width: 2;
+        stroke-dasharray: 5 5;
+        animation: lineFlow 2s linear infinite;
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 7: MINI DASHBOARD PREVIEW
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.dashboard-preview {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 340px;
+  animation: floatCard 10s ease-in-out infinite, dashboardPulse 4s ease-in-out infinite;
+  
+  .preview-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    
+    .preview-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    
+    .preview-info {
+      flex: 1;
+      
+      .preview-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+      }
+      
+      .preview-role {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.6);
+      }
+    }
+    
+    .live-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+  }
+  
+  .preview-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+    
+    .stat-mini {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 12px;
+      border-radius: 12px;
+      
+      .stat-label {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 4px;
+      }
+      
+      .stat-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+        font-family: var(--font-mono);
+      }
+      
+      .stat-change {
+        font-size: 10px;
+        margin-top: 2px;
+        
+        &.up { color: #10b981; }
+        &.down { color: #f43f5e; }
+      }
+    }
+  }
+  
+  .preview-chart {
+    height: 60px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      height: 100%;
+      padding: 8px;
+      gap: 4px;
+      
+      .bar {
+        flex: 1;
+        background: linear-gradient(to top, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.4));
+        border-radius: 3px;
+        animation: barGrow 2s ease-out infinite alternate;
+        
+        @for $i from 1 through 8 {
+          &:nth-child(#{$i}) {
+            height: random(80) + 20%;
+            animation-delay: #{$i * 0.1}s;
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes barGrow {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 8: MOBILE-SPECIFIC COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.mobile-hero {
+  padding: 24px 20px 32px;
+  background: var(--auth-gradient-primary);
+  background-size: 200% 200%;
+  animation: meshGradientShift 15s ease infinite;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--auth-gradient-mesh);
+    opacity: 0.5;
+  }
+  
+  .mobile-logo {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      
+      svg {
+        width: 24px;
+        height: 24px;
+        color: #fff;
+      }
+    }
+    
+    .logo-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+  }
+  
+  .mobile-headline {
+    position: relative;
+    z-index: 1;
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  
+  .mobile-subheadline {
+    position: relative;
+    z-index: 1;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  
+  .mobile-modules-carousel {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+    margin: 0 -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .module-card-mini {
+      flex-shrink: 0;
+      scroll-snap-align: start;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 14px 16px;
+      min-width: 140px;
+      
+      .module-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        margin-bottom: 10px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+      
+      .module-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 2px;
+      }
+      
+      .module-stat {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.6);
+      }
+    }
+  }
+  
+  .swipe-hint {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 16px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    animation: swipeHint 2s ease-in-out infinite;
+    
+    .swipe-icon {
+      font-size: 14px;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 9: RESPONSIVE AUTH CARD
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.premium-auth-card {
+  position: relative;
+  background: var(--auth-glass-bg);
+  backdrop-filter: var(--auth-glass-blur);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: var(--auth-card-shadow);
+  animation: springIn 0.6s var(--ease-spring) both;
+  
+  // Animated gradient border
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: var(--auth-border-gradient);
+    background-size: 200% 200%;
+    animation: meshGradientShift 8s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  &:focus-within::before {
+    opacity: 1;
+  }
+  
+  .card-header {
+    margin-bottom: 32px;
+    
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: var(--color-primary);
+      
+      svg {
+        width: 28px;
+        height: 28px;
+      }
+    }
+    
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    
+    p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    padding: 28px 24px 32px;
+    border-radius: 28px 28px 0 0;
+    
+    .card-header {
+      margin-bottom: 24px;
+      
+      .header-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        margin-bottom: 16px;
+        
+        svg {
+          width: 24px;
+          height: 24px;
+        }
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+      
+      p {
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 10: CTA CARDS FOR REGISTRATION OPTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.registration-cta-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  
+  .cta-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    border: 2px solid var(--border-color);
+    background: var(--bg-surface);
+    text-decoration: none;
+    transition: all 0.3s var(--ease-spring);
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(99, 102, 241, 0.05));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    &:hover {
+      border-color: var(--color-primary);
+      transform: translateX(6px);
+      
+      &::before {
+        opacity: 1;
+      }
+      
+      .cta-arrow {
+        transform: translateX(4px);
+        color: var(--color-primary);
+      }
+    }
+    
+    &:active {
+      transform: translateX(6px) scale(0.98);
+    }
+    
+    .cta-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      
+      &.student {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+        color: #10b981;
+      }
+      
+      &.teacher {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+        color: #3b82f6;
+      }
+    }
+    
+    .cta-content {
+      flex: 1;
+      min-width: 0;
+      
+      .cta-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+      }
+      
+      .cta-description {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+    }
+    
+    .cta-arrow {
+      font-size: 18px;
+      color: var(--text-muted);
+      transition: all 0.3s;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECTION 11: PARTICLE SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.particle-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  
+  .particle {
+    position: absolute;
+    font-size: 20px;
+    animation: particleFloat var(--duration, 15s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+    opacity: 0.5;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    
+    &.book { --duration: 18s; }
+    &.graduation { --duration: 20s; }
+    &.school { --duration: 16s; }
+    &.certificate { --duration: 22s; }
+    &.teacher { --duration: 19s; }
+    &.student { --duration: 17s; }
+  }
+}
